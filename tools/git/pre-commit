@@ -1,0 +1,10 @@
+cat > .git/hooks/pre-commit <<'EOF'
+#!/bin/sh
+echo "🔍 Running spotlessApply before commit..."
+./gradlew spotlessApply
+
+# Re-add files that may have been changed by Spotless
+git add -u
+
+echo "✅ Spotless formatting applied."
+EOF
