@@ -1,8 +1,8 @@
-package io.askimo.cli.util
+package io.askimo.core.util
 
-import io.askimo.cli.model.core.ProviderSettings
-import io.askimo.cli.model.providers.ollama.OllamaSettings
-import io.askimo.cli.model.providers.openai.OpenAiSettings
+import io.askimo.core.providers.ProviderSettings
+import io.askimo.core.providers.ollama.OllamaSettings
+import io.askimo.core.providers.openai.OpenAiSettings
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic

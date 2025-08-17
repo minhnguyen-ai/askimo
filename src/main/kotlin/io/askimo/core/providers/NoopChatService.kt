@@ -1,4 +1,4 @@
-package io.askimo.cli.model.core
+package io.askimo.core.providers
 
 /**
  * A Noop implementation of the ChatModel interface.

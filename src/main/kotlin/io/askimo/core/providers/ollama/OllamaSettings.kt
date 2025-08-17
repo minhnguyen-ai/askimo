@@ -1,9 +1,9 @@
-package io.askimo.cli.model.providers.ollama
+package io.askimo.core.providers.ollama
 
-import io.askimo.cli.model.core.Presets
-import io.askimo.cli.model.core.ProviderSettings
-import io.askimo.cli.model.core.Style
-import io.askimo.cli.model.core.Verbosity
+import io.askimo.core.providers.Presets
+import io.askimo.core.providers.ProviderSettings
+import io.askimo.core.providers.Style
+import io.askimo.core.providers.Verbosity
 import kotlinx.serialization.Serializable
 
 @Serializable

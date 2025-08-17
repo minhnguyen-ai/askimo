@@ -36,7 +36,7 @@ You need to find the appropriate LangChain4j implementation for your provider. C
 
 ### 2. Create a New Provider Enum Value
 
-First, add your provider to the `ModelProvider` enum in `io.askimo.cli.model.core.ModelProvider`:
+First, add your provider to the `ModelProvider` enum in `io.askimo.core.providers.ModelProvider`:
 
 ```kotlin
 @Serializable
@@ -53,7 +53,7 @@ enum class ModelProvider {
 Create a settings class that implements `ProviderSettings` interface. This class will store configuration specific to your provider:
 
 ```kotlin
-// File: io.askimo.cli.model.providers.yourprovider.YourProviderSettings.kt
+// File: io.askimo.core.providers.yourprovider.YourProviderSettings.kt
 
 @Serializable
 data class YourProviderSettings(
@@ -73,7 +73,7 @@ data class YourProviderSettings(
 Create a class that implements the `ChatService` interface. This class will handle the actual communication with your provider's API:
 
 ```kotlin
-// File: io.askimo.cli.model.providers.yourprovider.YourProviderChatService.kt
+// File: io.askimo.core.providers.yourprovider.YourProviderChatService.kt
 
 class YourProviderChatService(
     private val modelName: String,
@@ -118,7 +118,7 @@ class YourProviderChatService(
 Create a factory class that implements `ChatModelFactory`. This class will be responsible for creating instances of your model:
 
 ```kotlin
-// File: io.askimo.cli.model.providers.yourprovider.YourProviderModelFactory.kt
+// File: io.askimo.core.providers.yourprovider.YourProviderModelFactory.kt
 
 class YourProviderModelFactory : ChatModelFactory {
     override val provider: ModelProvider = ModelProvider.YOUR_PROVIDER
@@ -160,7 +160,7 @@ class YourProviderModelFactory : ChatModelFactory {
 
 ### 6. Register Your Factory
 
-Register your factory in the `ModelRegistry`. The best place to do this is by modifying the `init` block in `ModelRegistry.kt`:
+Register your factory in the `ProviderRegistry`. The best place to do this is by modifying the `init` block in `Provideregistry.kt`:
 
 ```kotlin
 init {
@@ -174,7 +174,7 @@ init {
 Alternatively, you can register your factory programmatically at runtime:
 
 ```kotlin
-ModelRegistry.register(YourProviderModelFactory())
+ProviderRegistry.register(YourProviderModelFactory())
 ```
 
 ## Example: Implementation Reference

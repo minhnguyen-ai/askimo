@@ -1,13 +1,13 @@
-package io.askimo.cli.session
+package io.askimo.core.session
 
 import dev.langchain4j.memory.ChatMemory
 import dev.langchain4j.memory.chat.MessageWindowChatMemory
-import io.askimo.cli.model.core.ChatModelFactory
-import io.askimo.cli.model.core.ChatService
-import io.askimo.cli.model.core.ModelProvider
-import io.askimo.cli.model.core.ModelRegistry
-import io.askimo.cli.model.core.NoopProviderSettings
-import io.askimo.cli.model.core.ProviderSettings
+import io.askimo.core.providers.ChatModelFactory
+import io.askimo.core.providers.ChatService
+import io.askimo.core.providers.ModelProvider
+import io.askimo.core.providers.ProviderRegistry
+import io.askimo.core.providers.NoopProviderSettings
+import io.askimo.core.providers.ProviderSettings
 
 /**
  * Controls what happens to the *chat memory* when the active [ChatService] is re-created
@@ -114,12 +114,12 @@ class Session(
     /**
      * Returns the registered factory for the current provider.
      */
-    fun getModelFactory(): ChatModelFactory? = ModelRegistry.getFactory(params.currentProvider)
+    fun getModelFactory(): ChatModelFactory? = ProviderRegistry.getFactory(params.currentProvider)
 
     /**
      * Returns the registered factory for the given provider.
      */
-    fun getModelFactory(provider: ModelProvider): ChatModelFactory? = ModelRegistry.getFactory(provider)
+    fun getModelFactory(provider: ModelProvider): ChatModelFactory? = ProviderRegistry.getFactory(provider)
 
     /**
      * Gets the provider-specific settings map, or creates defaults if missing.
@@ -146,7 +146,7 @@ class Session(
     ): ChatMemory {
         val key = "${provider.name}/$model"
         return memoryMap.getOrPut(key) {
-            ModelRegistry.getFactory(provider)?.createMemory(model, settings)
+            ProviderRegistry.getFactory(provider)?.createMemory(model, settings)
                 ?: MessageWindowChatMemory.withMaxMessages(200)
         }
     }

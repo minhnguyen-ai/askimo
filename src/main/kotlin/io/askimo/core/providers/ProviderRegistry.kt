@@ -1,7 +1,7 @@
-package io.askimo.cli.model.core
+package io.askimo.core.providers
 
-import io.askimo.cli.model.providers.ollama.OllamaModelFactory
-import io.askimo.cli.model.providers.openai.OpenAiModelFactory
+import io.askimo.core.providers.ollama.OllamaModelFactory
+import io.askimo.core.providers.openai.OpenAiModelFactory
 
 /**
  * Central registry for managing chat model factories across different AI providers.
@@ -15,7 +15,7 @@ import io.askimo.cli.model.providers.openai.OpenAiModelFactory
  *
  * The registry is initialized with default factories for known providers.
  */
-object ModelRegistry {
+object ProviderRegistry {
     /**
      * Internal registry mapping model providers to their respective factory implementations.
      */
