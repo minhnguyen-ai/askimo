@@ -1,6 +1,6 @@
 package io.askimo.cli.autocompleter
 
-import io.askimo.cli.session.ParamKey
+import io.askimo.core.session.ParamKey
 import org.jline.reader.Candidate
 import org.jline.reader.Completer
 import org.jline.reader.LineReader

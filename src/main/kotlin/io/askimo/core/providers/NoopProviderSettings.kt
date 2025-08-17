@@ -1,4 +1,4 @@
-package io.askimo.cli.model.core
+package io.askimo.core.providers
 
 object NoopProviderSettings : ProviderSettings {
     override var presets: Presets = Presets(Style.BALANCED, Verbosity.NORMAL)

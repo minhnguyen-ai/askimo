@@ -1,41 +1,40 @@
-package io.askimo.cli.model.providers.openai
+package io.askimo.core.providers.ollama
 
 import dev.langchain4j.data.message.ChatMessage
+import dev.langchain4j.data.message.SystemMessage
 import dev.langchain4j.data.message.UserMessage
 import dev.langchain4j.memory.ChatMemory
 import dev.langchain4j.model.chat.response.ChatResponse
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler
-import dev.langchain4j.model.openai.OpenAiStreamingChatModel
-import io.askimo.cli.model.core.ChatService
-import io.askimo.cli.model.core.ModelProvider
-import io.askimo.cli.model.core.presetsOrDefault
-import io.askimo.cli.model.core.samplingFor
-import io.askimo.cli.model.core.tokensFor
+import dev.langchain4j.model.ollama.OllamaStreamingChatModel
+import io.askimo.core.providers.ChatService
+import io.askimo.core.providers.ModelProvider
+import io.askimo.core.providers.samplingFor
+import io.askimo.core.providers.tokensFor
 import java.util.concurrent.CountDownLatch
-import kotlin.collections.plusAssign
 
-class OpenAiChatService(
+class OllamaChatService(
     private val modelName: String,
-    private val settings: OpenAiSettings,
+    private val settings: OllamaSettings,
     private val memory: ChatMemory,
+    private val systemPrompt: String?,
 ) : ChatService {
     override val id: String = modelName
-    override val provider: ModelProvider = ModelProvider.OPEN_AI
+    override val provider: ModelProvider = ModelProvider.OLLAMA
 
-    private val chatModel: OpenAiStreamingChatModel by lazy {
+    private val chatModel: OllamaStreamingChatModel by lazy {
         val b =
-            OpenAiStreamingChatModel
+            OllamaStreamingChatModel
                 .builder()
-                .apiKey(settings.apiKey)
+                .baseUrl(settings.baseUrl)
                 .modelName(modelName)
 
-        val cap = tokensFor(settings.presetsOrDefault().verbosity)
-        if (usesCompletionCap(modelName)) b.maxCompletionTokens(cap) else b.maxTokens(cap)
+        val s = samplingFor(settings.presets.style)
+        b.temperature(s.temperature).topP(s.topP)
 
-        if (supportsSampling(modelName)) {
-            val s = samplingFor(settings.presetsOrDefault().style)
-            b.temperature(s.temperature).topP(s.topP)
-        }
+        val cap = tokensFor(settings.presets.verbosity)
+        b.numPredict(cap)
+
         b.build()
     }
 
@@ -74,18 +73,11 @@ class OpenAiChatService(
     private fun buildMessageList(userText: String): List<ChatMessage> {
         val existing = memory.messages()
         val list = mutableListOf<ChatMessage>()
+        if (!systemPrompt.isNullOrBlank()) {
+            list += SystemMessage(systemPrompt)
+        }
         list += existing
         list += UserMessage(userText)
         return list
-    }
-
-    private fun supportsSampling(model: String): Boolean {
-        val m = model.lowercase()
-        return !(m.startsWith("o") || m.startsWith("gpt-5") || m.contains("reasoning"))
-    }
-
-    private fun usesCompletionCap(name: String): Boolean {
-        val m = name.lowercase()
-        return (m.startsWith("o") || m.startsWith("gpt-5") || m.contains("reasoning"))
     }
 }

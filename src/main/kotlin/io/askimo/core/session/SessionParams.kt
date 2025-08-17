@@ -1,7 +1,7 @@
-package io.askimo.cli.session
+package io.askimo.core.session
 
-import io.askimo.cli.model.core.ModelProvider
-import io.askimo.cli.model.core.ProviderSettings
+import io.askimo.core.providers.ModelProvider
+import io.askimo.core.providers.ProviderSettings
 import kotlinx.serialization.Serializable
 
 @Serializable

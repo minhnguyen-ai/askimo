@@ -1,6 +1,6 @@
 package io.askimo.cli.commands
 
-import io.askimo.cli.model.core.ModelRegistry
+import io.askimo.core.providers.ProviderRegistry
 import org.jline.reader.ParsedLine
 
 /**
@@ -16,7 +16,7 @@ class ListProvidersCommandHandler : CommandHandler {
     override val description: String = "List all supported model providers"
 
     override fun handle(line: ParsedLine) {
-        val providers = ModelRegistry.getSupportedProviders()
+        val providers = ProviderRegistry.getSupportedProviders()
 
         if (providers.isEmpty()) {
             println("⚠️  No model providers registered.")

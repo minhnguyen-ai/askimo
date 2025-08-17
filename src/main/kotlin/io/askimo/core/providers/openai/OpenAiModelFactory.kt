@@ -1,11 +1,11 @@
-package io.askimo.cli.model.providers.openai
+package io.askimo.core.providers.openai
 
 import dev.langchain4j.memory.ChatMemory
-import io.askimo.cli.model.core.ChatModelFactory
-import io.askimo.cli.model.core.ChatService
-import io.askimo.cli.model.core.ModelProvider
-import io.askimo.cli.model.core.ProviderSettings
-import io.askimo.cli.util.json
+import io.askimo.core.providers.ChatModelFactory
+import io.askimo.core.providers.ChatService
+import io.askimo.core.providers.ModelProvider
+import io.askimo.core.providers.ProviderSettings
+import io.askimo.core.util.json
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject

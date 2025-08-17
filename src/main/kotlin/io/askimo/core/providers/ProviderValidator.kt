@@ -1,7 +1,7 @@
-package io.askimo.cli.model.core
+package io.askimo.core.providers
 
-import io.askimo.cli.model.providers.ollama.OllamaSettings
-import io.askimo.cli.model.providers.openai.OpenAiSettings
+import io.askimo.core.providers.ollama.OllamaSettings
+import io.askimo.core.providers.openai.OpenAiSettings
 import java.net.HttpURLConnection
 import java.net.URI
 

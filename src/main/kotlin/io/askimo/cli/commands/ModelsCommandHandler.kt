@@ -1,8 +1,8 @@
 package io.askimo.cli.commands
 
-import io.askimo.cli.model.core.ModelProvider
-import io.askimo.cli.model.core.ModelRegistry
-import io.askimo.cli.session.Session
+import io.askimo.core.providers.ModelProvider
+import io.askimo.core.providers.ProviderRegistry
+import io.askimo.core.session.Session
 import org.jline.reader.ParsedLine
 
 /**
@@ -21,7 +21,7 @@ class ModelsCommandHandler(
 
     override fun handle(line: ParsedLine) {
         val provider = session.params.currentProvider
-        val factory = ModelRegistry.getFactory(provider)
+        val factory = ProviderRegistry.getFactory(provider)
 
         if (factory == null) {
             println("❌ No model factory registered for provider: ${provider.name.lowercase()}")

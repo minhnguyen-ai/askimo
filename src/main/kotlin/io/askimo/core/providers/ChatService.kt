@@ -1,4 +1,4 @@
-package io.askimo.cli.model.core
+package io.askimo.core.providers
 
 /**
  * Interface representing a chat-based language model.

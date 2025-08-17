@@ -1,10 +1,10 @@
-package io.askimo.cli.model.providers.ollama
+package io.askimo.core.providers.ollama
 
 import dev.langchain4j.memory.ChatMemory
-import io.askimo.cli.model.core.ChatModelFactory
-import io.askimo.cli.model.core.ChatService
-import io.askimo.cli.model.core.ModelProvider
-import io.askimo.cli.model.core.ProviderSettings
+import io.askimo.core.providers.ChatModelFactory
+import io.askimo.core.providers.ChatService
+import io.askimo.core.providers.ModelProvider
+import io.askimo.core.providers.ProviderSettings
 
 class OllamaModelFactory : ChatModelFactory {
     override val provider: ModelProvider = ModelProvider.OLLAMA

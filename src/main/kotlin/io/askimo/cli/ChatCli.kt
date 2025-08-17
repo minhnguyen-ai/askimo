@@ -12,11 +12,12 @@ import io.askimo.cli.commands.ModelsCommandHandler
 import io.askimo.cli.commands.ParamsCommandHandler
 import io.askimo.cli.commands.SetParamCommandHandler
 import io.askimo.cli.commands.SetProviderCommandHandler
-import io.askimo.cli.model.core.ModelRegistry
-import io.askimo.cli.model.core.NoopChatService
-import io.askimo.cli.model.core.NoopProviderSettings
-import io.askimo.cli.session.Session
-import io.askimo.cli.session.SessionConfigManager
+import io.askimo.core.providers.ProviderRegistry
+import io.askimo.core.providers.NoopChatService
+import io.askimo.core.providers.NoopProviderSettings
+import io.askimo.core.session.Session
+import io.askimo.core.session.SessionConfigManager
+import io.askimo.core.VersionInfo
 import io.askimo.web.WebServer
 import org.jline.reader.LineReaderBuilder
 import org.jline.reader.impl.DefaultParser
@@ -176,12 +177,12 @@ private fun createSession(): Session {
 
     val settings =
         session.params.providerSettings[provider]
-            ?: ModelRegistry.getFactory(provider)?.defaultSettings()
+            ?: ProviderRegistry.getFactory(provider)?.defaultSettings()
             ?: NoopProviderSettings
 
     val memory = session.getOrCreateMemory(provider, modelName, settings)
 
-    val factory = ModelRegistry.getFactory(provider)
+    val factory = ProviderRegistry.getFactory(provider)
     val chatService =
         factory
             ?.create(

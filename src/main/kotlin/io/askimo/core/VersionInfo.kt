@@ -1,4 +1,4 @@
-package io.askimo.cli
+package io.askimo.core
 
 import java.util.Properties
 

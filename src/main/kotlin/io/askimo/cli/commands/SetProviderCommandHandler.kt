@@ -1,11 +1,11 @@
 package io.askimo.cli.commands
 
-import io.askimo.cli.model.core.ModelProvider
-import io.askimo.cli.model.core.ModelRegistry
-import io.askimo.cli.model.core.ProviderValidator
-import io.askimo.cli.session.MemoryPolicy
-import io.askimo.cli.session.Session
-import io.askimo.cli.session.SessionConfigManager
+import io.askimo.core.providers.ModelProvider
+import io.askimo.core.providers.ProviderRegistry
+import io.askimo.core.providers.ProviderValidator
+import io.askimo.core.session.MemoryPolicy
+import io.askimo.core.session.Session
+import io.askimo.core.session.SessionConfigManager
 import org.jline.reader.ParsedLine
 
 /**
@@ -38,7 +38,7 @@ class SetProviderCommandHandler(
             return
         }
 
-        if (!ModelRegistry.getSupportedProviders().contains(provider)) {
+        if (!ProviderRegistry.getSupportedProviders().contains(provider)) {
             println("❌ Provider '$input' is not registered.")
             println("💡 Use `:providers` to see which providers are currently available.")
             return

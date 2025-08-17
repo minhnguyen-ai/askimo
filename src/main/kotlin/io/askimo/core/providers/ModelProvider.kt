@@ -1,4 +1,4 @@
-package io.askimo.cli.model.core
+package io.askimo.core.providers
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

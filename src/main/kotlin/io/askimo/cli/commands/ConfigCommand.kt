@@ -1,6 +1,6 @@
 package io.askimo.cli.commands
 
-import io.askimo.cli.session.Session
+import io.askimo.core.session.Session
 import org.jline.reader.ParsedLine
 
 /**

@@ -1,11 +1,11 @@
-package io.askimo.cli.session
+package io.askimo.core.session
 
-import io.askimo.cli.model.core.ModelProvider
-import io.askimo.cli.model.core.ProviderSettings
-import io.askimo.cli.model.core.Style
-import io.askimo.cli.model.core.Verbosity
-import io.askimo.cli.model.providers.ollama.OllamaSettings
-import io.askimo.cli.model.providers.openai.OpenAiSettings
+import io.askimo.core.providers.ModelProvider
+import io.askimo.core.providers.ProviderSettings
+import io.askimo.core.providers.Style
+import io.askimo.core.providers.Verbosity
+import io.askimo.core.providers.ollama.OllamaSettings
+import io.askimo.core.providers.openai.OpenAiSettings
 
 /**
  * Defines all configurable parameters for the chat application.

@@ -1,7 +1,7 @@
-package io.askimo.cli.session
+package io.askimo.core.session
 
 import io.askimo.cli.Logger.log
-import io.askimo.cli.util.json
+import io.askimo.core.util.json
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths

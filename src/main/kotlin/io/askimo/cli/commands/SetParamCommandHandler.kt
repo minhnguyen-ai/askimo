@@ -1,9 +1,9 @@
 package io.askimo.cli.commands
 
-import io.askimo.cli.session.MemoryPolicy
-import io.askimo.cli.session.ParamKey
-import io.askimo.cli.session.Session
-import io.askimo.cli.session.SessionConfigManager
+import io.askimo.core.session.MemoryPolicy
+import io.askimo.core.session.ParamKey
+import io.askimo.core.session.Session
+import io.askimo.core.session.SessionConfigManager
 import org.jline.reader.ParsedLine
 
 /**
