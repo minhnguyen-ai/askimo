@@ -25,6 +25,8 @@ dependencies {
     implementation("dev.langchain4j:langchain4j-open-ai:1.2.0")
     implementation("dev.langchain4j:langchain4j-ollama:1.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.9.0")
+    implementation("io.ktor:ktor-server-cio:3.2.3")
+    implementation("io.ktor:ktor-server-core:3.2.3")
     implementation(kotlin("stdlib"))
     runtimeOnly("org.slf4j:slf4j-nop:2.0.17")
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
@@ -111,6 +113,7 @@ graalvmNative {
                     "--initialize-at-build-time=kotlin.DeprecationLevel,kotlin.jvm.internal.Intrinsics,kotlin.enums.EnumEntries",
                 ),
             )
+            resources.autodetect()
         }
     }
 }
@@ -126,6 +129,34 @@ spotless {
         ktlint()
         trimTrailingWhitespace()
         indentWithSpaces(4)
+        endWithNewline()
+    }
+    format("json") {
+        target("**/*.json")
+        targetExclude("**/build/**")
+        prettier().config(mapOf("parser" to "json"))
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format("html") {
+        target("**/*.html")
+        targetExclude("**/build/**")
+        prettier().config(mapOf("parser" to "html"))
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format("javascript") {
+        target("**/*.js")
+        targetExclude("**/build/**")
+        prettier().config(mapOf("parser" to "babel"))
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format("css") {
+        target("**/*.css")
+        targetExclude("**/build/**")
+        prettier().config(mapOf("parser" to "css"))
+        trimTrailingWhitespace()
         endWithNewline()
     }
 }

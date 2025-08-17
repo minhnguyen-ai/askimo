@@ -17,6 +17,7 @@ import io.askimo.cli.model.core.NoopChatService
 import io.askimo.cli.model.core.NoopProviderSettings
 import io.askimo.cli.session.Session
 import io.askimo.cli.session.SessionConfigManager
+import io.askimo.web.WebServer
 import org.jline.reader.LineReaderBuilder
 import org.jline.reader.impl.DefaultParser
 import org.jline.reader.impl.completer.AggregateCompleter
@@ -29,122 +30,138 @@ fun main(args: Array<String>) {
         printFullVersionInfo()
         return
     }
-    val session = createSession()
-    try {
-        if (args.isEmpty()) {
-            val terminal =
-                TerminalBuilder
-                    .builder()
-                    .jna(true)
-                    .jni(true)
-                    .system(true)
-                    .build()
+    if ("--web" in args) {
+        val host = System.getenv("ASKIMO_WEB_HOST") ?: "127.0.0.1"
+        val port = System.getenv("ASKIMO_WEB_PORT")?.toIntOrNull() ?: 8080
 
-            val commandHandlers: List<CommandHandler> =
-                listOf(
-                    HelpCommandHandler(),
-                    ConfigCommand(session),
-                    ParamsCommandHandler(session),
-                    SetParamCommandHandler(session),
-                    ListProvidersCommandHandler(),
-                    SetProviderCommandHandler(session),
-                    ModelsCommandHandler(session),
-                    CopyCommandHandler(session),
-                    ClearMemoryCommandHandler(session),
-                )
+        val server = WebServer(host = host, port = port)
+        Runtime.getRuntime().addShutdownHook(Thread { server.stop() })
+        server.start(wait = true) // block until Ctrl+C
+    } else {
+        val session = createSession()
+        try {
+            if (args.isEmpty()) {
+                val terminal =
+                    TerminalBuilder
+                        .builder()
+                        .jna(true)
+                        .jni(true)
+                        .system(true)
+                        .build()
 
-            // Setup parser and completer
-            val parser = DefaultParser()
-            val completer =
-                AggregateCompleter(
-                    SetParamCompleter(),
-                )
+                val commandHandlers: List<CommandHandler> =
+                    listOf(
+                        HelpCommandHandler(),
+                        ConfigCommand(session),
+                        ParamsCommandHandler(session),
+                        SetParamCommandHandler(session),
+                        ListProvidersCommandHandler(),
+                        SetProviderCommandHandler(session),
+                        ModelsCommandHandler(session),
+                        CopyCommandHandler(session),
+                        ClearMemoryCommandHandler(session),
+                    )
 
-            val reader =
-                LineReaderBuilder
-                    .builder()
-                    .terminal(terminal)
-                    .parser(parser)
-                    .completer(completer)
-                    .build()
+                // Setup parser and completer
+                val parser = DefaultParser()
+                val completer =
+                    AggregateCompleter(
+                        SetParamCompleter(),
+                    )
 
-            terminal.writer().println("askimo> Ask anything. Type :help for commands.")
-            terminal.flush()
+                val reader =
+                    LineReaderBuilder
+                        .builder()
+                        .terminal(terminal)
+                        .parser(parser)
+                        .completer(completer)
+                        .build()
 
-            (commandHandlers.find { it.keyword == ":help" } as? HelpCommandHandler)?.setCommands(commandHandlers)
-
-            while (true) {
-                val input = reader.readLine("askimo> ") ?: continue
-                val parsedLine = parser.parse(input, 0)
-
-                // Exit handling
-                val trimmed = input.trim()
-                if (trimmed.equals("exit", true) || trimmed.equals("quit", true) || trimmed == ":exit" || trimmed == ":quit") {
-                    terminal.writer().println("Thank you for using askimo. Goodbye!")
-                    terminal.flush()
-                    break
-                }
-
-                val keyword = parsedLine.words().firstOrNull()
-
-                if (keyword != null && keyword.startsWith(":")) {
-                    val handler = commandHandlers.find { it.keyword == keyword }
-                    if (handler != null) {
-                        handler.handle(parsedLine)
-                    } else {
-                        terminal.writer().println("❌ Unknown command: $keyword")
-                        terminal.writer().println("💡 Type `:help` to see a list of available commands.")
-                    }
-                } else {
-                    val prompt = parsedLine.line()
-
-                    val indicator = LoadingIndicator(reader.terminal, "Thinking…")
-                    indicator.start()
-
-                    val firstTokenSeen = AtomicBoolean(false)
-
-                    val output =
-                        session.getChatService().chat(prompt) { token ->
-                            if (firstTokenSeen.compareAndSet(false, true)) {
-                                indicator.stopWithElapsed()
-                                reader.terminal.flush()
-                            }
-                            val w = reader.terminal.writer()
-                            w.print(token)
-                            w.flush()
-                        }
-                    if (!firstTokenSeen.get()) {
-                        indicator.stopWithElapsed()
-                        reader.terminal.writer().println()
-                        reader.terminal.flush()
-                    }
-                    session.lastResponse = output
-                    reader.terminal.writer().println()
-                    reader.terminal.writer().flush()
-                }
-
+                terminal.writer().println("askimo> Ask anything. Type :help for commands.")
                 terminal.flush()
-            }
-        } else {
-            val userPrompt = args.joinToString(" ").trim()
-            val stdinText =
-                readStdinIfAny(
-                    maxBytes = 1_000_000, // ~1MB cap to avoid OOM
-                    tailLines = 1500, // keep only last N lines if huge
-                )
-            val prompt = buildPrompt(userPrompt, stdinText)
-            val out = System.out.writer()
-            val output =
-                session.getChatService().chat(prompt) { token ->
-                    out.write(token)
-                    out.flush()
-                }
 
-            out.write("\n")
-            out.flush()
+                (commandHandlers.find { it.keyword == ":help" } as? HelpCommandHandler)?.setCommands(commandHandlers)
+
+                while (true) {
+                    val input = reader.readLine("askimo> ") ?: continue
+                    val parsedLine = parser.parse(input, 0)
+
+                    // Exit handling
+                    val trimmed = input.trim()
+                    if (trimmed.equals("exit", true) ||
+                        trimmed.equals(
+                            "quit",
+                            true,
+                        ) ||
+                        trimmed == ":exit" ||
+                        trimmed == ":quit"
+                    ) {
+                        terminal.writer().println("Thank you for using askimo. Goodbye!")
+                        terminal.flush()
+                        break
+                    }
+
+                    val keyword = parsedLine.words().firstOrNull()
+
+                    if (keyword != null && keyword.startsWith(":")) {
+                        val handler = commandHandlers.find { it.keyword == keyword }
+                        if (handler != null) {
+                            handler.handle(parsedLine)
+                        } else {
+                            terminal.writer().println("❌ Unknown command: $keyword")
+                            terminal.writer().println("💡 Type `:help` to see a list of available commands.")
+                        }
+                    } else {
+                        val prompt = parsedLine.line()
+
+                        val indicator = LoadingIndicator(reader.terminal, "Thinking…")
+                        indicator.start()
+
+                        val firstTokenSeen = AtomicBoolean(false)
+
+                        val output =
+                            session.getChatService().chat(prompt) { token ->
+                                if (firstTokenSeen.compareAndSet(false, true)) {
+                                    indicator.stopWithElapsed()
+                                    reader.terminal.flush()
+                                }
+                                val w = reader.terminal.writer()
+                                w.print(token)
+                                w.flush()
+                            }
+                        if (!firstTokenSeen.get()) {
+                            indicator.stopWithElapsed()
+                            reader.terminal.writer().println()
+                            reader.terminal.flush()
+                        }
+                        session.lastResponse = output
+                        reader.terminal.writer().println()
+                        reader.terminal.writer().flush()
+                    }
+
+                    terminal.flush()
+                }
+            } else {
+                val userPrompt = args.joinToString(" ").trim()
+                val stdinText =
+                    readStdinIfAny(
+                        maxBytes = 1_000_000, // ~1MB cap to avoid OOM
+                        tailLines = 1500, // keep only last N lines if huge
+                    )
+                val prompt = buildPrompt(userPrompt, stdinText)
+                val out = System.out.writer()
+                val output =
+                    session.getChatService().chat(prompt) { token ->
+                        out.write(token)
+                        out.flush()
+                    }
+
+                out.write("\n")
+                out.flush()
+            }
+        } catch (e: IOException) {
+            System.err.println("❌ Error: ${e.message}")
         }
-    } catch (e: IOException) {
-        System.err.println("❌ Error: ${e.message}")
     }
 }
 

@@ -1,0 +1,26 @@
+<section x-data="chatPage()" class="h-full flex flex-col gap-3">
+    <h2 class="text-xl font-semibold text-slate-800">Chat</h2>
+
+    <div class="flex-1 min-h-[280px] border border-slate-200 rounded-lg bg-white p-3 overflow-y-auto" x-ref="chatBox">
+        <template x-for="m in messages">
+            <div class="max-w-[80%] my-2 px-3 py-2 rounded-lg whitespace-pre-wrap"
+                 :class="m.role==='user'
+              ? 'ml-auto bg-blue-100 text-slate-900'
+              : 'mr-auto bg-slate-100 text-slate-900'"
+                 x-text="m.text"></div>
+        </template>
+    </div>
+
+    <div class="space-y-2">
+    <textarea x-model="prompt" placeholder="Type your message…"
+              class="w-full min-h-[90px] p-2 border border-slate-300 rounded-md"
+              @keydown.ctrl.enter.prevent="send()"
+              @keydown.meta.enter.prevent="send()"></textarea>
+        <div class="flex items-center gap-2">
+            <button @click="send()"
+                    class="inline-flex items-center px-4 py-2 rounded-md bg-brand-600 hover:bg-brand-700 text-white">
+                Send
+            </button>
+        </div>
+    </div>
+</section>

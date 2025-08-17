@@ -1,349 +1,481 @@
 [
-{
-  "name":"[Ljava.lang.Object;"
-},
-{
-  "name":"[Ljava.lang.String;"
-},
-{
-  "name":"apple.security.AppleProvider",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.fasterxml.jackson.databind.PropertyNamingStrategies$SnakeCaseStrategy",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.fasterxml.jackson.databind.ext.Java7SupportImpl",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.sun.crypto.provider.AESCipher$General",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.sun.crypto.provider.ARCFOURCipher",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.sun.crypto.provider.DESCipher",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.sun.crypto.provider.DESedeCipher",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.sun.crypto.provider.DHParameters",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.sun.crypto.provider.GaloisCounterMode$AESGCM",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.sun.crypto.provider.TlsMasterSecretGenerator",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"dev.langchain4j.model.ollama.FormatSerializer",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"dev.langchain4j.model.ollama.FunctionCall",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true
-},
-{
-  "name":"dev.langchain4j.model.ollama.Message",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getAdditionalFields","parameterTypes":[] }, {"name":"getContent","parameterTypes":[] }, {"name":"getImages","parameterTypes":[] }, {"name":"getRole","parameterTypes":[] }, {"name":"getThinking","parameterTypes":[] }, {"name":"getToolCalls","parameterTypes":[] }, {"name":"setContent","parameterTypes":["java.lang.String"] }, {"name":"setRole","parameterTypes":["dev.langchain4j.model.ollama.Role"] }, {"name":"setThinking","parameterTypes":["java.lang.String"] }]
-},
-{
-  "name":"dev.langchain4j.model.ollama.OllamaChatRequest",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"getFormat","parameterTypes":[] }, {"name":"getKeepAlive","parameterTypes":[] }, {"name":"getMessages","parameterTypes":[] }, {"name":"getModel","parameterTypes":[] }, {"name":"getOptions","parameterTypes":[] }, {"name":"getStream","parameterTypes":[] }, {"name":"getThink","parameterTypes":[] }, {"name":"getTools","parameterTypes":[] }]
-},
-{
-  "name":"dev.langchain4j.model.ollama.OllamaChatResponse",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setCreatedAt","parameterTypes":["java.lang.String"] }, {"name":"setDone","parameterTypes":["java.lang.Boolean"] }, {"name":"setDoneReason","parameterTypes":["java.lang.String"] }, {"name":"setEvalCount","parameterTypes":["java.lang.Integer"] }, {"name":"setMessage","parameterTypes":["dev.langchain4j.model.ollama.Message"] }, {"name":"setModel","parameterTypes":["java.lang.String"] }, {"name":"setPromptEvalCount","parameterTypes":["java.lang.Integer"] }]
-},
-{
-  "name":"dev.langchain4j.model.ollama.Options",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"getMinP","parameterTypes":[] }, {"name":"getMirostat","parameterTypes":[] }, {"name":"getMirostatEta","parameterTypes":[] }, {"name":"getMirostatTau","parameterTypes":[] }, {"name":"getNumCtx","parameterTypes":[] }, {"name":"getNumPredict","parameterTypes":[] }, {"name":"getRepeatLastN","parameterTypes":[] }, {"name":"getRepeatPenalty","parameterTypes":[] }, {"name":"getSeed","parameterTypes":[] }, {"name":"getStop","parameterTypes":[] }, {"name":"getTemperature","parameterTypes":[] }, {"name":"getTopK","parameterTypes":[] }, {"name":"getTopP","parameterTypes":[] }]
-},
-{
-  "name":"dev.langchain4j.model.ollama.Role",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "methods":[{"name":"serialize","parameterTypes":[] }]
-},
-{
-  "name":"dev.langchain4j.model.ollama.ToolCall",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true
-},
-{
-  "name":"java.io.Serializable",
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.lang.Comparable",
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.lang.Double",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true
-},
-{
-  "name":"java.lang.Iterable",
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.lang.Number",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.lang.Thread",
-  "fields":[{"name":"threadLocalRandomProbe"}]
-},
-{
-  "name":"java.lang.constant.Constable",
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.lang.constant.ConstantDesc",
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.security.AlgorithmParametersSpi"
-},
-{
-  "name":"java.security.KeyStoreSpi"
-},
-{
-  "name":"java.security.SecureRandomParameters"
-},
-{
-  "name":"java.util.AbstractCollection",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.util.Collection",
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.util.ImmutableCollections$AbstractImmutableCollection",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.util.ImmutableCollections$AbstractImmutableList",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.util.ImmutableCollections$ListN",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true
-},
-{
-  "name":"java.util.List",
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.util.RandomAccess",
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"java.util.concurrent.ForkJoinTask",
-  "fields":[{"name":"aux"}, {"name":"status"}]
-},
-{
-  "name":"java.util.concurrent.atomic.AtomicBoolean",
-  "fields":[{"name":"value"}]
-},
-{
-  "name":"java.util.concurrent.atomic.AtomicReference",
-  "fields":[{"name":"value"}]
-},
-{
-  "name":"java.util.concurrent.atomic.Striped64",
-  "fields":[{"name":"base"}, {"name":"cellsBusy"}]
-},
-{
-  "name":"javax.security.auth.x500.X500Principal",
-  "fields":[{"name":"thisX500Name"}],
-  "methods":[{"name":"<init>","parameterTypes":["sun.security.x509.X500Name"] }]
-},
-{
-  "name":"jdk.internal.misc.Unsafe"
-},
-{
-  "name":"kotlin.SafePublicationLazyImpl",
-  "fields":[{"name":"_value"}]
-},
-{
-  "name":"kotlin.reflect.jvm.internal.ReflectionFactoryImpl"
-},
-{
-  "name":"org.jline.terminal.impl.exec.ExecTerminalProvider",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"org.jline.terminal.impl.ffm.FfmTerminalProvider"
-},
-{
-  "name":"org.jline.terminal.impl.jansi.JansiTerminalProvider",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"org.jline.terminal.impl.jna.JnaTerminalProvider",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"org.jline.terminal.impl.jni.JniTerminalProvider",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.misc.Signal",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }, {"name":"handle","parameterTypes":["sun.misc.Signal","sun.misc.SignalHandler"] }]
-},
-{
-  "name":"sun.misc.SignalHandler",
-  "fields":[{"name":"SIG_DFL"}]
-},
-{
-  "name":"sun.security.pkcs12.PKCS12KeyStore",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.pkcs12.PKCS12KeyStore$DualFormatPKCS12",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.DSA$SHA224withDSA",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.DSA$SHA256withDSA",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.NativePRNG",
-  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["java.security.SecureRandomParameters"] }]
-},
-{
-  "name":"sun.security.provider.SHA",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.SHA2$SHA224",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.SHA2$SHA256",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.SHA5$SHA384",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.SHA5$SHA512",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.X509Factory",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.rsa.PSSParameters",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.rsa.RSAKeyFactory$Legacy",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.rsa.RSAPSSSignature",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.rsa.RSASignature$SHA224withRSA",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.ssl.KeyManagerFactoryImpl$SunX509",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.ssl.SSLContextImpl$DefaultSSLContext",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.ssl.TrustManagerFactoryImpl$PKIXFactory",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.x509.AuthorityInfoAccessExtension",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-{
-  "name":"sun.security.x509.AuthorityKeyIdentifierExtension",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-{
-  "name":"sun.security.x509.BasicConstraintsExtension",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-{
-  "name":"sun.security.x509.CRLDistributionPointsExtension",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-{
-  "name":"sun.security.x509.CertificatePoliciesExtension",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-{
-  "name":"sun.security.x509.ExtendedKeyUsageExtension",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-{
-  "name":"sun.security.x509.KeyUsageExtension",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-{
-  "name":"sun.security.x509.NetscapeCertTypeExtension",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-{
-  "name":"sun.security.x509.PrivateKeyUsageExtension",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-{
-  "name":"sun.security.x509.SubjectKeyIdentifierExtension",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-}
+  {
+    "name": "[Ljava.lang.Object;"
+  },
+  {
+    "name": "[Ljava.lang.String;"
+  },
+  {
+    "name": "apple.security.AppleProvider",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "com.fasterxml.jackson.databind.PropertyNamingStrategies$SnakeCaseStrategy",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "com.sun.crypto.provider.AESCipher$General",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "com.sun.crypto.provider.ARCFOURCipher",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "com.sun.crypto.provider.DESCipher",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "com.sun.crypto.provider.DESedeCipher",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "com.sun.crypto.provider.DHParameters",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "com.sun.crypto.provider.GaloisCounterMode$AESGCM",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "com.sun.crypto.provider.TlsMasterSecretGenerator",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "dev.langchain4j.model.ollama.FormatSerializer",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "dev.langchain4j.model.ollama.FunctionCall",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true
+  },
+  {
+    "name": "dev.langchain4j.model.ollama.Message",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] },
+      { "name": "getAdditionalFields", "parameterTypes": [] },
+      { "name": "getContent", "parameterTypes": [] },
+      { "name": "getImages", "parameterTypes": [] },
+      { "name": "getRole", "parameterTypes": [] },
+      { "name": "getThinking", "parameterTypes": [] },
+      { "name": "getToolCalls", "parameterTypes": [] },
+      { "name": "setContent", "parameterTypes": ["java.lang.String"] },
+      {
+        "name": "setRole",
+        "parameterTypes": ["dev.langchain4j.model.ollama.Role"]
+      },
+      { "name": "setThinking", "parameterTypes": ["java.lang.String"] }
+    ]
+  },
+  {
+    "name": "dev.langchain4j.model.ollama.OllamaChatRequest",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true,
+    "methods": [
+      { "name": "getFormat", "parameterTypes": [] },
+      { "name": "getKeepAlive", "parameterTypes": [] },
+      { "name": "getMessages", "parameterTypes": [] },
+      { "name": "getModel", "parameterTypes": [] },
+      { "name": "getOptions", "parameterTypes": [] },
+      { "name": "getStream", "parameterTypes": [] },
+      { "name": "getThink", "parameterTypes": [] },
+      { "name": "getTools", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "dev.langchain4j.model.ollama.OllamaChatResponse",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] },
+      { "name": "setCreatedAt", "parameterTypes": ["java.lang.String"] },
+      { "name": "setDone", "parameterTypes": ["java.lang.Boolean"] },
+      { "name": "setDoneReason", "parameterTypes": ["java.lang.String"] },
+      { "name": "setEvalCount", "parameterTypes": ["java.lang.Integer"] },
+      {
+        "name": "setMessage",
+        "parameterTypes": ["dev.langchain4j.model.ollama.Message"]
+      },
+      { "name": "setModel", "parameterTypes": ["java.lang.String"] },
+      { "name": "setPromptEvalCount", "parameterTypes": ["java.lang.Integer"] }
+    ]
+  },
+  {
+    "name": "dev.langchain4j.model.ollama.Options",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true,
+    "methods": [
+      { "name": "getMinP", "parameterTypes": [] },
+      { "name": "getMirostat", "parameterTypes": [] },
+      { "name": "getMirostatEta", "parameterTypes": [] },
+      { "name": "getMirostatTau", "parameterTypes": [] },
+      { "name": "getNumCtx", "parameterTypes": [] },
+      { "name": "getNumPredict", "parameterTypes": [] },
+      { "name": "getRepeatLastN", "parameterTypes": [] },
+      { "name": "getRepeatPenalty", "parameterTypes": [] },
+      { "name": "getSeed", "parameterTypes": [] },
+      { "name": "getStop", "parameterTypes": [] },
+      { "name": "getTemperature", "parameterTypes": [] },
+      { "name": "getTopK", "parameterTypes": [] },
+      { "name": "getTopP", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "dev.langchain4j.model.ollama.Role",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "methods": [{ "name": "serialize", "parameterTypes": [] }]
+  },
+  {
+    "name": "dev.langchain4j.model.ollama.ToolCall",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true
+  },
+  {
+    "name": "java.io.Serializable",
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.lang.Comparable",
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.lang.Double",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true
+  },
+  {
+    "name": "java.lang.Iterable",
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.lang.Number",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.lang.Thread",
+    "fields": [{ "name": "threadLocalRandomProbe" }]
+  },
+  {
+    "name": "java.lang.constant.Constable",
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.lang.constant.ConstantDesc",
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.security.AlgorithmParametersSpi"
+  },
+  {
+    "name": "java.security.KeyStoreSpi"
+  },
+  {
+    "name": "java.security.SecureRandomParameters"
+  },
+  {
+    "name": "java.util.AbstractCollection",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.util.Collection",
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.util.ImmutableCollections$AbstractImmutableCollection",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.util.ImmutableCollections$AbstractImmutableList",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.util.ImmutableCollections$ListN",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true
+  },
+  {
+    "name": "java.util.List",
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.util.RandomAccess",
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "java.util.concurrent.ForkJoinTask",
+    "fields": [{ "name": "aux" }, { "name": "status" }]
+  },
+  {
+    "name": "java.util.concurrent.atomic.AtomicBoolean",
+    "fields": [{ "name": "value" }]
+  },
+  {
+    "name": "java.util.concurrent.atomic.AtomicReference",
+    "fields": [{ "name": "value" }]
+  },
+  {
+    "name": "java.util.concurrent.atomic.Striped64",
+    "fields": [{ "name": "base" }, { "name": "cellsBusy" }]
+  },
+  {
+    "name": "javax.security.auth.x500.X500Principal",
+    "fields": [{ "name": "thisX500Name" }],
+    "methods": [
+      { "name": "<init>", "parameterTypes": ["sun.security.x509.X500Name"] }
+    ]
+  },
+  {
+    "name": "jdk.internal.misc.Unsafe"
+  },
+  {
+    "name": "kotlin.SafePublicationLazyImpl",
+    "fields": [{ "name": "_value" }]
+  },
+  {
+    "name": "kotlin.reflect.jvm.internal.ReflectionFactoryImpl"
+  },
+  {
+    "name": "org.jline.terminal.impl.exec.ExecTerminalProvider",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "org.jline.terminal.impl.ffm.FfmTerminalProvider"
+  },
+  {
+    "name": "org.jline.terminal.impl.jansi.JansiTerminalProvider",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "org.jline.terminal.impl.jna.JnaTerminalProvider",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "org.jline.terminal.impl.jni.JniTerminalProvider",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.misc.Signal",
+    "methods": [
+      { "name": "<init>", "parameterTypes": ["java.lang.String"] },
+      {
+        "name": "handle",
+        "parameterTypes": ["sun.misc.Signal", "sun.misc.SignalHandler"]
+      }
+    ]
+  },
+  {
+    "name": "sun.misc.SignalHandler",
+    "fields": [{ "name": "SIG_DFL" }]
+  },
+  {
+    "name": "sun.security.pkcs12.PKCS12KeyStore",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.pkcs12.PKCS12KeyStore$DualFormatPKCS12",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.provider.DSA$SHA224withDSA",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.provider.DSA$SHA256withDSA",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.provider.NativePRNG",
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] },
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.security.SecureRandomParameters"]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.provider.SHA",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.provider.SHA2$SHA224",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.provider.SHA2$SHA256",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.provider.SHA5$SHA384",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.provider.SHA5$SHA512",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.provider.X509Factory",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.rsa.PSSParameters",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.rsa.RSAKeyFactory$Legacy",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.rsa.RSAPSSSignature",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.rsa.RSASignature$SHA224withRSA",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.ssl.KeyManagerFactoryImpl$SunX509",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.ssl.SSLContextImpl$DefaultSSLContext",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.ssl.TrustManagerFactoryImpl$PKIXFactory",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.security.x509.AuthorityInfoAccessExtension",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.Boolean", "java.lang.Object"]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.x509.AuthorityKeyIdentifierExtension",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.Boolean", "java.lang.Object"]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.x509.BasicConstraintsExtension",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.Boolean", "java.lang.Object"]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.x509.CRLDistributionPointsExtension",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.Boolean", "java.lang.Object"]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.x509.CertificatePoliciesExtension",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.Boolean", "java.lang.Object"]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.x509.ExtendedKeyUsageExtension",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.Boolean", "java.lang.Object"]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.x509.KeyUsageExtension",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.Boolean", "java.lang.Object"]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.x509.NetscapeCertTypeExtension",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.Boolean", "java.lang.Object"]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.x509.PrivateKeyUsageExtension",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.Boolean", "java.lang.Object"]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.x509.SubjectKeyIdentifierExtension",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.Boolean", "java.lang.Object"]
+      }
+    ]
+  },
+  {
+    "name": "io.ktor.network.selector.SelectableBase",
+    "fields": [
+      { "name": "readHandlerReference", "allowUnsafeAccess": true },
+      { "name": "writeHandlerReference", "allowUnsafeAccess": true }
+    ]
+  },
+  {
+    "name": "io.ktor.network.selector.SelectableBase",
+    "fields": [
+      { "name": "readHandlerReference", "allowUnsafeAccess": true },
+      { "name": "writeHandlerReference", "allowUnsafeAccess": true }
+    ]
+  },
+  {
+    "name": "io.ktor.network.selector.InterestSuspensionsMap",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true
+  }
 ]
