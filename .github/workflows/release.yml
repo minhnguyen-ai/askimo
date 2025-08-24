@@ -105,8 +105,19 @@ jobs:
           if [[ -n "${MAC_DIR:-}" ]]; then
             BIN=$(ls "$MAC_DIR"/* | head -n1)
             chmod +x "$BIN"
-            tar -C "$MAC_DIR" -czf "askimo-${VERSION}-darwin-arm64.tar.gz" "$(basename "$BIN")"
-            files+=("askimo-${VERSION}-darwin-arm64.tar.gz")
+
+            TMPDIR="$(mktemp -d)"
+            mkdir -p "$TMPDIR/bin"
+            cp "$BIN" "$TMPDIR/bin/askimo"
+
+            # (optional) include shell completions if you have them
+            # mkdir -p "$TMPDIR/completions"
+            # cp scripts/completions/askimo.bash "$TMPDIR/completions/" 2>/dev/null || true
+            # cp scripts/completions/_askimo      "$TMPDIR/completions/" 2>/dev/null || true
+            # cp scripts/completions/askimo.fish  "$TMPDIR/completions/" 2>/dev/null || true
+
+          tar -C "$TMPDIR" -czf "askimo-${VERSION}-darwin-arm64.tar.gz" bin
+          files+=("askimo-${VERSION}-darwin-arm64.tar.gz")
           fi
 
           # Linux
@@ -114,10 +125,22 @@ jobs:
           if [[ -n "${LIN_DIR:-}" ]]; then
             BIN=$(ls "$LIN_DIR"/* | head -n1)
             chmod +x "$BIN"
-            tar -C "$LIN_DIR" -czf "askimo-${VERSION}-linux-x64.tar.gz" "$(basename "$BIN")"
+          
+            TMPDIR="$(mktemp -d)"
+            mkdir -p "$TMPDIR/bin"
+            cp "$BIN" "$TMPDIR/bin/askimo"
+          
+            # (optional) include completions if you have them:
+            # mkdir -p "$TMPDIR/completions"
+            # cp scripts/completions/askimo.bash "$TMPDIR/completions/" 2>/dev/null || true
+            # cp scripts/completions/_askimo      "$TMPDIR/completions/" 2>/dev/null || true
+            # cp scripts/completions/askimo.fish  "$TMPDIR/completions/" 2>/dev/null || true
+          
+            tar -C "$TMPDIR" -czf "askimo-${VERSION}-linux-x64.tar.gz" bin
             files+=("askimo-${VERSION}-linux-x64.tar.gz")
           fi
-
+  
+  
           # Windows
           WIN_DIR=$(compgen -G 'dist/*windows*' || true)
           if [[ -n "${WIN_DIR:-}" ]]; then
@@ -148,3 +171,151 @@ jobs:
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  homebrew:
+    name: Publish Homebrew tap (separate repo)
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [ release ]                 # wait until your release has uploaded assets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read                   # current repo only
+
+    steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Collect release assets & checksums
+        id: meta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"           # e.g. v0.0.4
+          VERSION_PLAIN="${TAG#v}"
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}"
+          JSON="$(curl -sSL -H "Authorization: Bearer $GH_TOKEN" "$API")"
+
+          # Your release job names (keep these in sync with your packaging step)
+          ARM_NAME="askimo-${TAG}-darwin-arm64.tar.gz"
+          AMD_NAME="askimo-${TAG}-darwin-amd64.tar.gz"
+
+          BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
+          ARM_URL="$(echo "$JSON" | jq -r --arg N "$ARM_NAME" '.assets[] | select(.name==$N) | .browser_download_url')"
+          AMD_URL="$(echo "$JSON" | jq -r --arg N "$AMD_NAME" '.assets[] | select(.name==$N) | .browser_download_url')"
+
+          SHA_URL="$(echo "$JSON" | jq -r '.assets[] | select(.name=="SHA256SUMS.txt") | .browser_download_url')"
+          if [ -z "$SHA_URL" ] || [ -z "$ARM_URL" ]; then
+            echo "Release missing SHA256SUMS.txt or macOS arm64 tarball." >&2
+            echo "Assets:" >&2
+            echo "$JSON" | jq -r '.assets[]?.name' >&2
+            exit 1
+          fi
+
+          curl -sSL -o SHA256SUMS.txt "$SHA_URL"
+          ARM_SHA="$(grep "  $ARM_NAME" SHA256SUMS.txt | awk '{print $1}')"
+          AMD_SHA=""
+          if [ -n "$AMD_URL" ]; then
+            AMD_SHA="$(grep "  $AMD_NAME" SHA256SUMS.txt | awk '{print $1}')"
+          fi
+
+          echo "tag=$TAG"                     >> $GITHUB_OUTPUT
+          echo "version_plain=$VERSION_PLAIN" >> $GITHUB_OUTPUT
+          echo "arm_url=$ARM_URL"             >> $GITHUB_OUTPUT
+          echo "arm_sha=$ARM_SHA"             >> $GITHUB_OUTPUT
+          echo "amd_url=$AMD_URL"             >> $GITHUB_OUTPUT
+          echo "amd_sha=$AMD_SHA"             >> $GITHUB_OUTPUT
+
+      - name: Checkout tap repo
+        uses: actions/checkout@v4
+        with:
+          repository: haiphucnguyen/homebrew-askimo
+          token: ${{ secrets.TAP_PUSH_TOKEN }}
+          path: tap
+          fetch-depth: 0
+
+      - name: Write formula into tap
+        run: |
+          set -euo pipefail
+          mkdir -p tap/Formula
+
+          # Begin formula
+          cat > tap/Formula/askimo.rb <<'RUBY'
+            class Askimo < Formula
+            desc "AI-powered terminal assistant for multiple LLM providers"
+            homepage "https://github.com/haiphucnguyen/askimo"
+            version "VERSION_PLACEHOLDER"
+            license "Apache-2.0"
+            
+            on_macos do
+              on_arm do
+                url "ARM_URL_PLACEHOLDER"
+                sha256 "ARM_SHA_PLACEHOLDER"
+              end
+          RUBY
+  
+          # Optional Intel block
+          if [ -n "${{ steps.meta.outputs.amd_url }}" ] && [ -n "${{ steps.meta.outputs.amd_sha }}" ]; then
+            cat >> tap/Formula/askimo.rb <<'RUBY'
+              on_intel do
+                url "AMD_URL_PLACEHOLDER"
+                sha256 "AMD_SHA_PLACEHOLDER"
+              end
+          RUBY
+          fi
+          
+          # Close formula
+          cat >> tap/Formula/askimo.rb <<'RUBY'
+            end
+            
+            def install
+              # Be tolerant to various archive layouts
+              candidates = [
+                "bin/askimo",
+                "./bin/askimo",
+                Dir["*/bin/askimo"].first,  # e.g., askimo-vX.Y.Z-.../bin/askimo
+                "askimo",
+                Dir["*/askimo"].first
+              ].compact
+          
+              path = candidates.find { |p| p && File.exist?(p) }
+              odie "askimo binary not found; archive contained: #{Dir['**/*'][0,30].join(', ')}" unless path
+
+              bin.install path => "askimo"
+            end
+            
+            test do
+              output = shell_output("#{bin}/askimo --version")
+              assert_match "askimo", output.downcase
+            end
+          end
+          RUBY
+          
+          # Replace placeholders
+          sed -i "s|VERSION_PLACEHOLDER|${{ steps.meta.outputs.version_plain }}|g" tap/Formula/askimo.rb
+          sed -i "s|ARM_URL_PLACEHOLDER|${{ steps.meta.outputs.arm_url }}|g" tap/Formula/askimo.rb
+          sed -i "s|ARM_SHA_PLACEHOLDER|${{ steps.meta.outputs.arm_sha }}|g" tap/Formula/askimo.rb
+          
+          if [ -n "${{ steps.meta.outputs.amd_url }}" ] && [ -n "${{ steps.meta.outputs.amd_sha }}" ]; then
+            sed -i "s|AMD_URL_PLACEHOLDER|${{ steps.meta.outputs.amd_url }}|g" tap/Formula/askimo.rb
+            sed -i "s|AMD_SHA_PLACEHOLDER|${{ steps.meta.outputs.amd_sha }}|g" tap/Formula/askimo.rb
+          fi
+          
+          echo "==== tap/Formula/askimo.rb ===="
+          cat tap/Formula/askimo.rb
+
+      - name: Commit & push to tap repo (single-commit history)
+        working-directory: tap
+        env:
+          GIT_AUTHOR_NAME: github-actions
+          GIT_AUTHOR_EMAIL: actions@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions
+          GIT_COMMITTER_EMAIL: actions@users.noreply.github.com
+        run: |
+          set -euo pipefail
+          # Keep the tap repo tidy: single commit with current formula
+          git rm -r --cached . >/dev/null 2>&1 || true
+          git add Formula/askimo.rb
+          git commit -m "askimo ${GITHUB_REF_NAME}" || echo "No changes"
+          # Optional: keep tap history as a single commit by force-updating main
+          CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+          git push --force origin "$CURRENT_BRANCH"
+  

@@ -76,9 +76,27 @@ The web UI supports real-time streaming responses and Markdown rendering.
 
 ## Installation
 
-You can install **Askimo** in two ways today:
+You can install Askimo in three ways today:
 
-### Download Release Binaries
+### 1. Homebrew (macOS/Linux)
+
+If you’re on macOS or Linux, the easiest way is via [Homebrew](https://brew.sh/)
+```bash
+brew tap haiphucnguyen/askimo
+brew install askimo
+```
+Once installed, you can run:
+```bash
+askimo
+```
+to start the CLI.
+
+To update Askimo later:
+```bash
+brew upgrade askimo
+```
+
+### 2. Download Release Binaries
 
 Prebuilt binaries for **macOS**, **Linux**, and **Windows** are available on the [Releases page](https://github.com/haiphucnguyen/askimo/releases).
 
@@ -92,7 +110,7 @@ Example (Linux/macOS):
 mv askimo /usr/local/bin/
 ```
 
-### Build from Source
+### 3. Build from Source
 
 If you prefer to build locally:
 ```
@@ -112,8 +130,6 @@ Run it directly:
 ### Coming Soon
 
 We plan to support installation via:
-
-* Homebrew (macOS/Linux)
 
 * Scoop (Windows)
 
