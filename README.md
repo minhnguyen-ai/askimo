@@ -76,7 +76,7 @@ The web UI supports real-time streaming responses and Markdown rendering.
 
 ## Installation
 
-You can install Askimo in three ways today:
+You can install Askimo in four ways today:
 
 ### 1. Homebrew (macOS/Linux)
 
@@ -127,16 +127,30 @@ Run it directly:
 ./build/native/nativeCompile/askimo
 ```
 
-### Coming Soon
+### 4. Docker (macOS/Linux/Windows)
+Run Askimo in a container while reading files from your host and persisting settings locally
 
-We plan to support installation via:
+**Quick start (REPL)**
+```bash
+IMAGE=ghcr.io/haiphucnguyen/askimo:latest   # or a specific tag like :v0.1.10
+docker run --rm -it \
+  -v "$HOME/.askimo:/home/nonroot/.askimo" \
+  -v "$PWD:/home/nonroot/work" \
+  -w /home/nonroot/work \
+  $IMAGE
+```
 
-* Scoop (Windows)
+* `~/.askimo` on your machine is mounted to the container’s home so Askimo can store and reuse provider settings/keys locally (no -e OPENAI_API_KEY needed).
 
-* Linux package managers (APT, DNF)
+* Your current folder is mounted at `/home/nonroot/work`, so Askimo can read/write your project files.
 
-Stay tuned for updates!
-
+**Pipe input**
+```bash
+cat logs.txt | docker run --rm -i \
+  -v "$HOME/.askimo:/home/nonroot/.askimo" \
+  -v "$PWD:/home/nonroot/work" -w /home/nonroot/work \
+  ghcr.io/haiphucnguyen/askimo:latest "Summarize it"
+```
 
 ## Available Commands
 
