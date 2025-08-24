@@ -291,6 +291,103 @@ jobs:
           git commit -m "askimo ${GITHUB_REF_NAME}" || echo "No changes"
           CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
           git push --force origin "$CURRENT_BRANCH"
+  scoop:
+    name: Publish Scoop manifest (Windows)
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [ release ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read   # reads current repo; pushes to bucket via PAT
+
+    steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Collect release assets & checksums
+        id: meta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"              # e.g. v0.1.013
+          VERSION_PLAIN="${TAG#v}"
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}"
+          JSON="$(curl -sSL -H "Authorization: Bearer $GH_TOKEN" "$API")"
+
+          WIN_NAME="askimo-${TAG}-windows-x64.zip"
+          WIN_URL="$(echo "$JSON" | jq -r --arg N "$WIN_NAME" '.assets[] | select(.name==$N) | .browser_download_url')"
+          SHA_URL="$(echo "$JSON" | jq -r '.assets[] | select(.name=="SHA256SUMS.txt") | .browser_download_url')"
+
+          if [ -z "$WIN_URL" ] || [ -z "$SHA_URL" ]; then
+            echo "Windows zip or SHA256SUMS.txt not found in the release." >&2
+            echo "Assets:" >&2
+            echo "$JSON" | jq -r '.assets[]?.name' >&2
+            exit 1
+          fi
+
+          curl -sSL -o SHA256SUMS.txt "$SHA_URL"
+          WIN_SHA="$(grep "  $WIN_NAME" SHA256SUMS.txt | awk '{print $1}')"
+          if [ -z "$WIN_SHA" ]; then
+            echo "SHA256 for $WIN_NAME not in SHA256SUMS.txt" >&2
+            exit 1
+          fi
+
+          echo "version=$VERSION_PLAIN" >> $GITHUB_OUTPUT
+          echo "win_url=$WIN_URL"       >> $GITHUB_OUTPUT
+          echo "win_sha=$WIN_SHA"       >> $GITHUB_OUTPUT
+
+      - name: Checkout scoop bucket
+        uses: actions/checkout@v4
+        with:
+          repository: haiphucnguyen/scoop-askimo
+          token: ${{ secrets.TAP_PUSH_TOKEN }}   # <-- use your existing PAT
+          ref: main
+          path: bucket
+          fetch-depth: 0
+
+      - name: Write askimo manifest
+        run: |
+          set -euo pipefail
+          mkdir -p bucket/bucket
+          printf '%s\n' \
+            '{' \
+            '  "version": "VERSION_PLACEHOLDER",' \
+            '  "description": "AI-powered terminal assistant for multiple LLM providers",' \
+            '  "homepage": "https://github.com/haiphucnguyen/askimo",' \
+            '  "license": "Apache-2.0",' \
+            '  "architecture": {' \
+            '    "64bit": {' \
+            '      "url": "WIN_URL_PLACEHOLDER",' \
+            '      "hash": "WIN_SHA_PLACEHOLDER",' \
+            '      "bin": "askimo.exe"' \
+            '    }' \
+            '  }' \
+            '}' \
+            > bucket/bucket/askimo.json
+          sed -i "s|VERSION_PLACEHOLDER|${{ steps.meta.outputs.version }}|g" bucket/bucket/askimo.json
+          sed -i "s|WIN_URL_PLACEHOLDER|${{ steps.meta.outputs.win_url }}|g" bucket/bucket/askimo.json
+          sed -i "s|WIN_SHA_PLACEHOLDER|${{ steps.meta.outputs.win_sha }}|g" bucket/bucket/askimo.json
+          cat bucket/bucket/askimo.json
+
+      - name: Commit & push to bucket
+        working-directory: bucket
+        env:
+          TOKEN: ${{ secrets.TAP_PUSH_TOKEN }}
+        run: |
+          set -euo pipefail
+          # set identity LOCALLY (not global)
+          git config user.name  "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+
+          git add bucket/askimo.json
+          if ! git diff --cached --quiet; then
+            git commit -m "askimo ${GITHUB_REF_NAME}"
+            # ensure remote uses PAT
+            git remote set-url origin "https://x-access-token:${TOKEN}@github.com/haiphucnguyen/scoop-askimo.git"
+            git push origin HEAD:main
+          else
+            echo "No changes to commit."
+          fi
 
   docker:
     name: Build & Push Docker (native, multi-arch)

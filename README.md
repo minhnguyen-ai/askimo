@@ -76,7 +76,7 @@ The web UI supports real-time streaming responses and Markdown rendering.
 
 ## Installation
 
-You can install Askimo in four ways today:
+You can install Askimo in five ways today:
 
 ### 1. Homebrew (macOS/Linux)
 
@@ -96,7 +96,35 @@ To update Askimo later:
 brew upgrade askimo
 ```
 
-### 2. Download Release Binaries
+### 2. Scoop (Windows)
+
+If you’re on Windows, use Scoop
+.
+
+Install Scoop if you don’t have it:
+```bash
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force
+iwr -useb get.scoop.sh | iex
+```
+
+Add the Askimo bucket and install:
+
+```bash
+scoop bucket add askimo https://github.com/haiphucnguyen/scoop-askimo
+scoop install askimo
+```
+Run:
+```bash
+askimo
+```
+
+Update later:
+```bash
+scoop update
+scoop update askimo
+```
+
+### 3. Download Release Binaries
 
 Prebuilt binaries for **macOS**, **Linux**, and **Windows** are available on the [Releases page](https://github.com/haiphucnguyen/askimo/releases).
 
@@ -110,7 +138,7 @@ Example (Linux/macOS):
 mv askimo /usr/local/bin/
 ```
 
-### 3. Build from Source
+### 4. Build from Source
 
 If you prefer to build locally:
 ```
@@ -127,7 +155,7 @@ Run it directly:
 ./build/native/nativeCompile/askimo
 ```
 
-### 4. Docker (macOS/Linux/Windows)
+### 5. Docker (macOS/Linux/Windows)
 Run Askimo in a container while reading files from your host and persisting settings locally
 
 **Quick start (REPL)**
