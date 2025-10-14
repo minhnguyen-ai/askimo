@@ -12,6 +12,7 @@ import dev.langchain4j.store.embedding.pgvector.PgVectorEmbeddingStore
 import io.askimo.core.session.Session
 import java.nio.file.Files
 import java.nio.file.Path
+import java.sql.DriverManager
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
@@ -230,22 +231,28 @@ class PgVectorIndexer(
 
     private fun buildEmbeddingModel(): EmbeddingModel = getEmbeddingModel(session.getActiveProvider())
 
+    private val embeddingModel: EmbeddingModel by lazy { buildEmbeddingModel() }
+
     // capture the actual dimension ONCE from the real model unless user overrode it
     private val dimension: Int by lazy {
-        preferredDim ?: buildEmbeddingModel().dimension()
+        preferredDim ?: embeddingModel.dimension()
     }
 
-    private fun newStore(): EmbeddingStore<TextSegment> =
-        PgVectorEmbeddingStore
-            .builder()
-            .host(extractHost(pgUrl))
-            .port(extractPort(pgUrl))
-            .database(extractDatabase(pgUrl))
-            .user(pgUser)
-            .password(pgPass)
-            .table(projectTable)
-            .dimension(dimension)
-            .build()
+    private fun newStore(): EmbeddingStore<TextSegment> {
+        val embeddingStore =
+            PgVectorEmbeddingStore
+                .builder()
+                .host(extractHost(pgUrl))
+                .port(extractPort(pgUrl))
+                .database(extractDatabase(pgUrl))
+                .user(pgUser)
+                .password(pgPass)
+                .table(projectTable)
+                .dimension(dimension)
+                .build()
+        ensureIndexes(pgUrl, pgUser, pgPass, projectTable)
+        return embeddingStore
+    }
 
     fun indexProject(root: Path): Int {
         require(Files.exists(root)) { "Path does not exist: $root" }
@@ -253,7 +260,6 @@ class PgVectorIndexer(
         val detectedTypes = detectProjectTypes(root)
         println("📦 Detected project types: ${detectedTypes.joinToString(", ") { it.name }}")
 
-        val embeddingModel = buildEmbeddingModel()
         val embeddingStore = newStore()
 
         var indexedCount = 0
@@ -268,10 +274,17 @@ class PgVectorIndexer(
                     val content = filePath.readText()
                     if (content.isNotBlank()) {
                         val relativePath = root.relativize(filePath).toString()
+                        val header =
+                            buildString {
+                                appendLine("FILE: $relativePath")
+                                appendLine("NAME: ${filePath.fileName}")
+                                appendLine("EXT: ${filePath.extension.lowercase()}")
+                                appendLine("---")
+                            }
 
                         val segment =
                             TextSegment.from(
-                                content,
+                                header + content,
                                 Metadata(
                                     mapOf(
                                         "project_id" to projectId,
@@ -421,7 +434,7 @@ class PgVectorIndexer(
     }
 
     fun embed(text: String): List<Float> =
-        buildEmbeddingModel()
+        embeddingModel
             .embed(text)
             .content()
             .vector()
@@ -446,5 +459,51 @@ class PgVectorIndexer(
             )
 
         return results.matches().map { it.embedded().text() }
+    }
+
+    private fun ensureIndexes(
+        pgUrl: String,
+        user: String,
+        pass: String,
+        table: String,
+    ) {
+        val stmts =
+            listOf(
+                "CREATE EXTENSION IF NOT EXISTS vector;",
+                "CREATE EXTENSION IF NOT EXISTS pg_trgm;",
+                // project_id
+                """CREATE INDEX IF NOT EXISTS ${table}_proj_idx
+           ON $table ( ((metadata)::jsonb ->> 'project_id') );""",
+                // file_name (lowered)
+                """CREATE INDEX IF NOT EXISTS ${table}_file_name_idx
+           ON $table ( lower(((metadata)::jsonb ->> 'file_name')) );""",
+                // file_path btree
+                """CREATE INDEX IF NOT EXISTS ${table}_file_path_idx
+           ON $table ( ((metadata)::jsonb ->> 'file_path') );""",
+                // full metadata GIN
+                """CREATE INDEX IF NOT EXISTS ${table}_meta_gin
+           ON $table USING GIN ( ((metadata)::jsonb) jsonb_path_ops );""",
+                // trigram on file_path
+                """CREATE INDEX IF NOT EXISTS ${table}_file_path_trgm
+           ON $table USING GIN ( ((metadata)::jsonb ->> 'file_path') gin_trgm_ops );""",
+                // ANN index on embedding
+                """CREATE INDEX IF NOT EXISTS ${table}_embedding_ivfflat
+           ON $table USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);""",
+                "ANALYZE $table;",
+            )
+
+        DriverManager.getConnection(pgUrl, user, pass).use { conn ->
+            conn.autoCommit = true
+            conn.createStatement().use { st ->
+                for (sql in stmts) {
+                    try {
+                        st.execute(sql.trimIndent())
+                    } catch (e: Exception) {
+                        // Log and continue so one issue (e.g., missing column) doesn't block others
+                        System.err.println("Index ensure failed for: ${sql.lineSequence().firstOrNull()} → ${e.message}")
+                    }
+                }
+            }
+        }
     }
 }

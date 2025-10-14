@@ -11,6 +11,7 @@ import io.askimo.cli.commands.ConfigCommandHandler
 import io.askimo.cli.commands.CopyCommandHandler
 import io.askimo.cli.commands.CreateProjectCommandHandler
 import io.askimo.cli.commands.CreateRecipeCommandHandler
+import io.askimo.cli.commands.DeleteAllProjectsCommandHandler
 import io.askimo.cli.commands.DeleteProjectCommandHandler
 import io.askimo.cli.commands.DeleteRecipeCommandHandler
 import io.askimo.cli.commands.HelpCommandHandler
@@ -24,6 +25,12 @@ import io.askimo.cli.commands.SetParamCommandHandler
 import io.askimo.cli.commands.SetProviderCommandHandler
 import io.askimo.cli.commands.UseProjectCommandHandler
 import io.askimo.core.VersionInfo
+import io.askimo.core.project.Budgets
+import io.askimo.core.project.DiffGenerator
+import io.askimo.core.project.EditFlow
+import io.askimo.core.project.EditIntentDetector
+import io.askimo.core.project.PatchApplier
+import io.askimo.core.project.ProjectStore
 import io.askimo.core.providers.chat
 import io.askimo.core.recipes.RecipeExecutor
 import io.askimo.core.recipes.RecipeRegistry
@@ -41,6 +48,7 @@ import org.jline.reader.impl.DefaultParser
 import org.jline.reader.impl.completer.AggregateCompleter
 import org.jline.reader.impl.history.DefaultHistory
 import org.jline.terminal.TerminalBuilder
+import org.jline.utils.InfoCmp
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicBoolean
@@ -97,26 +105,38 @@ fun main(args: Array<String>) {
                 val history = DefaultHistory(reader)
                 Runtime.getRuntime().addShutdownHook(Thread { runCatching { history.save() } })
 
-                // --- Secondary prompt style ---
-                reader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "%B..>%b ")
+                // Is this a “real” terminal with raw mode & cursor addressing?
+                val supportsRaw = terminal.getBooleanCapability(InfoCmp.Capability.cursor_address)
 
-                // --- Widget for newline ---
-                reader.widgets["insert-newline"] =
-                    Widget {
-                        reader.buffer.write("\n")
-                        reader.callWidget(LineReader.REDRAW_LINE)
-                        reader.callWidget(LineReader.REDISPLAY)
-                        true
-                    }
                 // --- Key bindings ---
                 // Get the main keymap
                 @Suppress("UNCHECKED_CAST")
                 val mainMap = reader.keyMaps[LineReader.MAIN] as KeyMap<Any>
 
-                mainMap.bind(Reference(LineReader.ACCEPT_LINE), "\r") // CR (Ctrl-M / many terms)
-                mainMap.bind(Reference(LineReader.ACCEPT_LINE), "\n") // LF (some terms)
+                if (supportsRaw) {
+                    val mainMap = reader.keyMaps[LineReader.MAIN] as KeyMap<Any>
+                    // --- Secondary prompt style ---
+                    reader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "%B..>%b ")
 
-                mainMap.bind(Reference("insert-newline"), KeyMap.ctrl('J'))
+                    // --- Widget for newline ---
+                    reader.widgets["insert-newline"] =
+                        Widget {
+                            reader.buffer.write("\n")
+                            reader.callWidget(LineReader.REDRAW_LINE)
+                            reader.callWidget(LineReader.REDISPLAY)
+                            true
+                        }
+
+                    mainMap.bind(Reference(LineReader.ACCEPT_LINE), "\r") // CR (Ctrl-M / many terms)
+                    mainMap.bind(Reference(LineReader.ACCEPT_LINE), "\n") // LF (some terms)
+                    mainMap.bind(Reference("insert-newline"), KeyMap.ctrl('J')) // Ctrl+J
+                    terminal.writer().println("💡 Tip: Ctrl+J for newline, Enter to send.")
+                } else {
+                    terminal.writer().println(
+                        "💡 Limited console detected. Enter submits. " +
+                            "Use Alt+Enter for a newline, or enable 'Emulate terminal in output console' in your Run config.",
+                    )
+                }
 
                 mainMap.bind(Reference("reverse-search-history"), KeyMap.ctrl('R'))
                 mainMap.bind(Reference("forward-search-history"), KeyMap.ctrl('S'))
@@ -148,6 +168,7 @@ fun main(args: Array<String>) {
                         DeleteRecipeCommandHandler(),
                         ListRecipesCommandHandler(),
                         DeleteProjectCommandHandler(),
+                        DeleteAllProjectsCommandHandler(),
                         HistoryCommandHandler(reader, terminal, historyFile),
                     )
 
@@ -172,6 +193,9 @@ fun main(args: Array<String>) {
                         break
                     }
 
+                    val diffGenerator = DiffGenerator(session.getChatService())
+                    val editFlow = EditFlow(diffGenerator, PatchApplier(), Budgets())
+
                     val keyword = parsedLine.words().firstOrNull()
 
                     if (keyword != null && keyword.startsWith(":")) {
@@ -185,32 +209,44 @@ fun main(args: Array<String>) {
                     } else {
                         val prompt = parsedLine.line()
 
-                        val indicator = LoadingIndicator(reader.terminal, "Thinking…")
-                        indicator.start()
+                        val active = ProjectStore.getActive()
+                        val hasActive = active != null
+                        val intent = EditIntentDetector.detect(prompt, hasActive)
 
-                        val firstTokenSeen = AtomicBoolean(false)
-
-                        val mdRenderer = MarkdownJLineRenderer()
-                        val mdSink = MarkdownStreamingSink(reader.terminal, mdRenderer)
-
-                        val output =
-                            session.getChatService().chat(prompt) { token ->
-                                if (firstTokenSeen.compareAndSet(false, true)) {
-                                    indicator.stopWithElapsed()
-                                    reader.terminal.flush()
-                                }
-                                mdSink.append(token)
-                            }
-                        if (!firstTokenSeen.get()) {
-                            indicator.stopWithElapsed()
+                        if (hasActive && intent.isEdit) {
+                            val (meta, _) = active!!
+                            editFlow.run(prompt, meta)
+                            session.lastResponse = "Applied edit flow for: $prompt"
                             reader.terminal.writer().println()
-                            reader.terminal.flush()
-                        }
-                        mdSink.finish()
+                            reader.terminal.writer().flush()
+                        } else {
+                            val indicator = LoadingIndicator(reader.terminal, "Thinking…")
+                            indicator.start()
 
-                        session.lastResponse = output
-                        reader.terminal.writer().println()
-                        reader.terminal.writer().flush()
+                            val firstTokenSeen = AtomicBoolean(false)
+
+                            val mdRenderer = MarkdownJLineRenderer()
+                            val mdSink = MarkdownStreamingSink(reader.terminal, mdRenderer)
+
+                            val output =
+                                session.getChatService().chat(prompt) { token ->
+                                    if (firstTokenSeen.compareAndSet(false, true)) {
+                                        indicator.stopWithElapsed()
+                                        reader.terminal.flush()
+                                    }
+                                    mdSink.append(token)
+                                }
+                            if (!firstTokenSeen.get()) {
+                                indicator.stopWithElapsed()
+                                reader.terminal.writer().println()
+                                reader.terminal.flush()
+                            }
+                            mdSink.finish()
+
+                            session.lastResponse = output
+                            reader.terminal.writer().println()
+                            reader.terminal.writer().flush()
+                        }
                     }
 
                     terminal.flush()
