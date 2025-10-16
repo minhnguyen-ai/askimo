@@ -46,6 +46,12 @@ enum class ModelProvider {
     ANTHROPIC,
 
     /**
+     * Represents GitHub Copilot CLI integration
+     */
+    @SerialName("COPILOT")
+    COPILOT,
+
+    /**
      * Represents an unidentified or unsupported model provider.
      */
     @SerialName("UNKNOWN")

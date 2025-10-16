@@ -5,11 +5,13 @@
 package io.askimo.core.providers
 
 import io.askimo.core.providers.ModelProvider.ANTHROPIC
+import io.askimo.core.providers.ModelProvider.COPILOT
 import io.askimo.core.providers.ModelProvider.GEMINI
 import io.askimo.core.providers.ModelProvider.OLLAMA
 import io.askimo.core.providers.ModelProvider.OPEN_AI
 import io.askimo.core.providers.ModelProvider.X_AI
 import io.askimo.core.providers.anthropic.AnthropicModelFactory
+import io.askimo.core.providers.copilot.CopilotModelFactory
 import io.askimo.core.providers.gemini.GeminiModelFactory
 import io.askimo.core.providers.ollama.OllamaModelFactory
 import io.askimo.core.providers.openai.OpenAiModelFactory
@@ -38,6 +40,7 @@ object ProviderRegistry {
             GEMINI to GeminiModelFactory(),
             OLLAMA to OllamaModelFactory(),
             ANTHROPIC to AnthropicModelFactory(),
+            COPILOT to CopilotModelFactory(),
         )
 
     /**

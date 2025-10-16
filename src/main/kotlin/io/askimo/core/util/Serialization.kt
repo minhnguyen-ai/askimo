@@ -6,6 +6,7 @@ package io.askimo.core.util
 
 import io.askimo.core.providers.ProviderSettings
 import io.askimo.core.providers.anthropic.AnthropicSettings
+import io.askimo.core.providers.copilot.CopilotSettings
 import io.askimo.core.providers.gemini.GeminiSettings
 import io.askimo.core.providers.ollama.OllamaSettings
 import io.askimo.core.providers.openai.OpenAiSettings
@@ -22,6 +23,7 @@ val coreProvidersModule =
             subclass(XAiSettings::class, XAiSettings.serializer())
             subclass(GeminiSettings::class, GeminiSettings.serializer())
             subclass(AnthropicSettings::class, AnthropicSettings.serializer())
+            subclass(CopilotSettings::class, CopilotSettings.serializer())
         }
     }
 

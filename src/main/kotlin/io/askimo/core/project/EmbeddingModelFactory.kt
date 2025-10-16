@@ -9,6 +9,7 @@ import dev.langchain4j.model.ollama.OllamaEmbeddingModel.OllamaEmbeddingModelBui
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel.OpenAiEmbeddingModelBuilder
 import io.askimo.core.providers.ModelProvider
 import io.askimo.core.providers.ModelProvider.ANTHROPIC
+import io.askimo.core.providers.ModelProvider.COPILOT
 import io.askimo.core.providers.ModelProvider.GEMINI
 import io.askimo.core.providers.ModelProvider.OLLAMA
 import io.askimo.core.providers.ModelProvider.OPEN_AI
@@ -41,7 +42,7 @@ fun getEmbeddingModel(provider: ModelProvider): EmbeddingModel =
                 .build()
         }
 
-        ANTHROPIC, GEMINI, X_AI -> {
+        ANTHROPIC, GEMINI, X_AI, COPILOT -> {
             noteOllamaRequired(provider)
             buildOllamaEmbeddingModel()
         }
