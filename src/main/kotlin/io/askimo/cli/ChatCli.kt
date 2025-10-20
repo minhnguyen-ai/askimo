@@ -96,6 +96,9 @@ fun main(args: Array<String>) {
                         .parser(parser)
                         .variable(LineReader.HISTORY_FILE, historyFile)
                         .variable(LineReader.HISTORY_SIZE, 100)
+                        .variable(LineReader.COMPLETION_STYLE_LIST_SELECTION, "fg:blue")
+                        .variable(LineReader.LIST_MAX, 5) // Limit to 5 suggestions max
+                        .variable(LineReader.COMPLETION_STYLE_STARTING, "")
                         .completer(completer)
                         .build()
                 val history = DefaultHistory(reader)
@@ -293,7 +296,7 @@ private fun readStdinIfAny(
         val lines = text.split('\n')
         if (lines.size > tailLines) {
             val tail = lines.takeLast(tailLines).joinToString("\n")
-            text = tail + "\n\n(…truncated to last $tailLines lines…)"
+            text = "$tail\n\n(…truncated to last $tailLines lines…)"
         }
     }
 
