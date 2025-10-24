@@ -11,10 +11,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.text.get
+import kotlin.text.set
 
 class SecureApiKeyStorageTest {
     private lateinit var secureSessionManager: SecureSessionManager
@@ -24,7 +29,7 @@ class SecureApiKeyStorageTest {
         secureSessionManager = SecureSessionManager()
 
         // Clean up any existing test keys
-        KeychainManager.removeApiKey("openai")
+        KeychainManager.removeApiKey("open_ai")
 
         // Clean up encryption key file if it exists
         val keyPath = Paths.get(System.getProperty("user.home"), ".askimo", ".key")
@@ -55,25 +60,24 @@ class SecureApiKeyStorageTest {
 
     @Test
     fun `test secure session loading`() {
+        // Skip test on non-macOS platforms due to lack of keychain support
+        val osName = System.getProperty("os.name").lowercase()
+        assumeTrue(osName.contains("mac"), "Keychain only supported on macOS")
+
         // Create a session with placeholder API key
         val sessionParams = SessionParams()
         val openAiSettings = OpenAiSettings(apiKey = "***keychain***")
         sessionParams.providerSettings[ModelProvider.OPEN_AI] = openAiSettings
 
-        // First store a key in keychain (if available)
-        KeychainManager.storeApiKey("openai", "sk-actual-key-from-keychain")
+        // Store a key in keychain using the correct provider name
+        KeychainManager.storeApiKey("open_ai", "sk-actual-key-from-keychain")
 
         // Load the secure session
         val secureSession = secureSessionManager.loadSecureSession(sessionParams)
 
-        // If keychain is available, the API key should be loaded
+        // The key should be loaded from keychain, not remain as placeholder
         val loadedSettings = secureSession.providerSettings[ModelProvider.OPEN_AI] as OpenAiSettings
-
-        // The key should either be loaded from keychain or remain as placeholder
-        assertTrue(
-            loadedSettings.apiKey == "sk-actual-key-from-keychain" ||
-                loadedSettings.apiKey == "***keychain***",
-        )
+        Assertions.assertEquals("sk-actual-key-from-keychain", loadedSettings.apiKey)
     }
 
     @Test
