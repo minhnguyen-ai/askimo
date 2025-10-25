@@ -13,7 +13,6 @@ import io.askimo.cli.commands.ConfigCommandHandler
 import io.askimo.cli.commands.CopyCommandHandler
 import io.askimo.cli.commands.CreateProjectCommandHandler
 import io.askimo.cli.commands.CreateRecipeCommandHandler
-import io.askimo.cli.commands.DeleteAllProjectsCommandHandler
 import io.askimo.cli.commands.DeleteProjectCommandHandler
 import io.askimo.cli.commands.DeleteRecipeCommandHandler
 import io.askimo.cli.commands.HelpCommandHandler
@@ -34,6 +33,7 @@ import io.askimo.core.recipes.RecipeRegistry
 import io.askimo.core.recipes.ToolRegistry
 import io.askimo.core.session.Session
 import io.askimo.core.session.SessionFactory
+import io.askimo.core.util.AskimoHome
 import io.askimo.core.util.Logger.debug
 import io.askimo.core.util.Logger.info
 import org.jline.keymap.KeyMap
@@ -47,7 +47,6 @@ import org.jline.reader.impl.history.DefaultHistory
 import org.jline.terminal.TerminalBuilder
 import org.jline.utils.InfoCmp
 import java.io.IOException
-import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicBoolean
 
 fun main(args: Array<String>) {
@@ -56,7 +55,7 @@ fun main(args: Array<String>) {
         return
     }
 
-    val historyFile = Paths.get(System.getProperty("user.home"), ".askimo", "history").toAbsolutePath()
+    val historyFile = AskimoHome.historyFile().toAbsolutePath()
     val session = SessionFactory.createSession()
 
     // Create all command handlers once
@@ -78,7 +77,6 @@ fun main(args: Array<String>) {
             CreateRecipeCommandHandler(),
             DeleteRecipeCommandHandler(),
             ListRecipesCommandHandler(),
-            DeleteAllProjectsCommandHandler(),
             AgentCommandHandler(session),
             ApiKeySecurityCommandHandler(session),
         )
@@ -340,22 +338,21 @@ private fun readStdinIfAny(
 private fun buildPrompt(
     userPrompt: String,
     stdinText: String,
-): String =
-    if (stdinText.isBlank()) {
-        userPrompt.ifBlank { "Analyze the following input (no stdin provided)." }
-    } else {
-        // Attach the piped input as context
-        buildString {
-            appendLine(userPrompt.ifBlank { "Analyze the following input:" })
-            appendLine()
-            appendLine("--- Begin input ---")
-            append(stdinText)
-            appendLine()
-            appendLine("--- End input ---")
-            appendLine()
-            appendLine("Return concise, actionable findings.")
-        }
+): String = if (stdinText.isBlank()) {
+    userPrompt.ifBlank { "Analyze the following input (no stdin provided)." }
+} else {
+    // Attach the piped input as context
+    buildString {
+        appendLine(userPrompt.ifBlank { "Analyze the following input:" })
+        appendLine()
+        appendLine("--- Begin input ---")
+        append(stdinText)
+        appendLine()
+        appendLine("--- End input ---")
+        appendLine()
+        appendLine("Return concise, actionable findings.")
     }
+}
 
 private fun printFullVersionInfo() {
     val a = VersionInfo
@@ -405,12 +402,21 @@ private fun runYamlCommand(
 ) {
     info("🚀 Running recipe '$name'…")
 
-    val toolRegistry = ToolRegistry.defaults()
     val registry = RecipeRegistry()
+    // Load once to inspect allowedTools (empty ⇒ all tools)
+    val def = registry.load(name)
+    val toolRegistry =
+        if (def.allowedTools.isEmpty()) {
+            ToolRegistry.defaults()
+        } else {
+            info("🔒 Restricting tools to: ${def.allowedTools.sorted().joinToString(", ")}")
+            ToolRegistry.defaults(allow = def.allowedTools.toSet())
+        }
+
     val executor =
         RecipeExecutor(
             session = session,
-            registry = registry,
+            registry = registry, // will re-load; negligible overhead
             tools = toolRegistry,
         )
 
