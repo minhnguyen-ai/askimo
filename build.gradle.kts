@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.langchain4j.anthropic)
     implementation(libs.commonmark)
     implementation(libs.kotlinx.serialization.json.jvm)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.postgresql)
     implementation(libs.langchain4j.pgvector)
     implementation(libs.testcontainers.postgresql)
@@ -174,6 +175,9 @@ graalvmNative {
                     "--report-unsupported-elements-at-runtime",
                     "--features=io.askimo.core.graal.AskimoFeature",
                     "--initialize-at-build-time=kotlin.DeprecationLevel,kotlin.jvm.internal.Intrinsics,kotlin.enums.EnumEntries",
+                    "--initialize-at-run-time=kotlinx.coroutines,kotlin.coroutines,io.askimo.core.project.ProjectFileWatcher",
+                    "--allow-incomplete-classpath",
+                    "-H:+ReportExceptionStackTraces",
                 ),
             )
             resources.autodetect()

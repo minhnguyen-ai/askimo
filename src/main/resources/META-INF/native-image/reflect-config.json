@@ -57,6 +57,9 @@
     "name": "[Lcom.github.dockerjava.api.model.VolumesFrom;"
   },
   {
+    "name": "[Lcom.zaxxer.hikari.util.ConcurrentBag$IConcurrentBagEntry;"
+  },
+  {
     "name": "[Ljava.lang.Object;"
   },
   {
@@ -69,10 +72,16 @@
     "name": "[Ljava.lang.constant.ConstantDesc;"
   },
   {
+    "name": "[Ljava.sql.Statement;"
+  },
+  {
     "name": "[Lnet.bytebuddy.description.enumeration.EnumerationDescription;"
   },
   {
     "name": "[Lorg.testcontainers.shaded.com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;"
+  },
+  {
+    "name": "android.os.Build"
   },
   {
     "name": "apple.security.AppleProvider",
@@ -815,6 +824,18 @@
     "name": "com.sun.tools.attach.VirtualMachine"
   },
   {
+    "name": "com.zaxxer.hikari.HikariConfig",
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.zaxxer.hikari.pool.PoolBase",
+    "fields": [{ "name": "catalog" }]
+  },
+  {
+    "name": "com.zaxxer.hikari.pool.PoolEntry",
+    "fields": [{ "name": "state" }]
+  },
+  {
     "name": "dev.langchain4j.model.ollama.EmbeddingRequest",
     "allDeclaredFields": true,
     "queryAllDeclaredMethods": true,
@@ -1203,7 +1224,8 @@
           "io.askimo.core.config.EmbeddingConfig",
           "io.askimo.core.config.RetryConfig",
           "io.askimo.core.config.ThrottleConfig",
-          "io.askimo.core.config.IndexingConfig"
+          "io.askimo.core.config.IndexingConfig",
+          "io.askimo.core.config.ChatConfig"
         ]
       },
       {
@@ -1214,6 +1236,26 @@
           "io.askimo.core.config.RetryConfig",
           "io.askimo.core.config.ThrottleConfig",
           "io.askimo.core.config.IndexingConfig",
+          "io.askimo.core.config.ChatConfig",
+          "int",
+          "kotlin.jvm.internal.DefaultConstructorMarker"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "io.askimo.core.config.ChatConfig",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": ["int", "int", "int"] },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "int",
+          "int",
+          "int",
           "int",
           "kotlin.jvm.internal.DefaultConstructorMarker"
         ]
@@ -1335,6 +1377,24 @@
     ]
   },
   {
+    "name": "io.askimo.core.project.PgVectorIndexer",
+    "allDeclaredFields": true,
+    "allDeclaredClasses": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.String", "io.askimo.core.session.Session"]
+      },
+      {
+        "name": "indexSingleFile",
+        "parameterTypes": ["java.nio.file.Path", "java.lang.String"]
+      },
+      { "name": "removeFileFromIndex", "parameterTypes": ["java.lang.String"] }
+    ]
+  },
+  {
     "name": "io.askimo.core.project.PgVectorIndexerOllamaTest",
     "allDeclaredFields": true,
     "allDeclaredClasses": true,
@@ -1384,6 +1444,91 @@
     "queryAllPublicMethods": true
   },
   {
+    "name": "io.askimo.core.project.ProjectFileWatcher",
+    "fields": [{ "name": "isWatching" }]
+  },
+  {
+    "name": "io.askimo.core.project.ProjectFileWatcher$getNextWatchKey$1",
+    "fields": [{ "name": "label" }]
+  },
+  {
+    "name": "io.askimo.core.project.ProjectFileWatcher$handleFileChange$1",
+    "fields": [{ "name": "label" }]
+  },
+  {
+    "name": "io.askimo.core.project.ProjectFileWatcher$processWatchKeyEvents$1",
+    "fields": [{ "name": "label" }]
+  },
+  {
+    "name": "io.askimo.core.project.ProjectFileWatcher$startWatching$1",
+    "fields": [{ "name": "label" }]
+  },
+  {
+    "name": "io.askimo.core.project.ProjectFileWatcher$watchForChanges$1",
+    "fields": [{ "name": "label" }]
+  },
+  {
+    "name": "io.askimo.core.project.ProjectFileWatcherTest",
+    "allDeclaredFields": true,
+    "allDeclaredClasses": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllPublicMethods": true,
+    "queryAllDeclaredConstructors": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] },
+      { "name": "can start and stop file watcher", "parameterTypes": [] },
+      {
+        "name": "error during indexing does not stop watcher",
+        "parameterTypes": []
+      },
+      {
+        "name": "file creation in subdirectory triggers indexing with correct path",
+        "parameterTypes": []
+      },
+      { "name": "file creation triggers indexing", "parameterTypes": [] },
+      {
+        "name": "file modification triggers re-indexing",
+        "parameterTypes": []
+      },
+      { "name": "hidden files are ignored", "parameterTypes": [] },
+      {
+        "name": "multiple file creation events are handled",
+        "parameterTypes": []
+      },
+      {
+        "name": "nested directory structure is handled correctly",
+        "parameterTypes": []
+      },
+      {
+        "name": "new directories created after watcher starts are registered",
+        "parameterTypes": []
+      },
+      {
+        "name": "only supported file extensions are processed",
+        "parameterTypes": []
+      },
+      { "name": "setUp", "parameterTypes": [] },
+      {
+        "name": "skipped directories include common build and IDE directories",
+        "parameterTypes": []
+      },
+      {
+        "name": "startWatching does nothing if already watching",
+        "parameterTypes": []
+      },
+      {
+        "name": "stopWatching does nothing if not watching",
+        "parameterTypes": []
+      },
+      {
+        "name": "supported extensions include common programming languages",
+        "parameterTypes": []
+      },
+      { "name": "tearDown", "parameterTypes": [] },
+      { "name": "watchedPath returns the project root", "parameterTypes": [] }
+    ]
+  },
+  {
     "name": "io.askimo.core.providers.ChatService",
     "queryAllPublicMethods": true
   },
@@ -1398,6 +1543,22 @@
       { "name": "<init>", "parameterTypes": [] },
       { "name": "canCreateChatServiceAndStream", "parameterTypes": [] }
     ]
+  },
+  {
+    "name": "io.askimo.core.recipes.IRecipeRegistry",
+    "allDeclaredClasses": true,
+    "queryAllPublicMethods": true
+  },
+  {
+    "name": "io.askimo.core.recipes.IToolRegistry",
+    "allDeclaredClasses": true,
+    "queryAllPublicMethods": true
+  },
+  {
+    "name": "io.askimo.core.recipes.MiniTpl",
+    "allDeclaredClasses": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllPublicMethods": true
   },
   {
     "name": "io.askimo.core.recipes.PostAction",
@@ -1470,6 +1631,43 @@
     ]
   },
   {
+    "name": "io.askimo.core.recipes.RecipeDefinition",
+    "allDeclaredClasses": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllPublicMethods": true
+  },
+  {
+    "name": "io.askimo.core.recipes.RecipeExecutorTest",
+    "allDeclaredFields": true,
+    "allDeclaredClasses": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllPublicMethods": true,
+    "queryAllDeclaredConstructors": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] },
+      { "name": "testExternalArgSubstitution", "parameterTypes": [] },
+      { "name": "testRecipeExecutorWithExternalArg", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "io.askimo.core.recipes.RecipeExecutorTest$testExternalArgSubstitution$TestRecipeExecutor",
+    "allDeclaredClasses": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllPublicMethods": true
+  },
+  {
+    "name": "io.askimo.core.recipes.RecipeExecutorTest$testRecipeExecutorWithExternalArg$TestRecipeExecutor",
+    "allDeclaredClasses": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllPublicMethods": true
+  },
+  {
+    "name": "io.askimo.core.recipes.RecipeVarCall",
+    "allDeclaredClasses": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllPublicMethods": true
+  },
+  {
     "name": "io.askimo.core.recipes.ToolRegistryTest",
     "allDeclaredFields": true,
     "allDeclaredClasses": true,
@@ -1537,6 +1735,7 @@
     "methods": [
       { "name": "<init>", "parameterTypes": [] },
       { "name": "setUp", "parameterTypes": [] },
+      { "name": "tearDown", "parameterTypes": [] },
       {
         "name": "test API key migration from plain text",
         "parameterTypes": []
@@ -1544,6 +1743,94 @@
       { "name": "test encryption fallback", "parameterTypes": [] },
       { "name": "test secure session loading", "parameterTypes": [] },
       { "name": "test storage security descriptions", "parameterTypes": [] }
+    ]
+  },
+  {
+    "name": "io.askimo.core.session.ChatSessionRepositoryIT",
+    "allDeclaredFields": true,
+    "allDeclaredClasses": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllPublicMethods": true,
+    "queryAllDeclaredConstructors": true,
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] },
+      { "name": "setUp", "parameterTypes": [] },
+      {
+        "name": "should add and retrieve messages for a session",
+        "parameterTypes": []
+      },
+      { "name": "should count messages correctly", "parameterTypes": [] },
+      {
+        "name": "should create and retrieve a chat session",
+        "parameterTypes": []
+      },
+      {
+        "name": "should create database file in correct location",
+        "parameterTypes": []
+      },
+      {
+        "name": "should generate and update session title",
+        "parameterTypes": []
+      },
+      {
+        "name": "should generate title ending with period for sentences",
+        "parameterTypes": []
+      },
+      {
+        "name": "should generate title with ellipsis for long messages",
+        "parameterTypes": []
+      },
+      {
+        "name": "should handle conversation summary with complex data",
+        "parameterTypes": []
+      },
+      {
+        "name": "should handle database transactions correctly on failure",
+        "parameterTypes": []
+      },
+      {
+        "name": "should handle different message roles correctly",
+        "parameterTypes": []
+      },
+      { "name": "should handle empty messages list", "parameterTypes": [] },
+      { "name": "should handle empty sessions list", "parameterTypes": [] },
+      {
+        "name": "should limit recent messages correctly",
+        "parameterTypes": []
+      },
+      {
+        "name": "should retrieve all sessions ordered by updated_at desc",
+        "parameterTypes": []
+      },
+      {
+        "name": "should retrieve messages after specific message",
+        "parameterTypes": []
+      },
+      {
+        "name": "should retrieve recent messages in chronological order",
+        "parameterTypes": []
+      },
+      {
+        "name": "should return null for non-existent conversation summary",
+        "parameterTypes": []
+      },
+      {
+        "name": "should return null for non-existent session",
+        "parameterTypes": []
+      },
+      {
+        "name": "should save and retrieve conversation summary",
+        "parameterTypes": []
+      },
+      {
+        "name": "should update conversation summary when saving again",
+        "parameterTypes": []
+      },
+      {
+        "name": "should update session updated_at when adding message",
+        "parameterTypes": []
+      },
+      { "name": "tearDown", "parameterTypes": [] }
     ]
   },
   {
@@ -1704,7 +1991,15 @@
     "queryAllDeclaredMethods": true
   },
   {
+    "name": "java.lang.Exception",
+    "allDeclaredFields": true
+  },
+  {
     "name": "java.lang.FunctionalInterface"
+  },
+  {
+    "name": "java.lang.IllegalStateException",
+    "allDeclaredFields": true
   },
   {
     "name": "java.lang.Integer",
@@ -1738,6 +2033,7 @@
       { "name": "addReads", "parameterTypes": ["java.lang.Module"] },
       { "name": "canRead", "parameterTypes": ["java.lang.Module"] },
       { "name": "getClassLoader", "parameterTypes": [] },
+      { "name": "getDescriptor", "parameterTypes": [] },
       { "name": "getName", "parameterTypes": [] },
       { "name": "getPackages", "parameterTypes": [] },
       { "name": "getResourceAsStream", "parameterTypes": ["java.lang.String"] },
@@ -1787,6 +2083,17 @@
     "methods": [{ "name": "feature", "parameterTypes": [] }]
   },
   {
+    "name": "java.lang.RuntimeException",
+    "allDeclaredFields": true,
+    "queryAllPublicConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": ["java.lang.String", "java.lang.Throwable"]
+      }
+    ]
+  },
+  {
     "name": "java.lang.SecurityManager",
     "methods": [
       {
@@ -1822,6 +2129,10 @@
   {
     "name": "java.lang.Thread",
     "fields": [{ "name": "threadLocalRandomProbe" }]
+  },
+  {
+    "name": "java.lang.Throwable",
+    "allDeclaredFields": true
   },
   {
     "name": "java.lang.WeakPairMap"
@@ -1997,6 +2308,10 @@
     "methods": [{ "name": "getInputArguments", "parameterTypes": [] }]
   },
   {
+    "name": "java.lang.module.ModuleDescriptor",
+    "methods": [{ "name": "name", "parameterTypes": [] }]
+  },
+  {
     "name": "java.lang.reflect.AccessibleObject",
     "methods": [{ "name": "setAccessible", "parameterTypes": ["boolean"] }]
   },
@@ -2047,8 +2362,21 @@
     ]
   },
   {
+    "name": "java.lang.reflect.TypeVariable",
+    "methods": [{ "name": "getAnnotatedBounds", "parameterTypes": [] }]
+  },
+  {
     "name": "java.net.UnixDomainSocketAddress",
     "methods": [{ "name": "of", "parameterTypes": ["java.lang.String"] }]
+  },
+  {
+    "name": "java.nio.file.ClosedWatchServiceException",
+    "allDeclaredFields": true,
+    "queryAllPublicConstructors": true,
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "java.nio.file.Path"
   },
   {
     "name": "java.security.AccessController",
@@ -2375,6 +2703,9 @@
     "name": "kotlin.collections.Set"
   },
   {
+    "name": "kotlin.coroutines.jvm.internal.BaseContinuationImpl"
+  },
+  {
     "name": "kotlin.internal.PlatformDependent"
   },
   {
@@ -2399,6 +2730,97 @@
     "allPublicFields": true
   },
   {
+    "name": "kotlinx.coroutines.CancellableContinuationImpl",
+    "fields": [
+      { "name": "_decisionAndIndex$volatile" },
+      { "name": "_parentHandle$volatile" },
+      { "name": "_state$volatile" }
+    ]
+  },
+  {
+    "name": "kotlinx.coroutines.CancelledContinuation",
+    "fields": [{ "name": "_resumed$volatile" }]
+  },
+  {
+    "name": "kotlinx.coroutines.CompletedExceptionally",
+    "fields": [{ "name": "_handled$volatile" }]
+  },
+  {
+    "name": "kotlinx.coroutines.EventLoopImplBase",
+    "fields": [
+      { "name": "_delayed$volatile" },
+      { "name": "_isCompleted$volatile" },
+      { "name": "_queue$volatile" }
+    ]
+  },
+  {
+    "name": "kotlinx.coroutines.JobSupport",
+    "fields": [
+      { "name": "_parentHandle$volatile" },
+      { "name": "_state$volatile" }
+    ]
+  },
+  {
+    "name": "kotlinx.coroutines.JobSupport$Finishing",
+    "fields": [
+      { "name": "_exceptionsHolder$volatile" },
+      { "name": "_isCompleting$volatile" },
+      { "name": "_rootCause$volatile" }
+    ]
+  },
+  {
+    "name": "kotlinx.coroutines.internal.DispatchedContinuation",
+    "fields": [{ "name": "_reusableCancellableContinuation$volatile" }]
+  },
+  {
+    "name": "kotlinx.coroutines.internal.LimitedDispatcher",
+    "fields": [{ "name": "runningWorkers$volatile" }]
+  },
+  {
+    "name": "kotlinx.coroutines.internal.LockFreeLinkedListNode",
+    "fields": [
+      { "name": "_next$volatile" },
+      { "name": "_prev$volatile" },
+      { "name": "_removedRef$volatile" }
+    ]
+  },
+  {
+    "name": "kotlinx.coroutines.internal.LockFreeTaskQueue",
+    "fields": [{ "name": "_cur$volatile" }]
+  },
+  {
+    "name": "kotlinx.coroutines.internal.LockFreeTaskQueueCore",
+    "fields": [{ "name": "_next$volatile" }, { "name": "_state$volatile" }]
+  },
+  {
+    "name": "kotlinx.coroutines.internal.StackTraceRecoveryKt"
+  },
+  {
+    "name": "kotlinx.coroutines.internal.ThreadSafeHeap",
+    "fields": [{ "name": "_size$volatile" }]
+  },
+  {
+    "name": "kotlinx.coroutines.scheduling.CoroutineScheduler",
+    "fields": [
+      { "name": "_isTerminated$volatile" },
+      { "name": "controlState$volatile" },
+      { "name": "parkedWorkersStack$volatile" }
+    ]
+  },
+  {
+    "name": "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker",
+    "fields": [{ "name": "workerCtl$volatile" }]
+  },
+  {
+    "name": "kotlinx.coroutines.scheduling.WorkQueue",
+    "fields": [
+      { "name": "blockingTasksInBuffer$volatile" },
+      { "name": "consumerIndex$volatile" },
+      { "name": "lastScheduledTask$volatile" },
+      { "name": "producerIndex$volatile" }
+    ]
+  },
+  {
     "name": "org.jline.reader.ParsedLine",
     "allDeclaredFields": true,
     "allDeclaredClasses": true,
@@ -2415,7 +2837,7 @@
     ]
   },
   {
-    "name": "org.jline.reader.ParsedLine$MockitoMock$8PidVg5d",
+    "name": "org.jline.reader.ParsedLine$MockitoMock$TXRpVxVK",
     "queryAllDeclaredConstructors": true,
     "methods": [{ "name": "<init>", "parameterTypes": [] }]
   },
@@ -2433,6 +2855,16 @@
       { "name": "isClosed" },
       { "name": "statementState" }
     ]
+  },
+  {
+    "name": "org.slf4j.Logger"
+  },
+  {
+    "name": "org.sqlite.JDBC",
+    "methods": [{ "name": "<init>", "parameterTypes": [] }]
+  },
+  {
+    "name": "sun.misc.SharedSecrets"
   },
   {
     "name": "sun.security.pkcs12.PKCS12KeyStore",
