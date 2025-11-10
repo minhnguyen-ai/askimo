@@ -28,6 +28,7 @@ import io.askimo.cli.commands.SetParamCommandHandler
 import io.askimo.cli.commands.SetProviderCommandHandler
 import io.askimo.cli.commands.UseProjectCommandHandler
 import io.askimo.cli.commands.VersionDisplayCommandHandler
+import io.askimo.cli.util.CompositeCommandExecutor
 import io.askimo.cli.util.NonInteractiveCommandParser
 import io.askimo.core.VersionInfo
 import io.askimo.core.providers.sendStreamingMessageWithCallback
@@ -40,6 +41,7 @@ import io.askimo.core.session.Session
 import io.askimo.core.session.SessionFactory
 import io.askimo.core.util.Logger.debug
 import io.askimo.core.util.Logger.info
+import io.askimo.core.util.Logger.warn
 import io.askimo.core.util.RetryPresets.RECIPE_EXECUTOR_TRANSIENT_ERRORS
 import io.askimo.core.util.RetryUtils
 import org.jline.keymap.KeyMap
@@ -97,7 +99,14 @@ fun main(args: Array<String>) {
     // Set up help command with non-interactive commands
     (nonInteractiveCommandHandlers.find { it.keyword == ":help" } as? HelpCommandHandler)?.setCommands(nonInteractiveCommandHandlers)
 
-    // Check for non-interactive commands
+    // Check for composite command (multiple non-interactive commands)
+    if (CompositeCommandExecutor.hasMultipleCommands(args, nonInteractiveCommandHandlers)) {
+        val commandHandlerMap = nonInteractiveCommandHandlers.associateBy { keywordToFlag(it.keyword) }
+        CompositeCommandExecutor.executeCommands(args, commandHandlerMap)
+        return
+    }
+
+    // Check for single non-interactive commands
     for (handler in nonInteractiveCommandHandlers) {
         val flag = keywordToFlag(handler.keyword)
 
@@ -135,7 +144,11 @@ fun main(args: Array<String>) {
                 } else {
                     emptyList()
                 }
-            runYamlCommand(session, cliCommandName, overrides, externalArgs)
+            try {
+                runYamlCommand(session, cliCommandName, overrides, externalArgs)
+            } catch (e: io.askimo.core.recipes.RecipeNotFoundException) {
+                warn(e.message ?: "Recipe not found")
+            }
             return
         }
 
@@ -436,7 +449,7 @@ private fun runYamlCommand(
     overrides: Map<String, String>,
     externalArgs: List<String> = emptyList(),
 ) {
-    info("🚀 Running recipe '$name'…")
+    info("🚀 Running recipe '$name' with arguments $externalArgs…")
 
     val registry = RecipeRegistry()
     // Load once to inspect allowedTools (empty ⇒ all tools)
