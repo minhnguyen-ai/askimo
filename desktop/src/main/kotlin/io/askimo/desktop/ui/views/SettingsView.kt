@@ -35,7 +35,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -464,7 +463,7 @@ private fun fontSettingsCard() {
                         }
                     }
 
-                    DropdownMenu(
+                    ComponentColors.themedDropdownMenu(
                         expanded = fontDropdownExpanded,
                         onDismissRequest = { fontDropdownExpanded = false },
                         modifier = Modifier.fillMaxWidth(0.5f),
@@ -555,7 +554,7 @@ private fun fontSettingsCard() {
                         }
                     }
 
-                    DropdownMenu(
+                    ComponentColors.themedDropdownMenu(
                         expanded = fontSizeDropdownExpanded,
                         onDismissRequest = { fontSizeDropdownExpanded = false },
                     ) {
@@ -914,7 +913,7 @@ private fun enumFieldSetting(
                 }
             }
 
-            DropdownMenu(
+            ComponentColors.themedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
             ) {
@@ -1006,7 +1005,7 @@ private fun providerSelectionDialog(
                             colors = ComponentColors.outlinedTextFieldColors(),
                         )
 
-                        DropdownMenu(
+                        ComponentColors.themedDropdownMenu(
                             expanded = providerDropdownExpanded,
                             onDismissRequest = { providerDropdownExpanded = false },
                         ) {

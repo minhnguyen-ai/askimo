@@ -301,13 +301,14 @@ class Session(
      * Starts a new chat session.
      * Only persists session for CLI_INTERACTIVE and DESKTOP modes.
      *
+     * @param directiveId Optional directive ID to apply to this session
      * @return The newly created ChatSession
      */
-    fun startNewChatSession(): ChatSession {
+    fun startNewChatSession(directiveId: String? = null): ChatSession {
         val session = when (mode) {
             SessionMode.CLI_INTERACTIVE, SessionMode.DESKTOP -> {
                 // Persist session to database for interactive modes
-                chatSessionRepository.createSession("New Chat")
+                chatSessionRepository.createSession("New Chat", directiveId)
             }
             SessionMode.CLI_PROMPT -> {
                 // Create in-memory only session for non-interactive mode
@@ -316,6 +317,7 @@ class Session(
                     title = "Temporary Session",
                     createdAt = LocalDateTime.now(),
                     updatedAt = LocalDateTime.now(),
+                    directiveId = directiveId,
                 )
             }
         }
@@ -368,6 +370,30 @@ class Session(
                 }
             }
         }
+    }
+
+    /**
+     * Set or update the directive for the current chat session.
+     * @param directiveId The directive ID to set (null to clear directive)
+     * @return true if updated successfully, false if no active session or update failed
+     */
+    fun setCurrentSessionDirective(directiveId: String?): Boolean {
+        val sessionId = currentChatSession?.id ?: return false
+
+        // Skip persistence for CLI_PROMPT mode
+        if (mode == SessionMode.CLI_PROMPT) {
+            // Update in-memory session only
+            currentChatSession = currentChatSession?.copy(directiveId = directiveId)
+            return true
+        }
+
+        // Update in database and reload session
+        val success = chatSessionRepository.updateSessionDirective(sessionId, directiveId)
+        if (success) {
+            // Reload the session to get updated data
+            currentChatSession = chatSessionRepository.getSession(sessionId)
+        }
+        return success
     }
 
     /**
@@ -484,6 +510,9 @@ class Session(
      * Prepare the prompt with conversation context
      */
     private fun preparePromptWithContext(userMessage: String): String {
+        // Build directive system message if applicable
+        val directivePrompt = buildDirectivePrompt()
+
         // Get smart context (summary + recent messages)
         val contextMessages = getContextForSession()
 
@@ -499,14 +528,49 @@ class Session(
 
             // If we have conversation history, create a prompt that includes context
             if (contextMessages.size > 1) {
-                "Previous conversation context:\n$conversationText\n\nPlease continue the conversation naturally."
+                if (directivePrompt != null) {
+                    "$directivePrompt\n\nPrevious conversation context:\n$conversationText\n\nPlease continue the conversation naturally."
+                } else {
+                    "Previous conversation context:\n$conversationText\n\nPlease continue the conversation naturally."
+                }
             } else {
                 // If only one message, just use its content
-                contextMessages.lastOrNull()?.content ?: userMessage
+                if (directivePrompt != null) {
+                    "$directivePrompt\n\n${contextMessages.lastOrNull()?.content ?: userMessage}"
+                } else {
+                    contextMessages.lastOrNull()?.content ?: userMessage
+                }
             }
         } else {
             // Use simple prompt for first message
-            userMessage
+            if (directivePrompt != null) {
+                "$directivePrompt\n\n$userMessage"
+            } else {
+                userMessage
+            }
+        }
+    }
+
+    /**
+     * Build directive prompt if the current session has a directive applied.
+     * @return The directive prompt text, or null if no directive is set
+     */
+    private fun buildDirectivePrompt(): String? {
+        val directiveId = currentChatSession?.directiveId ?: return null
+
+        try {
+            val directiveRepository = io.askimo.core.directive.ChatDirectiveRepository()
+            val directive = directiveRepository.get(directiveId) ?: return null
+
+            return buildString {
+                appendLine("SYSTEM DIRECTIVE: ${directive.name}")
+                appendLine(directive.content.trim())
+                appendLine("---")
+                appendLine("Apply this directive throughout the conversation.")
+            }.trim()
+        } catch (e: Exception) {
+            debug("Error loading directive: ${e.message}", e)
+            return null
         }
     }
 

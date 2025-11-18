@@ -1,0 +1,105 @@
+/* SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright (c) 2025 Hai Nguyen
+ */
+package io.askimo.core.directive
+
+/**
+ * Service for managing chat directives and building system prompts for chat sessions.
+ */
+class ChatDirectiveService(
+    private val repository: ChatDirectiveRepository,
+) {
+    /**
+     * Build a system prompt by combining selected directives.
+     * @param directiveIds List of directive IDs to include
+     * @return Combined system prompt text
+     */
+    fun buildSystemPrompt(
+        directiveIds: List<String> = emptyList(),
+    ): String {
+        val selected = if (directiveIds.isNotEmpty()) {
+            repository.getByIds(directiveIds)
+        } else {
+            emptyList()
+        }
+
+        if (selected.isEmpty()) {
+            return "You are a helpful AI assistant."
+        }
+
+        return buildString {
+            appendLine("You are a helpful AI assistant. Follow these session directives:")
+            appendLine()
+            selected.forEach { directive ->
+                appendLine("## ${directive.name}")
+                appendLine(directive.content.trim())
+                appendLine()
+            }
+            appendLine("---")
+            appendLine("Apply the above directives consistently throughout this conversation.")
+        }.trim()
+    }
+
+    /**
+     * Create a new directive.
+     */
+    fun createDirective(
+        name: String,
+        content: String,
+    ): ChatDirective {
+        val directive = ChatDirective(
+            name = name,
+            content = content,
+        )
+        return repository.save(directive)
+    }
+
+    /**
+     * Update an existing directive.
+     * @return true if updated successfully
+     */
+    fun updateDirective(
+        id: String,
+        name: String,
+        content: String,
+    ): Boolean {
+        val existing = repository.get(id) ?: return false
+        val directive = existing.copy(
+            name = name,
+            content = content,
+        )
+        return repository.update(directive)
+    }
+
+    /**
+     * Delete a directive.
+     * @return true if deleted successfully
+     */
+    fun deleteDirective(id: String): Boolean = repository.delete(id)
+
+    /**
+     * Get a directive by id.
+     */
+    fun getDirective(id: String): ChatDirective? = repository.get(id)
+
+    /**
+     * Get a directive by name.
+     */
+    fun getDirectiveByName(name: String): ChatDirective? = repository.getByName(name)
+
+    /**
+     * List all directives.
+     */
+    fun listAllDirectives(): List<ChatDirective> = repository.list()
+
+    /**
+     * Check if a directive exists by id.
+     */
+    fun directiveExists(id: String): Boolean = repository.exists(id)
+
+    /**
+     * Check if a directive exists by name.
+     */
+    fun directiveExistsByName(name: String): Boolean = repository.existsByName(name)
+}
