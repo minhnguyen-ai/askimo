@@ -34,14 +34,22 @@ object ProviderValidator {
         settings: ProviderSettings,
     ): Boolean = when (provider) {
         OPENAI ->
-            (settings as? OpenAiSettings)?.apiKey?.isNotBlank() == true
+            (settings as? OpenAiSettings)?.let { s ->
+                s.apiKey.isNotBlank() && testApiConnection(s.apiKey, "https://api.openai.com/v1/models")
+            } == true
         XAI ->
-            (settings as? XAiSettings)?.apiKey?.isNotBlank() == true
+            (settings as? XAiSettings)?.let { s ->
+                s.apiKey.isNotBlank() && testApiConnection(s.apiKey, "https://api.x.ai/v1/models")
+            } == true
         GEMINI ->
-            (settings as? GeminiSettings)?.apiKey?.isNotBlank() == true
+            (settings as? GeminiSettings)?.let { s ->
+                s.apiKey.isNotBlank() && testGeminiConnection(s.apiKey)
+            } == true
         ANTHROPIC ->
-            (settings as? AnthropicSettings)?.apiKey?.isNotBlank() == true ||
-                (settings as? AnthropicSettings)?.apiKey.equals("default")
+            (settings as? AnthropicSettings)?.let { s ->
+                (s.apiKey.isNotBlank() || s.apiKey.equals("default")) &&
+                    testAnthropicConnection(s.apiKey)
+            } == true
 
         OLLAMA ->
             (settings as? OllamaSettings)?.let { s ->
@@ -110,5 +118,86 @@ object ProviderValidator {
             val code = runCatching { responseCode }.getOrDefault(0)
             code in 200..499
         }
+    }.getOrElse { false }
+
+    /**
+     * Tests API connection by making a request to the models endpoint.
+     * Works for OpenAI-compatible APIs (OpenAI, XAI, etc.)
+     */
+    private fun testApiConnection(
+        apiKey: String,
+        modelsUrl: String,
+        timeoutMs: Int = 5000,
+    ): Boolean = runCatching {
+        val uri = URI(modelsUrl)
+        val connection = uri.toURL().openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+        connection.connectTimeout = timeoutMs
+        connection.readTimeout = timeoutMs
+        connection.setRequestProperty("Authorization", "Bearer $apiKey")
+        connection.setRequestProperty("Content-Type", "application/json")
+
+        val responseCode = connection.responseCode
+        connection.disconnect()
+
+        // 200 = success, 401 = unauthorized (invalid API key)
+        responseCode == 200
+    }.getOrElse { false }
+
+    /**
+     * Tests Gemini API connection.
+     */
+    private fun testGeminiConnection(
+        apiKey: String,
+        timeoutMs: Int = 5000,
+    ): Boolean = runCatching {
+        // Gemini uses a different URL pattern with API key in the URL
+        val uri = URI("https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey")
+        val connection = uri.toURL().openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+        connection.connectTimeout = timeoutMs
+        connection.readTimeout = timeoutMs
+        connection.setRequestProperty("Content-Type", "application/json")
+
+        val responseCode = connection.responseCode
+        connection.disconnect()
+
+        responseCode == 200
+    }.getOrElse { false }
+
+    /**
+     * Tests Anthropic API connection.
+     */
+    private fun testAnthropicConnection(
+        apiKey: String,
+        timeoutMs: Int = 5000,
+    ): Boolean = runCatching {
+        // For "default" key used in testing, skip validation
+        if (apiKey == "default") {
+            return@runCatching true
+        }
+
+        // Anthropic doesn't have a models endpoint, so we make a minimal request
+        // to check if the API key is valid
+        val uri = URI("https://api.anthropic.com/v1/messages")
+        val connection = uri.toURL().openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+        connection.connectTimeout = timeoutMs
+        connection.readTimeout = timeoutMs
+        connection.setRequestProperty("x-api-key", apiKey)
+        connection.setRequestProperty("anthropic-version", "2023-06-01")
+        connection.setRequestProperty("Content-Type", "application/json")
+        connection.doOutput = true
+
+        // Send a minimal invalid request just to test authentication
+        // Valid API key will return 400 (bad request), invalid key returns 401
+        connection.outputStream.use { it.write("{}".toByteArray()) }
+
+        val responseCode = connection.responseCode
+        connection.disconnect()
+
+        // 400 means authenticated but bad request (which is expected)
+        // 401 means authentication failed (invalid API key)
+        responseCode == 400
     }.getOrElse { false }
 }

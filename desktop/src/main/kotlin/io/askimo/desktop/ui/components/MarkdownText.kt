@@ -6,19 +6,23 @@ package io.askimo.desktop.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,12 +35,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -45,6 +51,10 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import org.commonmark.ext.gfm.tables.TableBlock
 import org.commonmark.ext.gfm.tables.TableBody
 import org.commonmark.ext.gfm.tables.TableCell
@@ -58,6 +68,8 @@ import org.commonmark.node.Emphasis
 import org.commonmark.node.FencedCodeBlock
 import org.commonmark.node.HardLineBreak
 import org.commonmark.node.Heading
+import org.commonmark.node.Image
+import org.commonmark.node.Link
 import org.commonmark.node.ListItem
 import org.commonmark.node.Node
 import org.commonmark.node.OrderedList
@@ -93,13 +105,30 @@ private fun renderNode(node: Node) {
     var child = node.firstChild
     while (child != null) {
         when (child) {
-            is Paragraph -> renderParagraph(child)
+            is Paragraph -> {
+                // Check if paragraph contains only a video link
+                val videoUrl = extractVideoUrl(child)
+                if (videoUrl != null) {
+                    renderVideo(videoUrl)
+                } else {
+                    renderParagraph(child)
+                }
+            }
             is Heading -> renderHeading(child)
             is BulletList -> renderBulletList(child)
             is OrderedList -> renderOrderedList(child)
             is FencedCodeBlock -> renderCodeBlock(child)
             is BlockQuote -> renderBlockQuote(child)
             is TableBlock -> renderTable(child)
+            is Image -> {
+                // Check if it's actually a video
+                val destination = child.destination
+                if (isVideoUrl(destination)) {
+                    renderVideo(destination)
+                } else {
+                    renderImage(child)
+                }
+            }
             else -> renderNode(child)
         }
         child = child.next
@@ -272,6 +301,94 @@ private fun renderBlockQuote(blockQuote: BlockQuote) {
 }
 
 @Composable
+private fun renderImage(image: Image) {
+    val context = LocalPlatformContext.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(context)
+                .data(image.destination)
+                .crossfade(true)
+                .build(),
+            contentDescription = image.title ?: extractImageAltText(image),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                .padding(8.dp),
+        )
+
+        // Show caption if title or alt text exists
+        val caption = image.title ?: extractImageAltText(image)
+        if (caption.isNotBlank()) {
+            Text(
+                text = caption,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun renderVideo(videoUrl: String) {
+    val uriHandler = LocalUriHandler.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .clickable { uriHandler.openUri(videoUrl) },
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9f)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .border(1.dp, MaterialTheme.colorScheme.outline),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Play video",
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            Color.Black.copy(alpha = 0.5f),
+                            shape = CircleShape,
+                        )
+                        .padding(16.dp),
+                    tint = Color.White,
+                )
+                Text(
+                    text = "Click to play video",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+        }
+
+        Text(
+            text = videoUrl,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+        )
+    }
+}
+
+@Composable
 private fun renderTable(table: TableBlock) {
     val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
 
@@ -412,10 +529,69 @@ private fun buildInlineContent(
                     append(child.literal)
                 }
             }
+            is Image -> {
+                // For inline images, show [image: alt text] placeholder
+                append("[image: ${extractImageAltText(child)}]")
+            }
             is HardLineBreak, is SoftLineBreak -> append("\n")
             is Paragraph -> append(buildInlineContent(child, inlineCodeBg))
             else -> append(buildInlineContent(child, inlineCodeBg))
         }
         child = child.next
     }
+}
+
+/**
+ * Extract alt text from an image node.
+ */
+private fun extractImageAltText(image: Image): String {
+    val builder = StringBuilder()
+    var child = image.firstChild
+    while (child != null) {
+        if (child is MarkdownText) {
+            builder.append(child.literal)
+        }
+        child = child.next
+    }
+    return builder.toString()
+}
+
+/**
+ * Check if a URL is a video URL based on file extension.
+ */
+private fun isVideoUrl(url: String): Boolean {
+    val videoExtensions = listOf(".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v", ".flv", ".wmv")
+    return videoExtensions.any { url.lowercase().endsWith(it) }
+}
+
+/**
+ * Extract video URL from paragraph if it's the only content.
+ * Returns the video URL if found, null otherwise.
+ */
+private fun extractVideoUrl(paragraph: Paragraph): String? {
+    var child = paragraph.firstChild
+    var linkFound: String? = null
+    var hasOtherContent = false
+
+    while (child != null) {
+        when (child) {
+            is Link -> {
+                val destination = child.destination
+                if (isVideoUrl(destination)) {
+                    linkFound = destination
+                } else {
+                    hasOtherContent = true
+                }
+            }
+            is MarkdownText -> {
+                if (child.literal.trim().isNotEmpty()) {
+                    hasOtherContent = true
+                }
+            }
+            else -> hasOtherContent = true
+        }
+        child = child.next
+    }
+
+    return if (!hasOtherContent && linkFound != null) linkFound else null
 }
