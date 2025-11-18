@@ -7,6 +7,7 @@ package io.askimo.core.session
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.askimo.core.util.AskimoHome
+import io.askimo.core.util.Logger.debug
 import kotlinx.serialization.json.Json
 import java.sql.Connection
 import java.time.LocalDateTime
@@ -53,7 +54,8 @@ class ChatSessionRepository {
                     id TEXT PRIMARY KEY,
                     title TEXT NOT NULL,
                     created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
+                    updated_at TEXT NOT NULL,
+                    directive_id TEXT
                 )
             """,
             )
@@ -87,25 +89,27 @@ class ChatSessionRepository {
         }
     }
 
-    fun createSession(title: String): ChatSession {
+    fun createSession(title: String, directiveId: String? = null): ChatSession {
         val session = ChatSession(
             id = UUID.randomUUID().toString(),
             title = title,
             createdAt = LocalDateTime.now(),
             updatedAt = LocalDateTime.now(),
+            directiveId = directiveId,
         )
 
         dataSource.connection.use { conn ->
             conn.prepareStatement(
                 """
-                INSERT INTO chat_sessions (id, title, created_at, updated_at)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO chat_sessions (id, title, created_at, updated_at, directive_id)
+                VALUES (?, ?, ?, ?, ?)
             """,
             ).use { stmt ->
                 stmt.setString(1, session.id)
                 stmt.setString(2, session.title)
                 stmt.setString(3, session.createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
                 stmt.setString(4, session.updatedAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                stmt.setString(5, directiveId)
                 stmt.executeUpdate()
             }
         }
@@ -119,7 +123,7 @@ class ChatSessionRepository {
             conn.createStatement().use { stmt ->
                 val rs = stmt.executeQuery(
                     """
-                    SELECT id, title, created_at, updated_at
+                    SELECT id, title, created_at, updated_at, directive_id
                     FROM chat_sessions
                     ORDER BY updated_at DESC
                 """,
@@ -131,6 +135,7 @@ class ChatSessionRepository {
                             title = rs.getString("title"),
                             createdAt = LocalDateTime.parse(rs.getString("created_at")),
                             updatedAt = LocalDateTime.parse(rs.getString("updated_at")),
+                            directiveId = rs.getString("directive_id"),
                         ),
                     )
                 }
@@ -139,27 +144,26 @@ class ChatSessionRepository {
         return sessions
     }
 
-    fun getSession(sessionId: String): ChatSession? {
-        dataSource.connection.use { conn ->
-            conn.prepareStatement(
-                """
-                SELECT id, title, created_at, updated_at
-                FROM chat_sessions
-                WHERE id = ?
-            """,
-            ).use { stmt ->
-                stmt.setString(1, sessionId)
-                val rs = stmt.executeQuery()
-                return if (rs.next()) {
-                    ChatSession(
-                        id = rs.getString("id"),
-                        title = rs.getString("title"),
-                        createdAt = LocalDateTime.parse(rs.getString("created_at")),
-                        updatedAt = LocalDateTime.parse(rs.getString("updated_at")),
-                    )
-                } else {
-                    null
-                }
+    fun getSession(sessionId: String): ChatSession? = dataSource.connection.use { conn ->
+        conn.prepareStatement(
+            """
+            SELECT id, title, created_at, updated_at, directive_id
+            FROM chat_sessions
+            WHERE id = ?
+        """,
+        ).use { stmt ->
+            stmt.setString(1, sessionId)
+            val rs = stmt.executeQuery()
+            if (rs.next()) {
+                ChatSession(
+                    id = rs.getString("id"),
+                    title = rs.getString("title"),
+                    createdAt = LocalDateTime.parse(rs.getString("created_at")),
+                    updatedAt = LocalDateTime.parse(rs.getString("updated_at")),
+                    directiveId = rs.getString("directive_id"),
+                )
+            } else {
+                null
             }
         }
     }
@@ -539,6 +543,28 @@ class ChatSessionRepository {
                 stmt.setString(2, sessionId)
                 stmt.executeUpdate()
             }
+        }
+    }
+
+    /**
+     * Update the directive for a chat session.
+     * @param sessionId The session ID
+     * @param directiveId The directive ID to set (null to clear directive)
+     * @return true if updated successfully
+     */
+    fun updateSessionDirective(sessionId: String, directiveId: String?): Boolean {
+        dataSource.connection.use { conn ->
+            val rowsAffected = conn.prepareStatement(
+                """
+                UPDATE chat_sessions SET directive_id = ?, updated_at = ? WHERE id = ?
+            """,
+            ).use { stmt ->
+                stmt.setString(1, directiveId)
+                stmt.setString(2, LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                stmt.setString(3, sessionId)
+                stmt.executeUpdate()
+            }
+            return rowsAffected > 0
         }
     }
 

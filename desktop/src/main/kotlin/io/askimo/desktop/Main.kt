@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.KeyboardDoubleArrowLeft
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -601,6 +602,8 @@ fun mainContent(
                     onJumpToMessage = { messageId, timestamp ->
                         chatViewModel.jumpToMessage(messageId, timestamp)
                     },
+                    selectedDirective = chatViewModel.selectedDirective,
+                    onDirectiveSelected = { directiveId -> chatViewModel.setDirective(directiveId) },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -677,7 +680,6 @@ private fun sessionItemWithMenu(
             colors = ComponentColors.navigationDrawerItemColors(),
         )
 
-        // Three-dot menu button with dropdown
         Box {
             IconButton(
                 onClick = { showMenu = true },
@@ -693,11 +695,11 @@ private fun sessionItemWithMenu(
                 )
             }
 
-            androidx.compose.material3.DropdownMenu(
+            ComponentColors.themedDropdownMenu(
                 expanded = showMenu,
                 onDismissRequest = { showMenu = false },
             ) {
-                androidx.compose.material3.DropdownMenuItem(
+                DropdownMenuItem(
                     text = { Text("Delete") },
                     onClick = {
                         showMenu = false
@@ -711,7 +713,6 @@ private fun sessionItemWithMenu(
                         )
                     },
                 )
-                // Future menu items can be added here
             }
         }
     }

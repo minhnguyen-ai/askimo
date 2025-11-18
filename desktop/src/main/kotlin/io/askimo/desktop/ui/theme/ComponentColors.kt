@@ -4,10 +4,12 @@
  */
 package io.askimo.desktop.ui.theme
 
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -18,6 +20,7 @@ import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 
@@ -225,5 +228,44 @@ object ComponentColors {
             blue = surfaceColor.blue + (primaryColor.blue - surfaceColor.blue) * tintAmount,
             alpha = surfaceColor.alpha,
         )
+    }
+
+    /**
+     * Themed DropdownMenu that uses correct theme colors.
+     *
+     * DropdownMenu in Material3 uses surfaceContainer by default, which doesn't follow
+     * custom theme colors. This wrapper overrides the color scheme to use the proper
+     * surface color from the theme.
+     *
+     * Usage:
+     * ```kotlin
+     * ComponentColors.themedDropdownMenu(
+     *     expanded = expanded,
+     *     onDismissRequest = { expanded = false }
+     * ) {
+     *     DropdownMenuItem(...)
+     *     DropdownMenuItem(...)
+     * }
+     * ```
+     */
+    @Composable
+    fun themedDropdownMenu(
+        expanded: Boolean,
+        onDismissRequest: () -> Unit,
+        modifier: Modifier = Modifier,
+        content: @Composable ColumnScope.() -> Unit,
+    ) {
+        MaterialTheme(
+            colorScheme = MaterialTheme.colorScheme.copy(
+                surfaceContainer = MaterialTheme.colorScheme.surface,
+            ),
+        ) {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismissRequest,
+                modifier = modifier,
+                content = content,
+            )
+        }
     }
 }

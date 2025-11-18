@@ -1,3 +1,4 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import java.time.Instant
 import java.time.Year
 import java.time.ZoneOffset
@@ -75,9 +76,9 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg,
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
+                TargetFormat.Dmg,
+                TargetFormat.Msi,
+                TargetFormat.Deb,
             )
             packageName = "Askimo"
             // Convert 0.x.y to 1.x.y for packaging (DMG requires MAJOR > 0)

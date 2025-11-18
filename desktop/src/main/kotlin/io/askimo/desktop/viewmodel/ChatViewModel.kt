@@ -79,6 +79,9 @@ class ChatViewModel(
     var isSearchMode by mutableStateOf(false)
         private set
 
+    var selectedDirective by mutableStateOf<String?>(null)
+        private set
+
     private val sessionService = ChatSessionService()
 
     private var onMessageComplete: (() -> Unit)? = null
@@ -279,6 +282,10 @@ class ChatViewModel(
                     currentCursor = result.cursor
                     hasMoreMessages = result.hasMore
                     _currentSessionId.value = sessionId
+
+                    // Load directive from the resumed session
+                    val session = chatService.getSession()
+                    selectedDirective = session.currentChatSession?.directiveId
                 } else {
                     errorMessage = result.errorMessage
                 }
@@ -497,8 +504,14 @@ class ChatViewModel(
         // Clear search state
         clearSearch()
 
-        // Clear the current session and memory
-        chatService.getSession().currentChatSession = null
+        // Start a new session with the currently selected directive
+        val session = chatService.getSession()
+        session.currentChatSession = null
+        if (selectedDirective != null) {
+            // Pre-create session with directive so it's ready for the first message
+            session.startNewChatSession(selectedDirective)
+        }
+
         chatService.clearMemory()
     }
 
@@ -520,4 +533,34 @@ class ChatViewModel(
      * @return SessionConfigInfo containing provider, model, and settings description
      */
     fun getSessionConfigInfo(): SessionConfigInfo = chatService.getSession().getConfigInfo()
+
+    /**
+     * Set the directive for the current or next chat session.
+     * @param directiveId The directive ID to set (null to clear directive)
+     */
+    fun setDirective(directiveId: String?) {
+        selectedDirective = directiveId
+
+        // If there's an active session, update it immediately
+        val session = chatService.getSession()
+        if (session.currentChatSession != null) {
+            session.setCurrentSessionDirective(directiveId)
+        }
+        // Otherwise, the directive will be applied when a new session is started
+    }
+
+    /**
+     * Get the currently selected directive name for display.
+     * @return The directive name or null if none selected
+     */
+    fun getSelectedDirectiveName(): String? {
+        if (selectedDirective == null) return null
+
+        return try {
+            val directiveRepository = io.askimo.core.directive.ChatDirectiveRepository()
+            directiveRepository.get(selectedDirective!!)?.name
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

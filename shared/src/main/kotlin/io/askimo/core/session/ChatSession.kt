@@ -11,6 +11,7 @@ data class ChatSession(
     val title: String,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
+    val directiveId: String? = null,
 )
 
 data class ChatMessage(
