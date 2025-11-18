@@ -19,6 +19,7 @@ graalvmSvm = "25.0.1"
 sqlite = "3.50.3.0"
 hikaricp = "7.0.2"
 compose = "1.9.3"
+coil = "3.3.0"
 
 [libraries]
 # JLine
@@ -39,6 +40,10 @@ langchain4j-pgvector = { group = "dev.langchain4j", name = "langchain4j-pgvector
 # Markdown
 commonmark = { group = "org.commonmark", name = "commonmark", version.ref = "commonmark" }
 commonmark-ext-gfm-tables = { group = "org.commonmark", name = "commonmark-ext-gfm-tables", version.ref = "commonmark" }
+
+# Image Loading (Coil)
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 
 # Jackson
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }

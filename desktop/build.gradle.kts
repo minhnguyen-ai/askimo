@@ -26,6 +26,8 @@ dependencies {
     implementation(project(":shared"))
     implementation(libs.commonmark)
     implementation(libs.commonmark.ext.gfm.tables)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     testImplementation(kotlin("test"))
 }
