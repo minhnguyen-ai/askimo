@@ -67,6 +67,7 @@ import io.askimo.core.session.SettingField
 import io.askimo.desktop.model.AccentColor
 import io.askimo.desktop.model.FontSettings
 import io.askimo.desktop.model.FontSize
+import io.askimo.desktop.model.KeyboardShortcuts
 import io.askimo.desktop.model.ThemeMode
 import io.askimo.desktop.service.ThemePreferences
 import io.askimo.desktop.ui.theme.ComponentColors
@@ -293,6 +294,16 @@ fun settingsView(
             )
 
             fontSettingsCard()
+
+            // Keyboard Shortcuts Section
+            Text(
+                text = "Keyboard Shortcuts",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(top = 24.dp),
+            )
+
+            keyboardShortcutsCard()
         }
 
         // Snackbar for success messages
@@ -648,6 +659,131 @@ private fun accentColorOption(
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun keyboardShortcutsCard() {
+    val shortcutsByCategory = remember { KeyboardShortcuts.getShortcutsByCategory() }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = ComponentColors.bannerCardColors(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = "Available Shortcuts",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+
+            // Convert to list for easier column distribution
+            val categoriesList = shortcutsByCategory.entries.toList()
+            // Use 2 columns if we have 4 or fewer categories, otherwise 3 columns for larger lists
+            val columnsCount = if (categoriesList.size <= 4) 2 else 3
+
+            // Distribute categories across columns
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                for (columnIndex in 0 until columnsCount) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        categoriesList.filterIndexed { index, _ ->
+                            index % columnsCount == columnIndex
+                        }.forEach { (category, shortcuts) ->
+                            shortcutCategory(category)
+                            shortcuts.forEach { (description, shortcut) ->
+                                shortcutRowCompact(description, shortcut)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun shortcutCategory(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier = Modifier.padding(top = 4.dp),
+    )
+}
+
+@Composable
+private fun shortcutRow(description: String, shortcut: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.9f),
+        )
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+            ),
+        ) {
+            Text(
+                text = shortcut,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontFamily = FontFamily.Monospace,
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun shortcutRowCompact(description: String, shortcut: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.9f),
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+            ),
+        ) {
+            Text(
+                text = shortcut,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontFamily = FontFamily.Monospace,
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            )
         }
     }
 }

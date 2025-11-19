@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Card
@@ -45,8 +47,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -59,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import io.askimo.core.directive.ChatDirective
 import io.askimo.core.directive.ChatDirectiveRepository
 import io.askimo.core.directive.ChatDirectiveService
+import io.askimo.core.util.Logger.debug
 import io.askimo.desktop.model.ChatMessage
 import io.askimo.desktop.model.FileAttachment
 import io.askimo.desktop.ui.components.manageDirectivesDialog
@@ -158,9 +165,12 @@ fun chatView(
     isSearchMode: Boolean = false,
     searchQuery: String = "",
     searchResults: List<ChatMessage> = emptyList(),
+    currentSearchResultIndex: Int = 0,
     isSearching: Boolean = false,
     onSearch: (String) -> Unit = {},
     onClearSearch: () -> Unit = {},
+    onNextSearchResult: () -> Unit = {},
+    onPreviousSearchResult: () -> Unit = {},
     onJumpToMessage: (String, LocalDateTime) -> Unit = { _, _ -> },
     selectedDirective: String? = null,
     onDirectiveSelected: (String?) -> Unit = {},
@@ -177,6 +187,16 @@ fun chatView(
 
     LaunchedEffect(Unit) {
         availableDirectives = directiveService.listAllDirectives()
+    }
+
+    // Focus requester for search field
+    val searchFocusRequester = remember { FocusRequester() }
+
+    // Focus search field when search mode is activated
+    LaunchedEffect(isSearchMode) {
+        if (isSearchMode) {
+            searchFocusRequester.requestFocus()
+        }
     }
 
     // Show new directive dialog
@@ -201,7 +221,31 @@ fun chatView(
     }
 
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .onPreviewKeyEvent { keyEvent ->
+                if (keyEvent.type != KeyEventType.KeyDown) {
+                    return@onPreviewKeyEvent false
+                }
+
+                when {
+                    // Escape: Close search box
+                    keyEvent.key == Key.Escape && isSearchMode -> {
+                        onClearSearch()
+                        true
+                    }
+                    // F3/Shift+F3: Navigate search results
+                    keyEvent.key == Key.F3 && isSearchMode && searchResults.isNotEmpty() -> {
+                        if (keyEvent.isShiftPressed) {
+                            onPreviousSearchResult()
+                        } else {
+                            onNextSearchResult()
+                        }
+                        true
+                    }
+                    else -> false
+                }
+            },
     ) {
         // Configuration info header
         if (provider != null && model != null) {
@@ -497,67 +541,99 @@ fun chatView(
             }
         }
 
-        // Search bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = onSearch,
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("Search in conversation...") },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Search,
-                        contentDescription = "Search",
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(
-                            onClick = onClearSearch,
-                            modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
-                        ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Clear search",
-                            )
-                        }
-                    }
-                },
-                singleLine = true,
-                colors = ComponentColors.outlinedTextFieldColors(),
-            )
-        }
-
-        // Search mode indicator
+        // Search bar - fixed at top, always visible when search mode is active
         if (isSearchMode) {
+            HorizontalDivider()
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 colors = ComponentColors.bannerCardColors(),
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                        .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text(
-                        text = if (isSearching) {
-                            "Searching..."
-                        } else {
-                            "Found ${searchResults.size} result(s)"
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    // Search icon
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
+
+                    // Search input field
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = onSearch,
+                        modifier = Modifier
+                            .weight(1f)
+                            .focusRequester(searchFocusRequester),
+                        placeholder = { Text("Search in conversation...") },
+                        singleLine = true,
+                        colors = ComponentColors.outlinedTextFieldColors(),
+                    )
+
+                    // Result count
+                    if (!isSearching && searchQuery.isNotEmpty()) {
+                        Text(
+                            text = if (searchResults.isEmpty()) {
+                                "No results"
+                            } else {
+                                "${currentSearchResultIndex + 1}/${searchResults.size}"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                        )
+                    }
+
+                    // Navigation buttons (Previous)
+                    IconButton(
+                        onClick = onPreviousSearchResult,
+                        enabled = searchResults.isNotEmpty(),
+                        modifier = Modifier
+                            .size(36.dp)
+                            .pointerHoverIcon(PointerIcon.Hand),
+                    ) {
+                        Icon(
+                            Icons.Default.KeyboardArrowUp,
+                            contentDescription = "Previous result (Shift+F3)",
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+
+                    // Navigation buttons (Next)
+                    IconButton(
+                        onClick = onNextSearchResult,
+                        enabled = searchResults.isNotEmpty(),
+                        modifier = Modifier
+                            .size(36.dp)
+                            .pointerHoverIcon(PointerIcon.Hand),
+                    ) {
+                        Icon(
+                            Icons.Default.KeyboardArrowDown,
+                            contentDescription = "Next result (F3)",
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+
+                    // Close button
+                    IconButton(
+                        onClick = onClearSearch,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .pointerHoverIcon(PointerIcon.Hand),
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Close search",
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 }
             }
         }
@@ -588,6 +664,7 @@ fun chatView(
                         isLoadingPrevious = false,
                         onLoadPrevious = {},
                         searchQuery = searchQuery,
+                        currentSearchResultIndex = currentSearchResultIndex,
                         onMessageClick = onJumpToMessage,
                     )
                 }
@@ -615,11 +692,53 @@ fun chatView(
 
         HorizontalDivider()
 
+        // File attachment handler
+        val openFileDialog = {
+            val fileChooser = FileDialog(null as Frame?, "Select File", FileDialog.LOAD)
+            fileChooser.isVisible = true
+            val selectedFile = fileChooser.file
+            val selectedDir = fileChooser.directory
+            if (selectedFile != null && selectedDir != null) {
+                val file = java.io.File(selectedDir, selectedFile)
+                try {
+                    val content = file.readText()
+                    val attachment = FileAttachment(
+                        fileName = file.name,
+                        content = content,
+                        mimeType = file.extension,
+                        size = file.length(),
+                    )
+                    onAttachmentsChange(attachments + attachment)
+                } catch (e: Exception) {
+                    debug("Error reading file: ${e.message}", e)
+                }
+            }
+        }
+
         // Input area
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
+                .onPreviewKeyEvent { keyEvent ->
+                    // Handle Cmd/Ctrl + A for file attachment
+                    if (keyEvent.type == KeyEventType.KeyDown &&
+                        keyEvent.key == Key.A &&
+                        !keyEvent.isShiftPressed
+                    ) {
+                        val isMac = System.getProperty("os.name").contains("Mac", ignoreCase = true)
+                        val modifierPressed = if (isMac) keyEvent.isMetaPressed else keyEvent.isCtrlPressed
+
+                        if (modifierPressed && !isLoading) {
+                            openFileDialog()
+                            true // consume the event
+                        } else {
+                            false // let the text field handle Ctrl+A for select all
+                        }
+                    } else {
+                        false // don't consume other key events
+                    }
+                },
         ) {
             // File attachments display
             if (attachments.isNotEmpty()) {
@@ -645,38 +764,34 @@ fun chatView(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Attach file button
-                IconButton(
-                    onClick = {
-                        // Open file picker
-                        val fileChooser =
-                            FileDialog(null as Frame?, "Select File", FileDialog.LOAD)
-                        fileChooser.isVisible = true
-                        val selectedFile = fileChooser.file
-                        val selectedDir = fileChooser.directory
-                        if (selectedFile != null && selectedDir != null) {
-                            val file = java.io.File(selectedDir, selectedFile)
-                            try {
-                                val content = file.readText()
-                                val attachment = FileAttachment(
-                                    fileName = file.name,
-                                    content = content,
-                                    mimeType = file.extension,
-                                    size = file.length(),
-                                )
-                                onAttachmentsChange(attachments + attachment)
-                            } catch (e: Exception) {
-                                // Handle error - file too large or unreadable
-                                println("Error reading file: ${e.message}")
-                            }
+                val isMac = remember { System.getProperty("os.name").contains("Mac", ignoreCase = true) }
+                val modKey = if (isMac) "⌘" else "Ctrl"
+
+                TooltipArea(
+                    tooltip = {
+                        Surface(
+                            modifier = Modifier.padding(4.dp),
+                            color = MaterialTheme.colorScheme.inverseOnSurface,
+                            shape = MaterialTheme.shapes.small,
+                        ) {
+                            Text(
+                                text = "Attach File ($modKey+A)",
+                                modifier = Modifier.padding(8.dp),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
                         }
                     },
-                    colors = ComponentColors.primaryIconButtonColors(),
-                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
                 ) {
-                    Icon(
-                        Icons.Default.AttachFile,
-                        contentDescription = "Attach file",
-                    )
+                    IconButton(
+                        onClick = openFileDialog,
+                        colors = ComponentColors.primaryIconButtonColors(),
+                        modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                    ) {
+                        Icon(
+                            Icons.Default.AttachFile,
+                            contentDescription = "Attach file",
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(4.dp))

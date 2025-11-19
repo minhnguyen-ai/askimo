@@ -56,6 +56,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
@@ -142,6 +150,7 @@ fun app() {
     var isSessionsExpanded by remember { mutableStateOf(true) }
     var attachments by remember { mutableStateOf(listOf<FileAttachment>()) }
     var sidebarWidth by remember { mutableStateOf(280.dp) }
+    var showQuitDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Create ViewModels
@@ -192,7 +201,58 @@ fun app() {
         typography = customTypography,
     ) {
         // Always show sidebar in expanded or collapsed mode
-        Row(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .onPreviewKeyEvent { keyEvent ->
+                    // Only handle key down events for shortcuts
+                    if (keyEvent.type != KeyEventType.KeyDown) {
+                        return@onPreviewKeyEvent false
+                    }
+
+                    val isMac = System.getProperty("os.name").contains("Mac", ignoreCase = true)
+                    val modifierPressed = if (isMac) keyEvent.isMetaPressed else keyEvent.isCtrlPressed
+
+                    when {
+                        // Cmd/Ctrl + N: New Chat
+                        keyEvent.key == Key.N && modifierPressed && !keyEvent.isShiftPressed -> {
+                            chatViewModel.clearChat()
+                            inputText = TextFieldValue("")
+                            attachments = emptyList()
+                            currentView = View.CHAT
+                            true
+                        }
+                        // Cmd/Ctrl + F: Search in Chat (only in chat view)
+                        keyEvent.key == Key.F && modifierPressed && !keyEvent.isShiftPressed && currentView == View.CHAT -> {
+                            if (!chatViewModel.isSearchMode) {
+                                chatViewModel.enableSearchMode() // Enable search mode
+                            }
+                            true
+                        }
+                        // Cmd/Ctrl + H: Toggle Chat History
+                        keyEvent.key == Key.H && modifierPressed && !keyEvent.isShiftPressed -> {
+                            isSessionsExpanded = !isSessionsExpanded
+                            true
+                        }
+                        // Cmd/Ctrl + ,: Open Settings
+                        keyEvent.key == Key.Comma && modifierPressed && !keyEvent.isShiftPressed -> {
+                            currentView = View.SETTINGS
+                            true
+                        }
+                        // Cmd/Ctrl + S: Stop AI Response (only when loading)
+                        keyEvent.key == Key.S && modifierPressed && !keyEvent.isShiftPressed && chatViewModel.isLoading -> {
+                            chatViewModel.cancelResponse()
+                            true
+                        }
+                        // Cmd/Ctrl + Q: Quit Application
+                        keyEvent.key == Key.Q && modifierPressed && !keyEvent.isShiftPressed -> {
+                            showQuitDialog = true
+                            true
+                        }
+                        else -> false // Don't consume other key events
+                    }
+                },
+        ) {
             // Observe current session ID
             val currentSessionId by chatViewModel.currentSessionId.collectAsState()
 
@@ -284,9 +344,36 @@ fun app() {
                 onNavigateToSettings = { currentView = View.SETTINGS },
             )
         }
+
+        // Quit confirmation dialog
+        if (showQuitDialog) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showQuitDialog = false },
+                title = { Text("Quit Askimo?") },
+                text = { Text("Are you sure you want to quit Askimo?") },
+                confirmButton = {
+                    androidx.compose.material3.Button(
+                        onClick = {
+                            showQuitDialog = false
+                            kotlin.system.exitProcess(0)
+                        },
+                    ) {
+                        Text("Yes")
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(
+                        onClick = { showQuitDialog = false },
+                    ) {
+                        Text("No")
+                    }
+                },
+            )
+        }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun sidebar(
     isExpanded: Boolean,
@@ -364,16 +451,35 @@ fun sidebar(
                     .verticalScroll(rememberScrollState()),
             ) {
                 // New Chat
-                NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    label = { Text("New Chat") },
-                    selected = false,
-                    onClick = onNewChat,
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp)
-                        .pointerHoverIcon(PointerIcon.Hand),
-                    colors = ComponentColors.navigationDrawerItemColors(),
-                )
+                val isMac = remember { System.getProperty("os.name").contains("Mac", ignoreCase = true) }
+                val modKey = if (isMac) "⌘" else "Ctrl"
+
+                TooltipArea(
+                    tooltip = {
+                        Surface(
+                            modifier = Modifier.padding(4.dp),
+                            color = MaterialTheme.colorScheme.inverseOnSurface,
+                            shape = MaterialTheme.shapes.small,
+                        ) {
+                            Text(
+                                text = "New Chat ($modKey+N)",
+                                modifier = Modifier.padding(8.dp),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    },
+                ) {
+                    NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                        label = { Text("New Chat") },
+                        selected = false,
+                        onClick = onNewChat,
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .pointerHoverIcon(PointerIcon.Hand),
+                        colors = ComponentColors.navigationDrawerItemColors(),
+                    )
+                }
 
                 // Sessions (Collapsible)
                 NavigationDrawerItem(
@@ -596,9 +702,12 @@ fun mainContent(
                     isSearchMode = chatViewModel.isSearchMode,
                     searchQuery = chatViewModel.searchQuery,
                     searchResults = chatViewModel.searchResults,
+                    currentSearchResultIndex = chatViewModel.currentSearchResultIndex,
                     isSearching = chatViewModel.isSearching,
                     onSearch = { query -> chatViewModel.searchMessages(query) },
                     onClearSearch = { chatViewModel.clearSearch() },
+                    onNextSearchResult = { chatViewModel.nextSearchResult() },
+                    onPreviousSearchResult = { chatViewModel.previousSearchResult() },
                     onJumpToMessage = { messageId, timestamp ->
                         chatViewModel.jumpToMessage(messageId, timestamp)
                     },
