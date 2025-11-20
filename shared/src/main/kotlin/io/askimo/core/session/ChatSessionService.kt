@@ -4,6 +4,8 @@
  */
 package io.askimo.core.session
 
+import java.time.LocalDateTime
+
 /**
  * Result of resuming a chat session.
  */
@@ -21,7 +23,7 @@ data class ResumeSessionPaginatedResult(
     val success: Boolean,
     val sessionId: String,
     val messages: List<ChatMessage> = emptyList(),
-    val cursor: java.time.LocalDateTime? = null,
+    val cursor: LocalDateTime? = null,
     val hasMore: Boolean = false,
     val errorMessage: String? = null,
 )
@@ -161,7 +163,7 @@ class ChatSessionService(
      * @param limit The number of messages to load
      * @return Pair of messages list and next cursor
      */
-    fun loadPreviousMessages(sessionId: String, cursor: java.time.LocalDateTime, limit: Int): Pair<List<ChatMessage>, java.time.LocalDateTime?> = repository.getMessagesPaginated(
+    fun loadPreviousMessages(sessionId: String, cursor: LocalDateTime, limit: Int): Pair<List<ChatMessage>, LocalDateTime?> = repository.getMessagesPaginated(
         sessionId = sessionId,
         limit = limit,
         cursor = cursor,
