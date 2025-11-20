@@ -76,6 +76,9 @@ class ChatViewModel(
     var searchResults by mutableStateOf<List<ChatMessage>>(emptyList())
         private set
 
+    var currentSearchResultIndex by mutableStateOf(0)
+        private set
+
     var isSearchMode by mutableStateOf(false)
         private set
 
@@ -357,9 +360,11 @@ class ChatViewModel(
         searchQuery = query
 
         if (query.isBlank()) {
-            // Clear search results and exit search mode
+            // Clear search results but keep search mode active
             searchResults = emptyList()
-            isSearchMode = false
+            currentSearchResultIndex = 0
+            // DON'T set isSearchMode = false here!
+            // User must close search with the X button
             return
         }
 
@@ -382,6 +387,17 @@ class ChatViewModel(
                     )
                 }
 
+                // Reset to first result
+                currentSearchResultIndex = 0
+
+                // Auto-jump to first result if available
+                if (searchResults.isNotEmpty()) {
+                    val firstResult = searchResults[0]
+                    if (firstResult.id != null && firstResult.timestamp != null) {
+                        jumpToMessage(firstResult.id, firstResult.timestamp)
+                    }
+                }
+
                 isSearching = false
             } catch (e: Exception) {
                 errorMessage = "Error searching messages: ${e.message}"
@@ -391,12 +407,50 @@ class ChatViewModel(
     }
 
     /**
+     * Enable search mode without performing a search.
+     */
+    fun enableSearchMode() {
+        isSearchMode = true
+    }
+
+    /**
      * Clear the search and return to normal view.
      */
     fun clearSearch() {
         searchQuery = ""
         searchResults = emptyList()
+        currentSearchResultIndex = 0
         isSearchMode = false
+    }
+
+    /**
+     * Navigate to the next search result.
+     */
+    fun nextSearchResult() {
+        if (searchResults.isEmpty()) return
+        currentSearchResultIndex = (currentSearchResultIndex + 1) % searchResults.size
+        // Jump to the message
+        val result = searchResults[currentSearchResultIndex]
+        if (result.id != null && result.timestamp != null) {
+            jumpToMessage(result.id, result.timestamp)
+        }
+    }
+
+    /**
+     * Navigate to the previous search result.
+     */
+    fun previousSearchResult() {
+        if (searchResults.isEmpty()) return
+        currentSearchResultIndex = if (currentSearchResultIndex == 0) {
+            searchResults.size - 1
+        } else {
+            currentSearchResultIndex - 1
+        }
+        // Jump to the message
+        val result = searchResults[currentSearchResultIndex]
+        if (result.id != null && result.timestamp != null) {
+            jumpToMessage(result.id, result.timestamp)
+        }
     }
 
     /**
@@ -420,8 +474,8 @@ class ChatViewModel(
             try {
                 isLoading = true
 
-                // Clear search mode
-                clearSearch()
+                // Don't clear search mode - we might be jumping to a search result
+                // clearSearch()  // REMOVED - was causing search box to disappear
 
                 // Load messages around the target message
                 // We'll load MESSAGE_PAGE_SIZE/2 messages before and after

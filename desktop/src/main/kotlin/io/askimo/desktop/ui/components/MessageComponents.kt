@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.onPointerEvent
@@ -56,6 +57,7 @@ fun messageList(
     isLoadingPrevious: Boolean = false,
     onLoadPrevious: () -> Unit = {},
     searchQuery: String = "",
+    currentSearchResultIndex: Int = 0,
     onMessageClick: ((String, java.time.LocalDateTime) -> Unit)? = null,
 ) {
     val scrollState = rememberScrollState()
@@ -65,6 +67,19 @@ fun messageList(
     LaunchedEffect(messages.size, isThinking) {
         if (shouldAutoScroll) {
             scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
+    // Auto-scroll to active search result when it changes
+    LaunchedEffect(currentSearchResultIndex, searchQuery) {
+        if (searchQuery.isNotBlank() && messages.isNotEmpty()) {
+            // Estimate the scroll position for the active result
+            // Each message bubble is approximately 150dp (this is an estimate)
+            val estimatedItemHeight = 150f
+            val targetPosition = (currentSearchResultIndex * estimatedItemHeight * scrollState.maxValue / (messages.size * estimatedItemHeight)).toInt()
+
+            // Scroll to the estimated position
+            scrollState.animateScrollTo(targetPosition)
         }
     }
 
@@ -104,10 +119,12 @@ fun messageList(
             }
         }
 
-        messages.forEach { message ->
+        messages.forEachIndexed { index, message ->
+            val isActiveResult = searchQuery.isNotBlank() && index == currentSearchResultIndex
             messageBubble(
                 message = message,
                 searchQuery = searchQuery,
+                isActiveSearchResult = isActiveResult,
                 onMessageClick = onMessageClick,
             )
         }
@@ -136,6 +153,7 @@ fun messageList(
 fun messageBubble(
     message: ChatMessage,
     searchQuery: String = "",
+    isActiveSearchResult: Boolean = false,
     onMessageClick: ((String, java.time.LocalDateTime) -> Unit)? = null,
 ) {
     val clipboardManager = LocalClipboardManager.current
@@ -203,7 +221,9 @@ fun messageBubble(
                                         text = highlightSearchText(
                                             text = message.content,
                                             query = searchQuery,
-                                            highlightColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.4f),
+                                            highlightColor = Color(0xFFFFEB3B).copy(alpha = 0.5f), // Yellow for normal matches
+                                            isActiveResult = isActiveSearchResult,
+                                            activeHighlightColor = Color(0xFFFF9800).copy(alpha = 0.8f), // Bright orange for active match
                                         ),
                                         modifier = Modifier.padding(12.dp),
                                         style = MaterialTheme.typography.bodyMedium,
@@ -225,7 +245,9 @@ fun messageBubble(
                                         text = highlightSearchText(
                                             text = message.content,
                                             query = searchQuery,
-                                            highlightColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.4f),
+                                            highlightColor = Color(0xFFFFEB3B).copy(alpha = 0.5f), // Yellow for normal matches
+                                            isActiveResult = isActiveSearchResult,
+                                            activeHighlightColor = Color(0xFFFF9800).copy(alpha = 0.8f), // Bright orange for active match
                                         ),
                                         modifier = Modifier.padding(12.dp),
                                         style = MaterialTheme.typography.bodyMedium,
