@@ -35,6 +35,9 @@ import androidx.compose.material.icons.filled.KeyboardDoubleArrowLeft
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -44,6 +47,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -69,11 +73,13 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import io.askimo.core.session.ChatSessionExporterService
 import io.askimo.desktop.model.FileAttachment
 import io.askimo.desktop.model.ThemeMode
 import io.askimo.desktop.model.View
@@ -89,8 +95,13 @@ import io.askimo.desktop.ui.views.settingsView
 import io.askimo.desktop.viewmodel.ChatViewModel
 import io.askimo.desktop.viewmodel.SessionsViewModel
 import io.askimo.desktop.viewmodel.SettingsViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.skia.Image
 import java.awt.Cursor
+import java.io.File
+import javax.swing.JFileChooser
+import javax.swing.filechooser.FileNameExtensionFilter
 
 /**
  * Detects if macOS is in dark mode by querying system defaults.
@@ -347,23 +358,25 @@ fun app() {
 
         // Quit confirmation dialog
         if (showQuitDialog) {
-            androidx.compose.material3.AlertDialog(
+            AlertDialog(
                 onDismissRequest = { showQuitDialog = false },
                 title = { Text("Quit Askimo?") },
                 text = { Text("Are you sure you want to quit Askimo?") },
                 confirmButton = {
-                    androidx.compose.material3.Button(
+                    Button(
                         onClick = {
                             showQuitDialog = false
                             kotlin.system.exitProcess(0)
                         },
+                        modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
                     ) {
                         Text("Yes")
                     }
                 },
                 dismissButton = {
-                    androidx.compose.material3.TextButton(
+                    TextButton(
                         onClick = { showQuitDialog = false },
+                        modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
                     ) {
                         Text("No")
                     }
@@ -377,7 +390,7 @@ fun app() {
 @Composable
 fun sidebar(
     isExpanded: Boolean,
-    width: androidx.compose.ui.unit.Dp,
+    width: Dp,
     currentView: View,
     isSessionsExpanded: Boolean,
     sessionsViewModel: SessionsViewModel,
@@ -741,6 +754,7 @@ private fun sessionItemWithMenu(
     onDeleteSession: (String) -> Unit,
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    var showExportChatSessionHistoryDialog by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
@@ -808,21 +822,251 @@ private fun sessionItemWithMenu(
                 expanded = showMenu,
                 onDismissRequest = { showMenu = false },
             ) {
-                DropdownMenuItem(
-                    text = { Text("Delete") },
-                    onClick = {
-                        showMenu = false
-                        onDeleteSession(session.id)
+                TooltipArea(
+                    tooltip = {
+                        Surface(
+                            modifier = Modifier.padding(4.dp),
+                            color = MaterialTheme.colorScheme.inverseOnSurface,
+                            shape = MaterialTheme.shapes.small,
+                            shadowElevation = 4.dp,
+                        ) {
+                            Text(
+                                text = "Export entire chat history",
+                                modifier = Modifier.padding(8.dp),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
                     },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                        )
+                    delayMillis = 500,
+                    tooltipPlacement = TooltipPlacement.CursorPoint(
+                        offset = DpOffset(8.dp, 0.dp),
+                    ),
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Export") },
+                        onClick = {
+                            showMenu = false
+                            showExportChatSessionHistoryDialog = true
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Share,
+                                contentDescription = null,
+                            )
+                        },
+                        modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                    )
+                }
+                TooltipArea(
+                    tooltip = {
+                        Surface(
+                            modifier = Modifier.padding(4.dp),
+                            color = MaterialTheme.colorScheme.inverseOnSurface,
+                            shape = MaterialTheme.shapes.small,
+                            shadowElevation = 4.dp,
+                        ) {
+                            Text(
+                                text = "Delete chat session (cannot be undone)",
+                                modifier = Modifier.padding(8.dp),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
                     },
-                )
+                    delayMillis = 500,
+                    tooltipPlacement = TooltipPlacement.CursorPoint(
+                        offset = DpOffset(8.dp, 0.dp),
+                    ),
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Delete") },
+                        onClick = {
+                            showMenu = false
+                            onDeleteSession(session.id)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        },
+                        modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                    )
+                }
             }
+        }
+    }
+
+    // Export confirmation dialog
+    if (showExportChatSessionHistoryDialog) {
+        var exportFilePath by remember { mutableStateOf("") }
+        var isExporting by remember { mutableStateOf(false) }
+        var exportError by remember { mutableStateOf<String?>(null) }
+        var showSuccessDialog by remember { mutableStateOf(false) }
+        val exportScope = rememberCoroutineScope()
+
+        AlertDialog(
+            onDismissRequest = {
+                if (!isExporting) {
+                    showExportChatSessionHistoryDialog = false
+                }
+            },
+            title = { Text("Export Chat Session") },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text("Export the entire chat history for \"${session.title}\"")
+
+                    // File selection row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        androidx.compose.material3.OutlinedTextField(
+                            value = exportFilePath,
+                            onValueChange = { exportFilePath = it },
+                            label = { Text("File Path") },
+                            placeholder = { Text("Select destination file...") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f),
+                            enabled = !isExporting,
+                        )
+
+                        Button(
+                            onClick = {
+                                val defaultFileName = "export.md"
+
+                                val fileChooser = JFileChooser().apply {
+                                    dialogTitle = "Save Chat History"
+                                    fileSelectionMode = JFileChooser.FILES_ONLY
+                                    // Set default filename as session title
+                                    selectedFile = File(defaultFileName)
+                                    // Add file filter for markdown files
+                                    fileFilter = FileNameExtensionFilter("Markdown files (*.md)", "md")
+                                }
+
+                                val result = fileChooser.showSaveDialog(null)
+                                if (result == JFileChooser.APPROVE_OPTION) {
+                                    var selectedPath = fileChooser.selectedFile.absolutePath
+                                    // Ensure .md extension
+                                    if (!selectedPath.endsWith(".md", ignoreCase = true)) {
+                                        selectedPath += ".md"
+                                    }
+                                    exportFilePath = selectedPath
+                                }
+                            },
+                            enabled = !isExporting,
+                            modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                        ) {
+                            Text("Browse")
+                        }
+                    }
+
+                    // Show exporting status
+                    if (isExporting) {
+                        Text(
+                            text = "Exporting...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+
+                    // Show error message if any
+                    if (exportError != null) {
+                        Text(
+                            text = "Error: $exportError",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isExporting = true
+                        exportError = null
+
+                        exportScope.launch(Dispatchers.IO) {
+                            val exporter = ChatSessionExporterService()
+                            try {
+                                val result = exporter.exportToMarkdown(session.id, exportFilePath)
+
+                                // Handle result - state updates will automatically happen on UI thread
+                                result.fold(
+                                    onSuccess = {
+                                        // Success - show success dialog
+                                        isExporting = false
+                                        showSuccessDialog = true
+                                    },
+                                    onFailure = { error ->
+                                        // Show error
+                                        exportError = error.message ?: "Unknown error"
+                                        isExporting = false
+                                    },
+                                )
+                            } catch (e: Exception) {
+                                exportError = e.message ?: "Unknown error"
+                                isExporting = false
+                            } finally {
+                                exporter.close()
+                            }
+                        }
+                    },
+                    enabled = exportFilePath.isNotBlank() && !isExporting,
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                ) {
+                    Text(if (isExporting) "Exporting..." else "Export")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showExportChatSessionHistoryDialog = false },
+                    enabled = !isExporting,
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                ) {
+                    Text("Cancel")
+                }
+            },
+        )
+
+        // Success dialog
+        if (showSuccessDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showSuccessDialog = false
+                    showExportChatSessionHistoryDialog = false
+                },
+                title = { Text("Export Successful") },
+                text = {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text("Chat session has been successfully exported to:")
+                        Text(
+                            text = exportFilePath,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showSuccessDialog = false
+                            showExportChatSessionHistoryDialog = false
+                        },
+                        modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                    ) {
+                        Text("OK")
+                    }
+                },
+            )
         }
     }
 }
