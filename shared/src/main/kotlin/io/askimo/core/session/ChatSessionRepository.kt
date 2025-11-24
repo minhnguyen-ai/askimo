@@ -711,6 +711,30 @@ class ChatSessionRepository {
     }
 
     /**
+     * Update the title of a session
+     */
+    fun updateSessionTitle(sessionId: String, title: String): Boolean {
+        val trimmedTitle = title.trim().take(SESSION_TITLE_MAX_LENGTH)
+        if (trimmedTitle.isEmpty()) {
+            return false
+        }
+
+        dataSource.connection.use { conn ->
+            val rowsAffected = conn.prepareStatement(
+                """
+                UPDATE chat_sessions SET title = ?, updated_at = ? WHERE id = ?
+            """,
+            ).use { stmt ->
+                stmt.setString(1, trimmedTitle)
+                stmt.setString(2, LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                stmt.setString(3, sessionId)
+                stmt.executeUpdate()
+            }
+            return rowsAffected > 0
+        }
+    }
+
+    /**
      * Get all sessions in a folder
      */
     fun getSessionsByFolder(folderId: String?): List<ChatSession> {

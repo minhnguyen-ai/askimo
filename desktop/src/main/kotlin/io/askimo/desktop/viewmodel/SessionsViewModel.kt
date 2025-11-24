@@ -165,4 +165,25 @@ class SessionsViewModel(
             }
         }
     }
+
+    /**
+     * Rename a session's title and refresh the list.
+     */
+    fun renameSession(sessionId: String, newTitle: String) {
+        scope.launch {
+            try {
+                val updated = withContext(Dispatchers.IO) {
+                    sessionService.renameTitle(sessionId, newTitle)
+                }
+                if (updated) {
+                    // Refresh the current page
+                    refresh()
+                } else {
+                    errorMessage = "Failed to rename session"
+                }
+            } catch (e: Exception) {
+                errorMessage = "Error renaming session: ${e.message}"
+            }
+        }
+    }
 }
