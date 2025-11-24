@@ -1383,6 +1383,87 @@ class ChatSessionRepositoryIT {
     }
 
     @Test
+    fun `should update session title`() {
+        val session = repository.createSession("Original Title")
+
+        assertEquals("Original Title", session.title)
+
+        val updated = repository.updateSessionTitle(session.id, "New Title")
+
+        assertTrue(updated)
+        val retrieved = repository.getSession(session.id)
+        assertEquals("New Title", retrieved!!.title)
+    }
+
+    @Test
+    fun `should trim whitespace when updating session title`() {
+        val session = repository.createSession("Test Session")
+
+        val updated = repository.updateSessionTitle(session.id, "  New Title With Spaces  ")
+
+        assertTrue(updated)
+        val retrieved = repository.getSession(session.id)
+        assertEquals("New Title With Spaces", retrieved!!.title)
+    }
+
+    @Test
+    fun `should return false when updating title with empty string`() {
+        val session = repository.createSession("Test Session")
+
+        val updated = repository.updateSessionTitle(session.id, "")
+
+        assertEquals(false, updated)
+        val retrieved = repository.getSession(session.id)
+        assertEquals("Test Session", retrieved!!.title) // Title should remain unchanged
+    }
+
+    @Test
+    fun `should return false when updating title with only whitespace`() {
+        val session = repository.createSession("Test Session")
+
+        val updated = repository.updateSessionTitle(session.id, "   ")
+
+        assertEquals(false, updated)
+        val retrieved = repository.getSession(session.id)
+        assertEquals("Test Session", retrieved!!.title) // Title should remain unchanged
+    }
+
+    @Test
+    fun `should return false when updating title of non-existent session`() {
+        val updated = repository.updateSessionTitle("non-existent-id", "New Title")
+
+        assertEquals(false, updated)
+    }
+
+    @Test
+    fun `should truncate title to maximum length when updating`() {
+        val session = repository.createSession("Test Session")
+
+        val longTitle = "a".repeat(SESSION_TITLE_MAX_LENGTH + 100)
+        val updated = repository.updateSessionTitle(session.id, longTitle)
+
+        assertTrue(updated)
+        val retrieved = repository.getSession(session.id)
+        assertEquals(SESSION_TITLE_MAX_LENGTH, retrieved!!.title.length)
+        assertEquals("a".repeat(SESSION_TITLE_MAX_LENGTH), retrieved.title)
+    }
+
+    @Test
+    fun `should update session updated_at when changing title`() {
+        val session = repository.createSession("Test Session")
+        val originalUpdatedAt = session.updatedAt
+
+        Thread.sleep(10) // Ensure different timestamp
+
+        repository.updateSessionTitle(session.id, "New Title")
+
+        val retrieved = repository.getSession(session.id)
+        assertNotNull(retrieved)
+        assertNotEquals(originalUpdatedAt, retrieved!!.updatedAt)
+        assertTrue(retrieved.updatedAt.isAfter(originalUpdatedAt))
+    }
+
+    @Test
     fun `should order sessions by starred, sort order, and updated time`() {
         // Create sessions with different combinations
         val normal1 = repository.createSession("Normal 1", isStarred = false, sortOrder = 5)

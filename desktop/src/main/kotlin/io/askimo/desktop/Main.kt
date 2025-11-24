@@ -25,6 +25,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.History
@@ -44,6 +45,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -62,6 +64,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -71,6 +74,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import io.askimo.core.session.ChatSessionExporterService
+import io.askimo.core.session.SESSION_TITLE_MAX_LENGTH
 import io.askimo.desktop.i18n.LocalizationManager
 import io.askimo.desktop.i18n.provideLocalization
 import io.askimo.desktop.i18n.stringResource
@@ -317,6 +321,9 @@ fun app() {
                     onStarSession = { sessionId, isStarred ->
                         sessionsViewModel.updateSessionStarred(sessionId, isStarred)
                     },
+                    onRenameSession = { sessionId, newTitle ->
+                        sessionsViewModel.renameSession(sessionId, newTitle)
+                    },
                     onNavigateToSettings = { currentView = View.SETTINGS },
                 )
 
@@ -430,6 +437,7 @@ fun sidebar(
     onResumeSession: (String) -> Unit,
     onDeleteSession: (String) -> Unit,
     onStarSession: (String, Boolean) -> Unit,
+    onRenameSession: (String, String) -> Unit,
     onNavigateToSettings: () -> Unit,
 ) {
     if (isExpanded) {
@@ -469,7 +477,7 @@ fun sidebar(
                     Text(
                         text = "Askimo AI",
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
@@ -579,7 +587,7 @@ fun sidebar(
                                         Text(
                                             "Starred (${starredSessions.size})",
                                             style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                            fontWeight = FontWeight.SemiBold,
                                         )
                                     },
                                     selected = false,
@@ -615,6 +623,7 @@ fun sidebar(
                                                 onResumeSession = onResumeSession,
                                                 onDeleteSession = onDeleteSession,
                                                 onStarSession = onStarSession,
+                                                onRenameSession = onRenameSession,
                                             )
                                         }
                                     }
@@ -640,6 +649,7 @@ fun sidebar(
                                     onResumeSession = onResumeSession,
                                     onDeleteSession = onDeleteSession,
                                     onStarSession = onStarSession,
+                                    onRenameSession = onRenameSession,
                                 )
                             }
 
@@ -651,7 +661,7 @@ fun sidebar(
                                         Text(
                                             text = "More...",
                                             style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                            fontWeight = FontWeight.SemiBold,
                                             color = MaterialTheme.colorScheme.primary,
                                         )
                                     },
@@ -838,9 +848,11 @@ private fun sessionItemWithMenu(
     onResumeSession: (String) -> Unit,
     onDeleteSession: (String) -> Unit,
     onStarSession: (String, Boolean) -> Unit,
+    onRenameSession: (String, String) -> Unit,
 ) {
     var showMenu by remember { mutableStateOf(false) }
     var showExportChatSessionHistoryDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -913,6 +925,24 @@ private fun sessionItemWithMenu(
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Share,
+                                contentDescription = null,
+                            )
+                        },
+                        modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                    )
+                }
+                themedTooltip(
+                    text = stringResource("session.rename.title.tooltip"),
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource("session.rename.title")) },
+                        onClick = {
+                            showMenu = false
+                            showRenameDialog = true
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Edit,
                                 contentDescription = null,
                             )
                         },
@@ -993,7 +1023,7 @@ private fun sessionItemWithMenu(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        androidx.compose.material3.OutlinedTextField(
+                        OutlinedTextField(
                             value = exportFilePath,
                             onValueChange = { exportFilePath = it },
                             label = { Text("File Path") },
@@ -1010,9 +1040,7 @@ private fun sessionItemWithMenu(
                                 val fileChooser = JFileChooser().apply {
                                     dialogTitle = "Save Chat History"
                                     fileSelectionMode = JFileChooser.FILES_ONLY
-                                    // Set default filename as session title
                                     selectedFile = File(defaultFileName)
-                                    // Add file filter for markdown files
                                     fileFilter = FileNameExtensionFilter("Markdown files (*.md)", "md")
                                 }
 
@@ -1134,5 +1162,94 @@ private fun sessionItemWithMenu(
                 },
             )
         }
+    }
+
+    // Rename dialog
+    if (showRenameDialog) {
+        var newTitle by remember { mutableStateOf(session.title) }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
+        val renameScope = rememberCoroutineScope()
+
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            title = { Text(stringResource("session.rename.title")) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    OutlinedTextField(
+                        value = newTitle,
+                        onValueChange = {
+                            newTitle = it
+                            errorMessage = null
+                        },
+                        label = { Text("Title") },
+                        placeholder = { Text("Enter session title...") },
+                        singleLine = true,
+                        isError = errorMessage != null,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    if (errorMessage != null) {
+                        Text(
+                            text = errorMessage!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val trimmedTitle = newTitle.trim()
+
+                        // Validate input
+                        when {
+                            trimmedTitle.isEmpty() -> {
+                                errorMessage = "Title cannot be empty"
+                            }
+                            trimmedTitle.length > SESSION_TITLE_MAX_LENGTH -> {
+                                errorMessage = "Title is too long (max $SESSION_TITLE_MAX_LENGTH characters)"
+                            }
+                            !isValidTitle(trimmedTitle) -> {
+                                errorMessage = "Title contains invalid characters"
+                            }
+                            else -> {
+                                // Valid input, save to database
+                                showRenameDialog = false
+                                onRenameSession(session.id, trimmedTitle)
+                            }
+                        }
+                    },
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                ) {
+                    Text(stringResource("action.save"))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showRenameDialog = false },
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                ) {
+                    Text(stringResource("action.cancel"))
+                }
+            },
+        )
+    }
+}
+
+/**
+ * Validates that the title contains only safe characters for database storage.
+ * Allows alphanumeric characters, spaces, and common punctuation.
+ */
+private fun isValidTitle(title: String): Boolean {
+    // Allow letters (any language), numbers, spaces, and common safe punctuation
+    // Reject control characters and other potentially dangerous characters
+    return title.all { char ->
+        char.isLetterOrDigit() ||
+            char.isWhitespace() ||
+            char in ".,!?;:'-_()[]{}@#$%&*+=<>/\\|\"~`"
     }
 }

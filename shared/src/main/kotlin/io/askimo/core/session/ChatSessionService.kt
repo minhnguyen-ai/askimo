@@ -101,6 +101,15 @@ class ChatSessionService(
     fun updateSessionStarred(sessionId: String, isStarred: Boolean): Boolean = repository.updateSessionStarred(sessionId, isStarred)
 
     /**
+     * Rename the title of a chat session.
+     *
+     * @param sessionId The ID of the session to rename
+     * @param newTitle The new title for the session
+     * @return true if the session was renamed, false if it didn't exist or the title is invalid
+     */
+    fun renameTitle(sessionId: String, newTitle: String): Boolean = repository.updateSessionTitle(sessionId, newTitle)
+
+    /**
      * Resume a chat session by ID and return the result with messages.
      *
      * @param session The current Session instance to resume into
