@@ -11,6 +11,8 @@ import io.askimo.core.config.AppConfig
 import io.askimo.core.providers.ModelProvider
 import io.askimo.core.providers.ModelProvider.ANTHROPIC
 import io.askimo.core.providers.ModelProvider.GEMINI
+import io.askimo.core.providers.ModelProvider.LMSTUDIO
+import io.askimo.core.providers.ModelProvider.LOCALAI
 import io.askimo.core.providers.ModelProvider.OLLAMA
 import io.askimo.core.providers.ModelProvider.OPENAI
 import io.askimo.core.providers.ModelProvider.UNKNOWN
@@ -47,7 +49,7 @@ fun getEmbeddingModel(provider: ModelProvider): EmbeddingModel = when (provider)
             .build()
     }
 
-    ANTHROPIC, GEMINI, XAI -> {
+    ANTHROPIC, GEMINI, XAI, LOCALAI, LMSTUDIO -> {
         noteOllamaRequired(provider)
         buildOllamaEmbeddingModel()
     }

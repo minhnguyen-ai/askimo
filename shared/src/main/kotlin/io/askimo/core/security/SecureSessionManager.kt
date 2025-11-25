@@ -9,6 +9,8 @@ import io.askimo.core.providers.ModelProvider
 import io.askimo.core.providers.ProviderSettings
 import io.askimo.core.providers.anthropic.AnthropicSettings
 import io.askimo.core.providers.gemini.GeminiSettings
+import io.askimo.core.providers.lmstudio.LmStudioSettings
+import io.askimo.core.providers.localai.LocalAiSettings
 import io.askimo.core.providers.ollama.OllamaSettings
 import io.askimo.core.providers.openai.OpenAiSettings
 import io.askimo.core.providers.xai.XAiSettings
@@ -207,6 +209,14 @@ class SecureSessionManager {
         ModelProvider.OLLAMA -> {
             val ollamaSettings = settings as OllamaSettings
             ollamaSettings.copy()
+        }
+        ModelProvider.LOCALAI -> {
+            val localAiSettings = settings as LocalAiSettings
+            localAiSettings.copy()
+        }
+        ModelProvider.LMSTUDIO -> {
+            val lmStudioSettings = settings as LmStudioSettings
+            lmStudioSettings.copy()
         }
         ModelProvider.UNKNOWN -> settings // Unknown settings, return as-is
     }

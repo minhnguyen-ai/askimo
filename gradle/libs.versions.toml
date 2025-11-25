@@ -36,6 +36,7 @@ langchain4j-ollama = { group = "dev.langchain4j", name = "langchain4j-ollama", v
 langchain4j-google-ai-gemini = { group = "dev.langchain4j", name = "langchain4j-google-ai-gemini", version.ref = "langchain4j" }
 langchain4j-anthropic = { group = "dev.langchain4j", name = "langchain4j-anthropic", version.ref = "langchain4j" }
 langchain4j-pgvector = { group = "dev.langchain4j", name = "langchain4j-pgvector", version.ref = "langchain4jPgvector" }
+langchain4j-localai = { group = "dev.langchain4j", name = "langchain4j-local-ai", version.ref = "langchain4jPgvector" }
 
 # Markdown
 commonmark = { group = "org.commonmark", name = "commonmark", version.ref = "commonmark" }

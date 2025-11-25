@@ -16,6 +16,7 @@ dependencies {
     api(libs.langchain4j.ollama)
     api(libs.langchain4j.google.ai.gemini)
     api(libs.langchain4j.anthropic)
+    api(libs.langchain4j.localai)
     api(libs.kotlinx.serialization.json.jvm)
     api(libs.kotlinx.coroutines.core)
     api(libs.postgresql)

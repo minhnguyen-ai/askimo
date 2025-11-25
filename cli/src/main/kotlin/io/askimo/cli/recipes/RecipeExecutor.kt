@@ -48,6 +48,10 @@ class RecipeExecutor(
         val vars = def.defaults.toMutableMap().apply { putAll(opts.overrides) }
 
         opts.externalArgs.forEachIndexed { i, v -> vars["arg${i + 1}"] = v }
+        // Inject stdin content if provided so recipes can use {{stdin}}
+        if (opts.stdinContent != null && opts.stdinContent.isNotBlank()) {
+            vars["stdin"] = opts.stdinContent
+        }
 
         // 2) pre-step: resolve declared vars via tools (generic; no git knowledge here)
         def.vars.forEach { (varName, call) ->
