@@ -5,7 +5,13 @@
 package io.askimo.core.security
 
 import io.askimo.core.providers.HasApiKey
+import io.askimo.core.providers.ModelProvider
 import io.askimo.core.providers.ProviderSettings
+import io.askimo.core.providers.anthropic.AnthropicSettings
+import io.askimo.core.providers.gemini.GeminiSettings
+import io.askimo.core.providers.ollama.OllamaSettings
+import io.askimo.core.providers.openai.OpenAiSettings
+import io.askimo.core.providers.xai.XAiSettings
 import io.askimo.core.session.SessionParams
 import io.askimo.core.util.Logger.debug
 import io.askimo.core.util.Logger.warn
@@ -78,7 +84,7 @@ class TestSecureSessionManager {
      * Migrates existing plain text API keys to secure storage using test-safe provider names.
      */
     fun migrateExistingApiKeys(sessionParams: SessionParams): MigrationResult {
-        val results = mutableMapOf<io.askimo.core.providers.ModelProvider, SecureApiKeyManager.StorageResult>()
+        val results = mutableMapOf<ModelProvider, SecureApiKeyManager.StorageResult>()
         var hasInsecureKeys = false
 
         sessionParams.providerSettings.forEach { (provider, settings) ->
@@ -107,7 +113,7 @@ class TestSecureSessionManager {
     private fun isUsingSecureStorage(apiKey: String): Boolean = apiKey == KEYCHAIN_API_KEY_PLACEHOLDER ||
         apiKey.startsWith(ENCRYPTED_API_KEY_PREFIX)
 
-    private fun loadApiKeyForProvider(provider: io.askimo.core.providers.ModelProvider, settings: HasApiKey) {
+    private fun loadApiKeyForProvider(provider: ModelProvider, settings: HasApiKey) {
         val currentKey = settings.apiKey
 
         // Skip if already loaded or empty
@@ -137,7 +143,7 @@ class TestSecureSessionManager {
         }
     }
 
-    private fun saveApiKeyForProvider(provider: io.askimo.core.providers.ModelProvider, settings: HasApiKey) {
+    private fun saveApiKeyForProvider(provider: ModelProvider, settings: HasApiKey) {
         val apiKey = settings.apiKey
 
         // Skip if it's already a placeholder or empty
@@ -168,7 +174,7 @@ class TestSecureSessionManager {
         }
     }
 
-    private fun getSafeProviderName(provider: io.askimo.core.providers.ModelProvider): String = "$TEST_PROVIDER_PREFIX${provider.name.lowercase()}"
+    private fun getSafeProviderName(provider: ModelProvider): String = "$TEST_PROVIDER_PREFIX${provider.name.lowercase()}"
 
     private fun updateApiKeyPlaceholder(settings: HasApiKey, method: SecureApiKeyManager.StorageMethod) {
         settings.apiKey = when (method) {
@@ -182,32 +188,40 @@ class TestSecureSessionManager {
         apiKey != KEYCHAIN_API_KEY_PLACEHOLDER &&
         !apiKey.startsWith(ENCRYPTED_API_KEY_PREFIX)
 
-    private fun deepCopyProviderSettings(provider: io.askimo.core.providers.ModelProvider, settings: ProviderSettings): ProviderSettings = when (provider) {
-        io.askimo.core.providers.ModelProvider.OPENAI -> {
-            val openAiSettings = settings as io.askimo.core.providers.openai.OpenAiSettings
+    private fun deepCopyProviderSettings(provider: ModelProvider, settings: ProviderSettings): ProviderSettings = when (provider) {
+        ModelProvider.OPENAI -> {
+            val openAiSettings = settings as OpenAiSettings
             openAiSettings.copy()
         }
-        io.askimo.core.providers.ModelProvider.GEMINI -> {
-            val geminiSettings = settings as io.askimo.core.providers.gemini.GeminiSettings
+        ModelProvider.GEMINI -> {
+            val geminiSettings = settings as GeminiSettings
             geminiSettings.copy()
         }
-        io.askimo.core.providers.ModelProvider.XAI -> {
-            val xaiSettings = settings as io.askimo.core.providers.xai.XAiSettings
+        ModelProvider.XAI -> {
+            val xaiSettings = settings as XAiSettings
             xaiSettings.copy()
         }
-        io.askimo.core.providers.ModelProvider.ANTHROPIC -> {
-            val anthropicSettings = settings as io.askimo.core.providers.anthropic.AnthropicSettings
+        ModelProvider.ANTHROPIC -> {
+            val anthropicSettings = settings as AnthropicSettings
             anthropicSettings.copy()
         }
-        io.askimo.core.providers.ModelProvider.OLLAMA -> {
-            val ollamaSettings = settings as io.askimo.core.providers.ollama.OllamaSettings
+        ModelProvider.OLLAMA -> {
+            val ollamaSettings = settings as OllamaSettings
             ollamaSettings.copy()
         }
-        io.askimo.core.providers.ModelProvider.UNKNOWN -> settings // Unknown settings, return as-is
+        ModelProvider.LOCALAI -> {
+            val localAiSettings = settings as OllamaSettings
+            localAiSettings.copy()
+        }
+        ModelProvider.LMSTUDIO -> {
+            val lmStudioSettings = settings as OllamaSettings
+            lmStudioSettings.copy()
+        }
+        ModelProvider.UNKNOWN -> settings // Unknown settings, return as-is
     }
 
     data class MigrationResult(
-        val results: Map<io.askimo.core.providers.ModelProvider, SecureApiKeyManager.StorageResult>,
+        val results: Map<ModelProvider, SecureApiKeyManager.StorageResult>,
         val hasInsecureKeys: Boolean,
     ) {
         fun getSecurityReport(): List<String> {
