@@ -69,7 +69,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
@@ -146,28 +145,19 @@ fun main() = application {
         ).toComposeImageBitmap(),
     )
 
+    var showAboutDialog by remember { mutableStateOf(false) }
+
     Window(
         icon = icon,
         onCloseRequest = ::exitApplication,
         title = "Askimo",
         state = rememberWindowState(width = 800.dp, height = 600.dp),
     ) {
-        var showAboutDialog by remember { mutableStateOf(false) }
-
-        MenuBar {
-            Menu("Help") {
-                Item(
-                    "Documentation",
-                    onClick = {
-                        try {
-                            java.awt.Desktop.getDesktop().browse(java.net.URI("https://askimo.chat/docs/"))
-                        } catch (e: Exception) {
-                            // Silently fail if browser cannot be opened
-                        }
-                    },
-                )
-                Item("About", onClick = { showAboutDialog = true })
-            }
+        LaunchedEffect(Unit) {
+            NativeMenuBar.setup(
+                frameWindowScope = this@Window,
+                onShowAbout = { showAboutDialog = true },
+            )
         }
 
         app()
@@ -995,7 +985,6 @@ private fun sessionItemWithMenu(
         }
     }
 
-    // Export confirmation dialog
     if (showExportChatSessionHistoryDialog) {
         var exportFilePath by remember { mutableStateOf("") }
         var isExporting by remember { mutableStateOf(false) }
@@ -1003,19 +992,34 @@ private fun sessionItemWithMenu(
         var showSuccessDialog by remember { mutableStateOf(false) }
         val exportScope = rememberCoroutineScope()
 
+        val exportDialogTitle = stringResource("session.export.dialog.title")
+        val dialogDescription = stringResource("session.export.dialog.description", session.title)
+        val fieldLabel = stringResource("session.export.field.label")
+        val fieldPlaceholder = stringResource("session.export.field.placeholder")
+        val fileChooserTitle = stringResource("session.export.file.chooser.title")
+        val fileFilterDescription = stringResource("session.export.file.filter.description")
+        val browseButton = stringResource("session.export.button.browse")
+        val exportingStatus = stringResource("session.export.status.exporting")
+        val errorUnknown = stringResource("session.export.error.unknown")
+        val exportButton = stringResource("session.export.button.export")
+        val cancelButton = stringResource("action.cancel")
+        val successTitle = stringResource("session.export.success.title")
+        val successMessage = stringResource("session.export.success.message")
+        val okButton = stringResource("action.ok")
+
         AlertDialog(
             onDismissRequest = {
                 if (!isExporting) {
                     showExportChatSessionHistoryDialog = false
                 }
             },
-            title = { Text("Export Chat Session") },
+            title = { Text(exportDialogTitle) },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text("Export the entire chat history for \"${session.title}\"")
+                    Text(dialogDescription)
 
                     // File selection row
                     Row(
@@ -1026,8 +1030,8 @@ private fun sessionItemWithMenu(
                         OutlinedTextField(
                             value = exportFilePath,
                             onValueChange = { exportFilePath = it },
-                            label = { Text("File Path") },
-                            placeholder = { Text("Select destination file...") },
+                            label = { Text(fieldLabel) },
+                            placeholder = { Text(fieldPlaceholder) },
                             singleLine = true,
                             modifier = Modifier.weight(1f),
                             enabled = !isExporting,
@@ -1038,10 +1042,10 @@ private fun sessionItemWithMenu(
                                 val defaultFileName = "export.md"
 
                                 val fileChooser = JFileChooser().apply {
-                                    dialogTitle = "Save Chat History"
+                                    dialogTitle = fileChooserTitle
                                     fileSelectionMode = JFileChooser.FILES_ONLY
                                     selectedFile = File(defaultFileName)
-                                    fileFilter = FileNameExtensionFilter("Markdown files (*.md)", "md")
+                                    fileFilter = FileNameExtensionFilter(fileFilterDescription, "md")
                                 }
 
                                 val result = fileChooser.showSaveDialog(null)
@@ -1057,14 +1061,14 @@ private fun sessionItemWithMenu(
                             enabled = !isExporting,
                             modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
                         ) {
-                            Text("Browse")
+                            Text(browseButton)
                         }
                     }
 
                     // Show exporting status
                     if (isExporting) {
                         Text(
-                            text = "Exporting...",
+                            text = exportingStatus,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
                         )
@@ -1073,7 +1077,7 @@ private fun sessionItemWithMenu(
                     // Show error message if any
                     if (exportError != null) {
                         Text(
-                            text = "Error: $exportError",
+                            text = stringResource("session.export.error.prefix", exportError!!),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                         )
@@ -1100,12 +1104,12 @@ private fun sessionItemWithMenu(
                                     },
                                     onFailure = { error ->
                                         // Show error
-                                        exportError = error.message ?: "Unknown error"
+                                        exportError = error.message ?: errorUnknown
                                         isExporting = false
                                     },
                                 )
                             } catch (e: Exception) {
-                                exportError = e.message ?: "Unknown error"
+                                exportError = e.message ?: errorUnknown
                                 isExporting = false
                             } finally {
                                 exporter.close()
@@ -1115,7 +1119,7 @@ private fun sessionItemWithMenu(
                     enabled = exportFilePath.isNotBlank() && !isExporting,
                     modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
                 ) {
-                    Text(if (isExporting) "Exporting..." else "Export")
+                    Text(if (isExporting) exportingStatus else exportButton)
                 }
             },
             dismissButton = {
@@ -1124,7 +1128,7 @@ private fun sessionItemWithMenu(
                     enabled = !isExporting,
                     modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
                 ) {
-                    Text("Cancel")
+                    Text(cancelButton)
                 }
             },
         )
@@ -1136,12 +1140,12 @@ private fun sessionItemWithMenu(
                     showSuccessDialog = false
                     showExportChatSessionHistoryDialog = false
                 },
-                title = { Text("Export Successful") },
+                title = { Text(successTitle) },
                 text = {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text("Chat session has been successfully exported to:")
+                        Text(successMessage)
                         Text(
                             text = exportFilePath,
                             style = MaterialTheme.typography.bodySmall,
@@ -1157,7 +1161,7 @@ private fun sessionItemWithMenu(
                         },
                         modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
                     ) {
-                        Text("OK")
+                        Text(okButton)
                     }
                 },
             )
@@ -1169,6 +1173,10 @@ private fun sessionItemWithMenu(
         var newTitle by remember { mutableStateOf(session.title) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
         val renameScope = rememberCoroutineScope()
+
+        val errorEmpty = stringResource("session.rename.error.empty")
+        val errorTooLong = stringResource("session.rename.error.too.long", SESSION_TITLE_MAX_LENGTH)
+        val errorInvalidChars = stringResource("session.rename.error.invalid.chars")
 
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
@@ -1184,8 +1192,8 @@ private fun sessionItemWithMenu(
                             newTitle = it
                             errorMessage = null
                         },
-                        label = { Text("Title") },
-                        placeholder = { Text("Enter session title...") },
+                        label = { Text(stringResource("session.rename.field.label")) },
+                        placeholder = { Text(stringResource("session.rename.field.placeholder")) },
                         singleLine = true,
                         isError = errorMessage != null,
                         modifier = Modifier.fillMaxWidth(),
@@ -1208,13 +1216,13 @@ private fun sessionItemWithMenu(
                         // Validate input
                         when {
                             trimmedTitle.isEmpty() -> {
-                                errorMessage = "Title cannot be empty"
+                                errorMessage = errorEmpty
                             }
                             trimmedTitle.length > SESSION_TITLE_MAX_LENGTH -> {
-                                errorMessage = "Title is too long (max $SESSION_TITLE_MAX_LENGTH characters)"
+                                errorMessage = errorTooLong
                             }
                             !isValidTitle(trimmedTitle) -> {
-                                errorMessage = "Title contains invalid characters"
+                                errorMessage = errorInvalidChars
                             }
                             else -> {
                                 // Valid input, save to database
