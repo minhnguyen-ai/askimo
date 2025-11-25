@@ -46,6 +46,18 @@ enum class ModelProvider {
     ANTHROPIC,
 
     /**
+     * Represents LocalAI's locally-hosted models.
+     */
+    @SerialName("LOCALAI")
+    LOCALAI,
+
+    /**
+     * Represents LMStudio's locally-hosted models (OpenAI-compatible API).
+     */
+    @SerialName("LMSTUDIO")
+    LMSTUDIO,
+
+    /**
      * Represents an unidentified or unsupported model provider.
      */
     @SerialName("UNKNOWN")
