@@ -14,26 +14,7 @@ build/
 *.ipr
 out/
 !**/src/main/**/out/
-!**/src/test/**/out/
-
-### Eclipse ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+!**/src/test/**/out/\
 
 ### VS Code ###
 .vscode/
@@ -49,7 +30,4 @@ Gemfile.lock
 *.p12
 certificate*.txt
 
-cloudflare-worker-openai-proxy.js
 .idea/
-create_dmg_bg.py
-create_dmg_background.sh
