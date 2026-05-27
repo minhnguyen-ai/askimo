@@ -1,0 +1,3 @@
+files:
+  - source: /desktop-shared/src/main/resources/i18n/messages.properties
+    translation: /desktop-shared/src/main/resources/i18n/%original_file_name%_%two_letters_code%.properties
