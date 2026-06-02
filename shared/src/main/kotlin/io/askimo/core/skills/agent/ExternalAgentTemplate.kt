@@ -33,6 +33,18 @@ import java.io.IOException
  */
 abstract class ExternalAgentTemplate : ExternalAgent {
 
+    @Volatile
+    private var executionSessionId: String? = null
+
+    @Volatile
+    private var executionWorkspaceDir: String? = null
+
+    override val lastExecutionSessionId: String?
+        get() = executionSessionId
+
+    override val lastExecutionWorkspaceDir: String?
+        get() = executionWorkspaceDir
+
     /**
      * Subclasses should define their own logger instance.
      * Example: `override val log = logger<CursorAgent>()`
@@ -108,6 +120,7 @@ abstract class ExternalAgentTemplate : ExternalAgent {
         line: String,
         onToken: (String) -> Unit,
         onStatus: (String) -> Unit,
+        onThinking: (String) -> Unit,
         output: StringBuilder,
     )
 
@@ -138,6 +151,18 @@ abstract class ExternalAgentTemplate : ExternalAgent {
         log.warn("{} exited with code {} — stderr: {}", id, exitCode, errMsg)
     }
 
+    /**
+     * Updates metadata captured for the current execution.
+     * Subclasses call this while parsing stdout events.
+     */
+    protected fun updateExecutionMetadata(
+        sessionId: String? = executionSessionId,
+        workspaceDir: String? = executionWorkspaceDir,
+    ) {
+        executionSessionId = sessionId
+        executionWorkspaceDir = workspaceDir
+    }
+
     override fun isBinaryAvailable(): Boolean {
         val found = resolveAgentPath() != null
         if (!found) log.debug("{} binary not found on PATH", name)
@@ -150,9 +175,11 @@ abstract class ExternalAgentTemplate : ExternalAgent {
         workDir: File?,
         onToken: (String) -> Unit,
         onStatus: (String) -> Unit,
+        onThinking: (String) -> Unit,
     ): Result<String> = runCatching {
         val agentPath = resolveAgentPath() ?: error("$name binary not found on PATH")
         val effectiveWorkDir = workDir ?: File(System.getProperty("user.home"))
+        updateExecutionMetadata(sessionId = null, workspaceDir = effectiveWorkDir.absolutePath)
 
         log.debug(
             "Starting {} for skill execution ({} chars systemPrompt, workDir={})",
@@ -185,34 +212,44 @@ abstract class ExternalAgentTemplate : ExternalAgent {
 
         var stdinWriteError: IOException? = null
 
-        // Write stdin (if needed by this agent)
-        try {
-            process.outputStream.bufferedWriter().use { writer ->
-                writeStdin(writer, systemPrompt, userInput)
+        // Write stdin in a background thread so stdout draining starts immediately.
+        // For long agent runs the stdout pipe buffer (~64 KB) fills up fast; if we
+        // block on stdin first the agent can't write more output → deadlock → broken pipe.
+        val stdinThread = Thread {
+            try {
+                process.outputStream.bufferedWriter().use { writer ->
+                    writeStdin(writer, systemPrompt, userInput)
+                }
+            } catch (e: IOException) {
+                stdinWriteError = e
+                val isStillRunning = process.isAlive
+                val exitCode = if (!isStillRunning) process.exitValue() else -1
+                val errMsg = stderrOutput.toString().trim()
+                log.debug(
+                    "Deferred stdin write error for {} (exit code: {}, running: {}): {} — stderr: {}",
+                    id,
+                    exitCode,
+                    isStillRunning,
+                    e.message,
+                    errMsg,
+                )
+                // Some CLIs close stdin early after consuming enough input — safe to ignore.
             }
-        } catch (e: IOException) {
-            stdinWriteError = e
-            val isStillRunning = process.isAlive
-            val exitCode = if (!isStillRunning) process.exitValue() else -1
-            val errMsg = stderrOutput.toString().trim()
-            log.debug(
-                "Deferred stdin write error for {} (exit code: {}, running: {}): {} — stderr: {}",
-                id,
-                exitCode,
-                isStillRunning,
-                e.message,
-                errMsg,
-            )
-            // Some CLIs close stdin early after consuming enough input.
-            // Continue reading stdout/stderr and decide success from exit code.
+        }.also {
+            it.isDaemon = true
+            it.name = "$id-stdin"
+            it.start()
         }
 
-        // Parse stdout
+        // Parse stdout — runs on calling thread while stdin is written concurrently.
         val output = StringBuilder()
         process.inputStream.bufferedReader().forEachLine { line ->
             if (line.isBlank()) return@forEachLine
-            parseStdoutLine(line, onToken, onStatus, output)
+            parseStdoutLine(line, onToken, onStatus, onThinking, output)
         }
+
+        // Wait for stdin to finish (it is almost always done by the time stdout is drained).
+        stdinThread.join(5_000)
 
         val exitCode = process.waitFor()
         stderrThread.join(2_000)

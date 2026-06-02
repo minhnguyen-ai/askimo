@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -26,7 +25,6 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.DropdownMenuItem
@@ -82,6 +80,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Desktop
+import java.io.File
 import javax.swing.JFileChooser
 import kotlin.time.Duration.Companion.milliseconds
 private enum class AgentState {
@@ -101,6 +100,7 @@ internal fun skillExecutionArea(
     onRunCompleted: () -> Unit = {},
     preloadRecord: SkillRunRecord? = null,
     onPreloadConsumed: () -> Unit = {},
+    onWorkDirChanged: (File) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
@@ -112,9 +112,14 @@ internal fun skillExecutionArea(
     var isRunning by remember(skill.relativePath) { mutableStateOf(false) }
     var responseText by remember(skill.relativePath) { mutableStateOf("") }
     var runError by remember(skill.relativePath) { mutableStateOf<String?>(null) }
-    var agentStatus by remember(skill.relativePath) { mutableStateOf<String?>(null) }
-    var activityLog by remember(skill.relativePath) { mutableStateOf(listOf<String>()) }
-    var activityLogExpanded by remember(skill.relativePath) { mutableStateOf(false) }
+    // Single live status line — replaced (not appended) on each non-thinking status event.
+    var currentStatusLine by remember(skill.relativePath) { mutableStateOf<String?>(null) }
+    // displayText drives the response panel while running:
+    //   • thinking phase  → blockquote "> …" accumulation
+    //   • non-thinking event → cleared (thinking wiped)
+    //   • result tokens   → replaced with final answer text
+    var displayText by remember(skill.relativePath) { mutableStateOf("") }
+    var isInThinkingPhase by remember(skill.relativePath) { mutableStateOf(false) }
     val hasResponse = responseText.isNotBlank()
     var elapsedSeconds by remember(skill.relativePath) { mutableStateOf(0) }
     LaunchedEffect(isRunning) {
@@ -169,34 +174,63 @@ internal fun skillExecutionArea(
     fun execute(agent: ExternalAgent, systemPrompt: String, userInput: String) {
         isRunning = true
         responseText = ""
+        displayText = ""
+        isInThinkingPhase = false
         runError = null
-        agentStatus = null
-        activityLog = listOf()
+        currentStatusLine = null
         scope.launch {
             withContext(Dispatchers.IO) {
                 agent.runTracked(
                     systemPrompt = systemPrompt,
                     userInput = userInput,
                     workDir = workDir,
-                    onToken = { line -> scope.launch { responseText += line } },
+                    onToken = { token ->
+                        scope.launch {
+                            // First token: wipe any leftover thinking display
+                            if (isInThinkingPhase) {
+                                displayText = ""
+                                isInThinkingPhase = false
+                            }
+                            responseText += token
+                            displayText += token
+                        }
+                    },
                     onStatus = { status ->
                         scope.launch {
-                            agentStatus = status
-                            activityLog = activityLog + status
+                            // Non-thinking event → clear accumulated thinking from display
+                            if (isInThinkingPhase) {
+                                displayText = ""
+                                isInThinkingPhase = false
+                            }
+                            // Replace in place — not appended
+                            currentStatusLine = status
+                        }
+                    },
+                    onThinking = { chunk ->
+                        scope.launch {
+                            if (!isInThinkingPhase) {
+                                // Start fresh blockquote paragraph
+                                displayText = ""
+                                isInThinkingPhase = true
+                            }
+                            displayText += chunk
                         }
                     },
                 ).onFailure { e ->
                     scope.launch { runError = e.message ?: "Execution failed" }
                 }
             }
-            agentStatus = null
+            currentStatusLine = null
             isRunning = false
+            isInThinkingPhase = false
             val record = SkillRunRecord(
                 skillPath = skill.relativePath,
                 userInput = userInput,
                 response = responseText,
                 error = runError,
-                activityLog = activityLog,
+                agentSessionId = agent.lastExecutionSessionId,
+                workspaceDir = agent.lastExecutionWorkspaceDir ?: workDir.absolutePath,
+                activityLog = emptyList(),
             )
             withContext(Dispatchers.IO) { historyRepo.save(record) }
             onRunCompleted()
@@ -207,7 +241,10 @@ internal fun skillExecutionArea(
             contextInput = preloadRecord.userInput
             responseText = preloadRecord.response
             runError = preloadRecord.error
-            activityLog = preloadRecord.activityLog
+            preloadRecord.workspaceDir?.takeIf { it.isNotBlank() }?.let { persistedDir ->
+                workDir = File(persistedDir)
+                onWorkDirChanged(workDir)
+            }
             isRunning = false
             onPreloadConsumed()
         }
@@ -311,6 +348,7 @@ internal fun skillExecutionArea(
                         }
                         if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                             workDir = chooser.selectedFile
+                            onWorkDirChanged(workDir)
                         }
                     },
                     modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
@@ -524,7 +562,7 @@ internal fun skillExecutionArea(
         }
         Spacer(modifier = Modifier.height(Spacing.extraLarge))
         // Response panel
-        if (isRunning || hasResponse || runError != null || activityLog.isNotEmpty()) {
+        if (isRunning || hasResponse || runError != null) {
             Surface(modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp, tonalElevation = 1.dp) {
                 Column(modifier = Modifier.padding(Spacing.large)) {
                     Row(
@@ -560,67 +598,30 @@ internal fun skillExecutionArea(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
                     if (runError != null) {
                         Text(text = runError!!, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = Spacing.medium))
+                    } else if (isRunning && isInThinkingPhase && displayText.isNotBlank()) {
+                        // Thinking phase — render accumulated text as a markdown blockquote
+                        val blockquote = displayText.lines()
+                            .joinToString("\n") { "> $it" }
+                        markdownText(
+                            markdown = blockquote,
+                            isStreaming = true,
+                            modifier = Modifier.fillMaxWidth().padding(top = Spacing.medium),
+                        )
                     } else if (responseText.isNotBlank()) {
                         markdownText(markdown = responseText, isStreaming = isRunning, modifier = Modifier.fillMaxWidth().padding(top = Spacing.medium))
-                        if (isRunning && agentStatus != null) {
-                            Text(text = agentStatus!!, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.padding(top = Spacing.small))
-                        }
                     } else {
-                        Column(modifier = Modifier.fillMaxWidth().padding(top = Spacing.medium), verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                            Box(modifier = Modifier.fillMaxWidth().height(48.dp), contentAlignment = Alignment.CenterStart) {
-                                Text(text = "▌", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                            }
-                            if (agentStatus != null) Text(text = agentStatus!!, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                        Box(modifier = Modifier.fillMaxWidth().height(48.dp).padding(top = Spacing.medium), contentAlignment = Alignment.CenterStart) {
+                            Text(text = "▌", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         }
                     }
-                }
-            }
-            Spacer(modifier = Modifier.height(Spacing.medium))
-            // Activity Log
-            if (activityLog.isNotEmpty()) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                    shape = MaterialTheme.shapes.medium,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)),
-                ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().pointerHoverIcon(PointerIcon.Hand)
-                                .toggleable(value = activityLogExpanded, role = Role.Button, onValueChange = { activityLogExpanded = it })
-                                .padding(horizontal = Spacing.large, vertical = Spacing.medium),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                                Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(stringResource("skills.view.activity.log"), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Box(
-                                    modifier = Modifier
-                                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), shape = MaterialTheme.shapes.extraSmall)
-                                        .padding(horizontal = 6.dp, vertical = 1.dp),
-                                ) {
-                                    Text("${activityLog.size}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                            Icon(if (activityLogExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-                        }
-                        if (activityLogExpanded) {
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
-                            SelectionContainer {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.large, vertical = Spacing.medium),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                                ) {
-                                    activityLog.forEachIndexed { index, entry ->
-                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.small), verticalAlignment = Alignment.Top) {
-                                            Text("${index + 1}.", style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f), modifier = Modifier.width(24.dp))
-                                            Text(entry, style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), modifier = Modifier.weight(1f))
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    // Single live status line — updates in place
+                    if (isRunning && currentStatusLine != null) {
+                        Text(
+                            text = currentStatusLine!!,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                            modifier = Modifier.padding(top = Spacing.small),
+                        )
                     }
                 }
             }

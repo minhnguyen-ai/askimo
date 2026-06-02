@@ -49,6 +49,18 @@ interface ExternalAgent {
     val configurationHint: String get() = ""
 
     /**
+     * Optional external runtime session identifier captured during the most recent execution.
+     * Agents that do not expose sessions return `null`.
+     */
+    val lastExecutionSessionId: String? get() = null
+
+    /**
+     * Effective workspace directory used by the most recent execution.
+     * Agents that do not expose it return `null`.
+     */
+    val lastExecutionWorkspaceDir: String? get() = null
+
+    /**
      * Returns `true` if the agent binary is installed and reachable on `PATH`.
      * Cheap check only — no API call.
      */
@@ -104,6 +116,7 @@ interface ExternalAgent {
         workDir: java.io.File? = null,
         onToken: (String) -> Unit = {},
         onStatus: (String) -> Unit = {},
+        onThinking: (String) -> Unit = {},
     ): Result<String>
 
     /**
@@ -116,9 +129,10 @@ interface ExternalAgent {
         workDir: java.io.File? = null,
         onToken: (String) -> Unit = {},
         onStatus: (String) -> Unit = {},
+        onThinking: (String) -> Unit = {},
     ): Result<String> {
         val startMs = System.currentTimeMillis()
-        val result = run(systemPrompt, userInput, workDir, onToken, onStatus)
+        val result = run(systemPrompt, userInput, workDir, onToken, onStatus, onThinking)
         val durationMs = System.currentTimeMillis() - startMs
         Analytics.track(
             AnalyticsEvent.SKILL_AGENT_RUN,

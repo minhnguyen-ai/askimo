@@ -646,11 +646,25 @@ class DatabaseManager private constructor(
                     user_input   TEXT NOT NULL DEFAULT '',
                     response     TEXT NOT NULL DEFAULT '',
                     error        TEXT,
+                    agent_session_id TEXT,
+                    workspace_dir TEXT,
                     activity_log TEXT NOT NULL DEFAULT '',
                     created_at   TEXT NOT NULL
                 )
                 """.trimIndent(),
             )
+
+            // Migration: add agent session/workspace columns for existing databases.
+            try {
+                stmt.executeUpdate("ALTER TABLE skill_run_history ADD COLUMN agent_session_id TEXT")
+            } catch (_: Exception) {
+                // Column already exists — safe to ignore.
+            }
+            try {
+                stmt.executeUpdate("ALTER TABLE skill_run_history ADD COLUMN workspace_dir TEXT")
+            } catch (_: Exception) {
+                // Column already exists — safe to ignore.
+            }
 
             stmt.executeUpdate(
                 """

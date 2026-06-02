@@ -151,6 +151,7 @@ class CodexAgent : ExternalAgentTemplate() {
         line: String,
         onToken: (String) -> Unit,
         onStatus: (String) -> Unit,
+        onThinking: (String) -> Unit,
         output: StringBuilder,
     ) {
         output.appendLine(line)

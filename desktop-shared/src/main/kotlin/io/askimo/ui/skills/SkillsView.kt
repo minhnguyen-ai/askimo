@@ -30,6 +30,7 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -70,6 +71,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Cursor
+import java.io.File
 
 @Composable
 fun skillsView() {
@@ -89,6 +91,8 @@ fun skillsView() {
     }
 
     var pendingHistoryRecord by remember { mutableStateOf<SkillRunRecord?>(null) }
+    var workDir by remember { mutableStateOf(File(System.getProperty("user.home") ?: "/tmp")) }
+    var workDirRefreshKey by remember { mutableStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
 
     Row(modifier = Modifier.fillMaxSize()) {
@@ -100,6 +104,10 @@ fun skillsView() {
                 pendingHistoryRecord = pendingHistoryRecord,
                 onPreloadConsumed = { pendingHistoryRecord = null },
                 onRunCompleted = { allHistoryRefreshKey++ },
+                onWorkDirChanged = { newWorkDir ->
+                    workDir = newWorkDir
+                    workDirRefreshKey++
+                },
             )
         }
 
@@ -113,6 +121,8 @@ fun skillsView() {
                 allRunHistory
             },
             filterSkillName = selectedSkill?.name,
+            workDir = workDir,
+            workDirRefreshKey = workDirRefreshKey,
             onSelectSkill = { selectedSkill = it },
             onSelectRecord = { record ->
                 val skill = skills.firstOrNull { it.relativePath == record.skillPath }
@@ -140,6 +150,7 @@ private fun skillsMainContent(
     pendingHistoryRecord: SkillRunRecord?,
     onPreloadConsumed: () -> Unit,
     onRunCompleted: () -> Unit,
+    onWorkDirChanged: (File) -> Unit = {},
 ) {
     val scrollState = rememberScrollState()
     Box(modifier = Modifier.fillMaxSize()) {
@@ -227,6 +238,7 @@ private fun skillsMainContent(
                     onRunCompleted = onRunCompleted,
                     preloadRecord = pendingHistoryRecord,
                     onPreloadConsumed = onPreloadConsumed,
+                    onWorkDirChanged = onWorkDirChanged,
                 )
             }
         }
@@ -251,6 +263,7 @@ private fun skillsMainContent(
 private enum class RailTab(val index: Int, val icon: ImageVector) {
     SKILLS(0, Icons.Default.Extension),
     HISTORY(1, Icons.Default.History),
+    WORKSPACE(2, Icons.Default.FolderOpen),
 }
 
 @Composable
@@ -259,6 +272,8 @@ private fun skillsRightRail(
     selectedSkill: SkillDefinition?,
     runHistory: List<SkillRunRecord>,
     filterSkillName: String?,
+    workDir: File,
+    workDirRefreshKey: Int,
     onSelectSkill: (SkillDefinition) -> Unit,
     onSelectRecord: (SkillRunRecord) -> Unit,
     onDeleteRecord: (SkillRunRecord) -> Unit,
@@ -357,6 +372,11 @@ private fun skillsRightRail(
                                     onDeleteRecord = onDeleteRecord,
                                 )
                             }
+
+                            RailTab.WORKSPACE -> workspaceFilesPanel(
+                                workDir = workDir,
+                                refreshKey = workDirRefreshKey,
+                            )
                         }
                     }
                 }
@@ -375,7 +395,11 @@ private fun skillsRightRail(
                 RailTab.entries.forEach { tab ->
                     val isActive = isExpanded && tab == activeTab
                     themedTooltip(
-                        text = if (tab == RailTab.SKILLS) "Skills" else "History",
+                        text = when (tab) {
+                            RailTab.SKILLS -> "Skills"
+                            RailTab.HISTORY -> "History"
+                            RailTab.WORKSPACE -> "Workspace"
+                        },
                         placement = TooltipPlacement.LEFT,
                     ) {
                         Box(
@@ -408,7 +432,11 @@ private fun skillsRightRail(
                         ) {
                             Icon(
                                 tab.icon,
-                                contentDescription = if (tab == RailTab.SKILLS) "Skills" else "History",
+                                contentDescription = when (tab) {
+                                    RailTab.SKILLS -> "Skills"
+                                    RailTab.HISTORY -> "History"
+                                    RailTab.WORKSPACE -> "Workspace"
+                                },
                                 tint = if (isActive) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(22.dp).alpha(if (isActive) 1f else 0.6f),
                             )

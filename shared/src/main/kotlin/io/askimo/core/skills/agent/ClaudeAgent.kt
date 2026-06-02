@@ -98,6 +98,7 @@ class ClaudeAgent : ExternalAgentTemplate() {
         line: String,
         onToken: (String) -> Unit,
         onStatus: (String) -> Unit,
+        onThinking: (String) -> Unit,
         output: StringBuilder,
     ) {
         val event = ClaudeStreamJsonEventParser.parse(line)
@@ -153,6 +154,7 @@ class ClaudeAgent : ExternalAgentTemplate() {
                         "thinking" -> {
                             val thinking = block.fields["thinking"] as? String ?: continue
                             log.debug("claude thinking: {}", thinking.take(200))
+                            onThinking(thinking)
                         }
                     }
                 }

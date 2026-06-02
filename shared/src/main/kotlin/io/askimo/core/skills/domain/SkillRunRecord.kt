@@ -17,6 +17,8 @@ import java.util.UUID
  * @param userInput   The context/prompt entered by the user before executing.
  * @param response    The full AI-generated response text; empty if the run failed.
  * @param error       Error message if the run failed; null on success.
+ * @param agentSessionId Optional external agent session identifier (if the runtime exposes one).
+ * @param workspaceDir Optional runtime workspace directory used by the agent process.
  * @param activityLog Ordered list of agent status/tool events emitted during the run.
  * @param createdAt   When this run was recorded.
  */
@@ -26,6 +28,8 @@ data class SkillRunRecord(
     val userInput: String,
     val response: String,
     val error: String?,
+    val agentSessionId: String? = null,
+    val workspaceDir: String? = null,
     val activityLog: List<String>,
     val createdAt: Instant = Instant.now(),
 )
@@ -41,6 +45,8 @@ object SkillRunHistoryTable : Table("skill_run_history") {
     val userInput = text("user_input").default("")
     val response = text("response").default("")
     val error = text("error").nullable()
+    val agentSessionId = text("agent_session_id").nullable()
+    val workspaceDir = text("workspace_dir").nullable()
 
     /** Newline-delimited activity log entries. */
     val activityLog = text("activity_log").default("")

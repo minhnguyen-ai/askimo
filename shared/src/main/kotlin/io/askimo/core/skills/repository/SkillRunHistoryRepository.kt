@@ -39,6 +39,8 @@ class SkillRunHistoryRepository internal constructor(
                 it[userInput] = record.userInput
                 it[response] = record.response
                 it[error] = record.error
+                it[agentSessionId] = record.agentSessionId
+                it[workspaceDir] = record.workspaceDir
                 it[activityLog] = encodeLog(record.activityLog)
                 it[createdAt] = record.createdAt
             }
@@ -61,6 +63,8 @@ class SkillRunHistoryRepository internal constructor(
                     userInput = it[SkillRunHistoryTable.userInput],
                     response = it[SkillRunHistoryTable.response],
                     error = it[SkillRunHistoryTable.error],
+                    agentSessionId = it[SkillRunHistoryTable.agentSessionId],
+                    workspaceDir = it[SkillRunHistoryTable.workspaceDir],
                     activityLog = decodeLog(it[SkillRunHistoryTable.activityLog]),
                     createdAt = it[SkillRunHistoryTable.createdAt],
                 )
@@ -83,6 +87,8 @@ class SkillRunHistoryRepository internal constructor(
                     userInput = it[SkillRunHistoryTable.userInput],
                     response = it[SkillRunHistoryTable.response],
                     error = it[SkillRunHistoryTable.error],
+                    agentSessionId = it[SkillRunHistoryTable.agentSessionId],
+                    workspaceDir = it[SkillRunHistoryTable.workspaceDir],
                     activityLog = decodeLog(it[SkillRunHistoryTable.activityLog]),
                     createdAt = it[SkillRunHistoryTable.createdAt],
                 )

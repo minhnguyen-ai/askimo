@@ -202,6 +202,7 @@ class GeminiAgent : ExternalAgentTemplate() {
         line: String,
         onToken: (String) -> Unit,
         onStatus: (String) -> Unit,
+        onThinking: (String) -> Unit,
         output: StringBuilder,
     ) {
         val event = GeminiStreamJsonEventParser.parse(line)

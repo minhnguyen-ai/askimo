@@ -7,6 +7,7 @@ package io.askimo.core.skills.agent
 import io.askimo.core.logging.logger
 import io.askimo.core.util.ProcessBuilderExt
 import java.io.BufferedWriter
+import java.io.File
 
 /**
  * External agent implementation for [Cursor](https://cursor.com).
@@ -64,11 +65,16 @@ class CursorAgent : ExternalAgentTemplate() {
         agentPath: String,
         systemPrompt: String,
         userInput: String,
-        effectiveWorkDir: java.io.File,
+        effectiveWorkDir: File,
     ): List<String> = buildList {
         add(agentPath)
         add("--print")
         add("--trust")
+        add("--workspace")
+        add(effectiveWorkDir.absolutePath)
+        add("--stream-partial-output")
+        add("--output-format")
+        add("stream-json")
         if (userInput.isNotBlank()) add(userInput.trim())
     }
 
@@ -91,11 +97,58 @@ class CursorAgent : ExternalAgentTemplate() {
         line: String,
         onToken: (String) -> Unit,
         onStatus: (String) -> Unit,
+        onThinking: (String) -> Unit,
         output: StringBuilder,
     ) {
-        // Simple line-by-line streaming; no special parsing
-        log.debug("Cursor output: $line")
-        output.appendLine(line)
-        onToken(line + "\n")
+        val event = CursorStreamJsonEventParser.parse(line)
+        if (event == null) {
+            log.debug("cursor unparseable line: {}", line)
+            return
+        }
+        log.debug("cursor event: type={} subtype={} line {}", event.type, event.subtype, line)
+
+        when (event.type) {
+            "system" -> {
+                // First init event carries stable session/workspace metadata.
+                if (event.subtype == "init") {
+                    val sessionId = event.fields["session_id"] as? String
+                    val cwd = event.fields["cwd"] as? String
+                    if (!sessionId.isNullOrBlank() || !cwd.isNullOrBlank()) {
+                        updateExecutionMetadata(sessionId = sessionId, workspaceDir = cwd)
+                    }
+                }
+                onStatus(CursorStreamJsonEventParser.renderStatus(event))
+            }
+
+            "thinking" -> {
+                if (event.content.isNotBlank()) {
+                    onThinking(event.content)
+                } else {
+                    onStatus(CursorStreamJsonEventParser.renderStatus(event))
+                }
+            }
+
+            "assistant" -> {
+                // Cursor emits incremental tokens here but also a final summary event that
+                // duplicates all of them. We skip streaming from assistant entirely and rely
+                // on the "result" event for the final output.
+            }
+
+            "result" -> {
+                if (!event.isError) {
+                    val resultText = event.fields["result"] as? String
+                    if (!resultText.isNullOrBlank()) {
+                        output.append(resultText)
+                        onToken(resultText)
+                    }
+                }
+                onStatus(CursorStreamJsonEventParser.renderStatus(event))
+            }
+
+            else -> {
+                // Unknown event type — show as status
+                onStatus(CursorStreamJsonEventParser.renderStatus(event))
+            }
+        }
     }
 }

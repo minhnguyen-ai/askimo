@@ -10,12 +10,8 @@ import dev.langchain4j.service.tool.DefaultToolExecutor
 import dev.langchain4j.service.tool.ToolProvider
 import dev.langchain4j.service.tool.ToolProviderRequest
 import dev.langchain4j.service.tool.ToolProviderResult
-import io.askimo.core.analytics.Analytics
-import io.askimo.core.analytics.AnalyticsEvent
 import io.askimo.core.context.ChatContext
-import io.askimo.core.intent.DetectUserIntentCommand
 import io.askimo.core.intent.ToolConfig
-import io.askimo.core.intent.ToolRegistry
 import io.askimo.core.intent.ToolSource
 import io.askimo.core.logging.logger
 import io.askimo.core.mcp.McpInstanceService
@@ -47,30 +43,11 @@ class ToolProviderImpl(
                 emptyList()
             }
 
-        val toolVectorIndex = mcpInstanceService.getToolVectorIndex()
-
-        val userIntent = DetectUserIntentCommand.execute(
-            userMessage = request.userMessage().singleText() ?: "",
-            availableTools = ToolRegistry.getIntentBased(),
-            mcpTools = mcpTools,
-            toolVectorIndex = toolVectorIndex,
-        )
-
-        if (userIntent.tools.isEmpty()) return null
-
-        val mcpCount = userIntent.tools.count { it.source == ToolSource.MCP_EXTERNAL }
-        if (mcpCount > 0) {
-            Analytics.track(
-                AnalyticsEvent.MCP_TOOL_USED,
-                mapOf("scope" to "global", "tool_count" to mcpCount.toString()),
-            )
-        }
-
         val enabledServers = ChatContext.getEnabledServers()
 
         val builder = ToolProviderResult.builder()
 
-        userIntent.tools
+        mcpTools
             .filter { tool -> tool.serverId in enabledServers }
             .forEach { tool ->
                 if (tool.source == ToolSource.ASKIMO_BUILTIN) {

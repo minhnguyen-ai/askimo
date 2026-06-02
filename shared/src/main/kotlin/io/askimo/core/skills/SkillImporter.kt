@@ -11,6 +11,7 @@ import java.io.File
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.zip.ZipInputStream
 
 /**
  * Imports skill packs from external sources into the local skills directory.
@@ -102,6 +103,56 @@ object SkillImporter {
         }
     }
 
+    /**
+     * Imports skills from a local `.zip` archive.
+     *
+     * The archive is extracted to a temporary directory, then skill folders are imported
+     * using the same rules as directory imports (folder contains `skill.md`).
+     */
+    fun importFromZip(zipFile: Path): ImportResult {
+        val normalizedZip = zipFile.toAbsolutePath().normalize()
+        if (!Files.isRegularFile(normalizedZip)) {
+            return ImportResult.Failure("ZIP file not found: $normalizedZip")
+        }
+        if (!normalizedZip.fileName.toString().endsWith(".zip", ignoreCase = true)) {
+            return ImportResult.Failure("Selected file is not a .zip archive: ${normalizedZip.fileName}")
+        }
+
+        val zipName = normalizedZip.fileName.toString()
+        val targetName = if (zipName.endsWith(".zip", ignoreCase = true)) {
+            zipName.substring(0, zipName.length - 4)
+        } else {
+            zipName
+        }.ifBlank { "imported-skills" }
+        val targetDir = AskimoHome.skillsDir().resolve(targetName)
+        if (Files.exists(targetDir)) {
+            return ImportResult.Failure("Target folder '$targetName' already exists at $targetDir.")
+        }
+
+        val tempDir = Files.createTempDirectory("askimo-skills-zip-")
+        return runCatching {
+            log.info("Importing skills from ZIP: {}", normalizedZip)
+            extractZipSecurely(normalizedZip, tempDir)
+
+            val importedCount = SkillRepository().importFromDirectory(tempDir, targetName)
+            if (importedCount <= 0) {
+                runCatching { targetDir.toFile().deleteRecursively() }
+                return ImportResult.Failure(
+                    "No skills found in ZIP archive. Make sure it contains folders with a skill.md file.",
+                )
+            }
+
+            log.info("Imported {} skill(s) from ZIP {} into {}", importedCount, normalizedZip, targetDir)
+            ImportResult.Success(targetDir, importedCount)
+        }.getOrElse { e ->
+            log.error("Failed to import skills from ZIP {}: {}", normalizedZip, e.message, e)
+            runCatching { targetDir.toFile().deleteRecursively() }
+            ImportResult.Failure("ZIP import failed: ${e.message ?: "Unknown error"}")
+        }.also {
+            runCatching { tempDir.toFile().deleteRecursively() }
+        }
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
@@ -132,5 +183,32 @@ object SkillImporter {
 
             Pair(cloneUrl, subDir)
         }.getOrNull()
+    }
+
+    /**
+     * Extracts [zipFile] into [targetDir] with Zip Slip protection.
+     */
+    private fun extractZipSecurely(zipFile: Path, targetDir: Path) {
+        ZipInputStream(Files.newInputStream(zipFile)).use { input ->
+            while (true) {
+                val entry = input.nextEntry ?: break
+                val destination = targetDir.resolve(entry.name).normalize()
+
+                if (!destination.startsWith(targetDir)) {
+                    throw IllegalArgumentException("Unsafe ZIP entry path: ${entry.name}")
+                }
+
+                if (entry.isDirectory) {
+                    Files.createDirectories(destination)
+                } else {
+                    Files.createDirectories(destination.parent)
+                    Files.newOutputStream(destination).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+
+                input.closeEntry()
+            }
+        }
     }
 }

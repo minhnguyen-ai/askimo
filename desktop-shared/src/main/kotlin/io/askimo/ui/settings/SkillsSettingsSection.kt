@@ -48,6 +48,7 @@ import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -101,6 +102,7 @@ import io.askimo.ui.common.theme.AppComponents.appOutlinedTextField
 import io.askimo.ui.common.theme.ThemePreferences
 import io.askimo.ui.common.ui.revealingMarkdownText
 import io.askimo.ui.common.ui.themedTooltip
+import io.askimo.ui.common.ui.util.FileDialogUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -138,6 +140,7 @@ fun skillsSettingsSection() {
     var newItemParentPath by remember { mutableStateOf("") } // context path for in-folder creation
     var showNewSkillInFolderDialog by remember { mutableStateOf(false) }
     var showImportGitHubDialog by remember { mutableStateOf(false) }
+    var showImportZipDialog by remember { mutableStateOf(false) }
     var showAddFileDialog by remember { mutableStateOf(false) }
     var showAddFolderDialog by remember { mutableStateOf(false) }
     var addItemParentPath by remember { mutableStateOf("") }
@@ -240,6 +243,7 @@ fun skillsSettingsSection() {
                         showNewSkillInFolderDialog = true
                     },
                     onImportFromGitHub = { showImportGitHubDialog = true },
+                    onImportFromZip = { showImportZipDialog = true },
                     onAddFileInFolder = { parentPath ->
                         addItemParentPath = parentPath
                         showAddFileDialog = true
@@ -360,6 +364,29 @@ fun skillsSettingsSection() {
         } else {
             importFromGitHubDialog(
                 onDismiss = { showImportGitHubDialog = false },
+                onImported = { message ->
+                    importSuccessMessage = message
+                    refresh()
+                },
+            )
+        }
+    }
+
+    // Import from ZIP
+    if (showImportZipDialog) {
+        var importSuccessMessage by remember { mutableStateOf<String?>(null) }
+
+        if (importSuccessMessage != null) {
+            importSuccessDialog(
+                message = importSuccessMessage!!,
+                onDismiss = {
+                    importSuccessMessage = null
+                    showImportZipDialog = false
+                },
+            )
+        } else {
+            importFromZipDialog(
+                onDismiss = { showImportZipDialog = false },
                 onImported = { message ->
                     importSuccessMessage = message
                     refresh()
@@ -1048,6 +1075,7 @@ private fun skillsTreePanel(
     onNewSkill: () -> Unit,
     onNewSkillInFolder: (parentPath: String) -> Unit = {},
     onImportFromGitHub: () -> Unit = {},
+    onImportFromZip: () -> Unit = {},
     onAddFileInFolder: (folderRelativePath: String) -> Unit = {},
     onAddFolderInFolder: (folderRelativePath: String) -> Unit = {},
     onDeleteAll: () -> Unit = {},
@@ -1055,6 +1083,10 @@ private fun skillsTreePanel(
     val scrollState = rememberScrollState()
     var showAddMenu by remember { mutableStateOf(false) }
     var showDeleteAllConfirm by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredTree = remember(tree, searchQuery) {
+        filterSkillTree(tree, searchQuery)
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Panel header
@@ -1102,6 +1134,15 @@ private fun skillsTreePanel(
                             leadingIcon = { Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp)) },
                             modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
                         )
+                        DropdownMenuItem(
+                            text = { Text(stringResource("settings.skills.import.zip"), style = MaterialTheme.typography.bodyMedium) },
+                            onClick = {
+                                showAddMenu = false
+                                onImportFromZip()
+                            },
+                            leadingIcon = { Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                            modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                        )
                     }
                 }
                 // Delete all button
@@ -1122,6 +1163,28 @@ private fun skillsTreePanel(
         }
         HorizontalDivider()
 
+        appOutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text(stringResource("skills.view.search.placeholder")) },
+            leadingIcon = {
+                Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp))
+            },
+            trailingIcon = {
+                if (searchQuery.isNotBlank()) {
+                    IconButton(
+                        onClick = { searchQuery = "" },
+                        modifier = Modifier.size(20.dp).pointerHoverIcon(PointerIcon.Hand),
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = stringResource("skills.view.search.clear"), modifier = Modifier.size(14.dp))
+                    }
+                }
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
+        )
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+
         if (showDeleteAllConfirm) {
             deleteAllSkillsDialog(
                 onDismiss = { showDeleteAllConfirm = false },
@@ -1141,19 +1204,23 @@ private fun skillsTreePanel(
                     .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                if (tree.isEmpty()) {
+                if (filteredTree.isEmpty()) {
                     Box(
                         modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = stringResource("settings.skills.empty"),
+                            text = if (searchQuery.isBlank()) {
+                                stringResource("settings.skills.empty")
+                            } else {
+                                stringResource("skills.view.empty.search")
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                         )
                     }
                 } else {
-                    tree.forEach { node ->
+                    filteredTree.forEach { node ->
                         skillTreeNodeItem(
                             node = node,
                             selectedSkill = selectedSkill,
@@ -1165,6 +1232,7 @@ private fun skillsTreePanel(
                             onNewSkillInFolder = onNewSkillInFolder,
                             onAddFileInFolder = onAddFileInFolder,
                             onAddFolderInFolder = onAddFolderInFolder,
+                            forceExpanded = searchQuery.isNotBlank(),
                         )
                     }
                 }
@@ -1199,6 +1267,7 @@ private fun skillTreeNodeItem(
     onNewSkillInFolder: (parentPath: String) -> Unit = {},
     onAddFileInFolder: (folderRelativePath: String) -> Unit = {},
     onAddFolderInFolder: (folderRelativePath: String) -> Unit = {},
+    forceExpanded: Boolean = false,
 ) {
     when (node) {
         is SkillTreeNode.Category -> {
@@ -1209,6 +1278,7 @@ private fun skillTreeNodeItem(
             val isHovered by interactionSource.collectIsHoveredAsState()
             val isSkillFolder = node.isSkillFolder && node.skill != null
             val isSelected = isSkillFolder && selectedSkill?.relativePath == node.skill?.relativePath
+            val isExpandedNow = if (forceExpanded) true else isExpanded
 
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -1221,7 +1291,11 @@ private fun skillTreeNodeItem(
                         )
                         .hoverable(interactionSource)
                         .clickable {
-                            if (isSkillFolder) onSelectSkill(node.skill!!) else isExpanded = !isExpanded
+                            if (isSkillFolder) {
+                                onSelectSkill(node.skill!!)
+                            } else if (!forceExpanded) {
+                                isExpanded = !isExpanded
+                            }
                         }
                         .pointerHoverIcon(PointerIcon.Hand)
                         .padding(start = (depth * 12).dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
@@ -1231,9 +1305,13 @@ private fun skillTreeNodeItem(
                     // Expand/collapse arrow for all folders
                     if (node.children.isNotEmpty()) {
                         Icon(
-                            if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = if (isExpanded) "Collapse" else "Expand",
-                            modifier = Modifier.size(14.dp).clickable { isExpanded = !isExpanded },
+                            if (isExpandedNow) Icons.Default.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = if (isExpandedNow) "Collapse" else "Expand",
+                            modifier = Modifier.size(14.dp).clickable {
+                                if (!forceExpanded) {
+                                    isExpanded = !isExpanded
+                                }
+                            },
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     } else {
@@ -1304,7 +1382,7 @@ private fun skillTreeNodeItem(
                         }
                     }
                 }
-                if (isExpanded && node.children.isNotEmpty()) {
+                if (isExpandedNow && node.children.isNotEmpty()) {
                     node.children.forEach { child ->
                         skillTreeNodeItem(
                             node = child,
@@ -1318,6 +1396,7 @@ private fun skillTreeNodeItem(
                             onNewSkillInFolder = onNewSkillInFolder,
                             onAddFileInFolder = onAddFileInFolder,
                             onAddFolderInFolder = onAddFolderInFolder,
+                            forceExpanded = forceExpanded,
                         )
                     }
                 }
@@ -1418,6 +1497,45 @@ private fun skillTreeNodeItem(
     }
 }
 
+private fun filterSkillTree(
+    tree: List<SkillTreeNode>,
+    query: String,
+): List<SkillTreeNode> {
+    val normalizedQuery = query.trim().lowercase()
+    if (normalizedQuery.isBlank()) return tree
+
+    fun SkillTreeNode.matchesSelf(): Boolean = when (this) {
+        is SkillTreeNode.Category -> {
+            name.lowercase().contains(normalizedQuery) ||
+                path.lowercase().contains(normalizedQuery) ||
+                (skill?.name?.lowercase()?.contains(normalizedQuery) == true) ||
+                (skill?.description?.lowercase()?.contains(normalizedQuery) == true)
+        }
+
+        is SkillTreeNode.Leaf -> {
+            name.lowercase().contains(normalizedQuery) ||
+                path.lowercase().contains(normalizedQuery) ||
+                (skill?.name?.lowercase()?.contains(normalizedQuery) == true) ||
+                (skill?.description?.lowercase()?.contains(normalizedQuery) == true)
+        }
+    }
+
+    fun filterNode(node: SkillTreeNode): SkillTreeNode? = when (node) {
+        is SkillTreeNode.Leaf -> if (node.matchesSelf()) node else null
+
+        is SkillTreeNode.Category -> {
+            val filteredChildren = node.children.mapNotNull(::filterNode)
+            if (node.matchesSelf() || filteredChildren.isNotEmpty()) {
+                node.copy(children = filteredChildren)
+            } else {
+                null
+            }
+        }
+    }
+
+    return tree.mapNotNull(::filterNode)
+}
+
 @Composable
 private fun readEditToggle(
     isPreviewMode: Boolean,
@@ -1514,6 +1632,22 @@ private fun openSkillsFolder(path: Path) {
 // ── Dialogs ───────────────────────────────────────────────────────────────────
 
 @Composable
+private fun importErrorBanner(message: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
+        shape = MaterialTheme.shapes.small,
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+        )
+    }
+}
+
+@Composable
 private fun newSkillInFolderDialog(
     parentPath: String,
     onDismiss: () -> Unit,
@@ -1560,6 +1694,7 @@ private fun importFromGitHubDialog(
     onImported: (message: String) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val importSuccessTemplate = stringResource("settings.skills.import.success.message")
     var repoUrl by remember { mutableStateOf("") }
     var isImporting by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -1586,19 +1721,9 @@ private fun importFromGitHubDialog(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isImporting,
                 )
+
                 if (errorMessage != null) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
-                        shape = MaterialTheme.shapes.small,
-                    ) {
-                        Text(
-                            text = errorMessage!!,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        )
-                    }
+                    importErrorBanner(errorMessage!!)
                 }
             }
         },
@@ -1613,7 +1738,11 @@ private fun importFromGitHubDialog(
                         }
                         when (result) {
                             is SkillImporter.ImportResult.Success -> {
-                                onImported("✅ Imported ${result.skillCount} skill(s) into \"${result.targetDir.fileName}\"")
+                                onImported(
+                                    importSuccessTemplate
+                                        .replace("{0}", result.skillCount.toString())
+                                        .replace("{1}", result.targetDir.fileName.toString()),
+                                )
                             }
 
                             is SkillImporter.ImportResult.Failure -> {
@@ -1626,6 +1755,104 @@ private fun importFromGitHubDialog(
                 enabled = repoUrl.isNotBlank() && !isImporting,
             ) {
                 Text(if (isImporting) stringResource("settings.skills.import.github.importing") else stringResource("settings.skills.import.github.button"))
+            }
+        },
+        dismissButton = {
+            secondaryButton(onClick = onDismiss, enabled = !isImporting) {
+                Text(stringResource("action.cancel"))
+            }
+        },
+    )
+}
+
+@Composable
+private fun importFromZipDialog(
+    onDismiss: () -> Unit,
+    onImported: (message: String) -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    val importSuccessTemplate = stringResource("settings.skills.import.success.message")
+    val zipPickerTitle = stringResource("settings.skills.import.zip.picker.title")
+    var selectedZipPath by remember { mutableStateOf<String?>(null) }
+    var isImporting by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    AppComponents.alertDialog(
+        onDismissRequest = { if (!isImporting) onDismiss() },
+        title = { Text(stringResource("settings.skills.import.zip")) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource("settings.skills.import.zip.description"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                secondaryButton(
+                    onClick = {
+                        scope.launch {
+                            if (isImporting) return@launch
+                            errorMessage = null
+                            val path = FileDialogUtils.pickFilePath(
+                                title = zipPickerTitle,
+                                extensions = listOf("zip"),
+                            ) ?: return@launch
+                            selectedZipPath = path
+                        }
+                    },
+                    enabled = !isImporting,
+                ) {
+                    Text(stringResource("settings.skills.import.zip.pick.button"))
+                }
+
+                if (selectedZipPath != null) {
+                    Text(
+                        text = Path.of(selectedZipPath!!).fileName.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                }
+
+                if (errorMessage != null) {
+                    importErrorBanner(errorMessage!!)
+                }
+            }
+        },
+        confirmButton = {
+            primaryButton(
+                onClick = {
+                    scope.launch {
+                        val path = selectedZipPath ?: return@launch
+                        isImporting = true
+                        errorMessage = null
+                        val result = withContext(Dispatchers.IO) {
+                            SkillImporter.importFromZip(Path.of(path))
+                        }
+                        when (result) {
+                            is SkillImporter.ImportResult.Success -> {
+                                onImported(
+                                    importSuccessTemplate
+                                        .replace("{0}", result.skillCount.toString())
+                                        .replace("{1}", result.targetDir.fileName.toString()),
+                                )
+                            }
+
+                            is SkillImporter.ImportResult.Failure -> {
+                                errorMessage = result.message
+                                isImporting = false
+                            }
+                        }
+                    }
+                },
+                enabled = selectedZipPath != null && !isImporting,
+            ) {
+                Text(
+                    if (isImporting) {
+                        stringResource("settings.skills.import.zip.importing")
+                    } else {
+                        stringResource("settings.skills.import.zip.button")
+                    },
+                )
             }
         },
         dismissButton = {
