@@ -786,6 +786,14 @@ fun chatView(
                                             }
                                             availableDirectives = directiveService.listAllDirectives()
                                         },
+                                        onExport = {
+                                            directiveService.exportToJson()
+                                        },
+                                        onImport = { json ->
+                                            val result = directiveService.importFromJson(json)
+                                            availableDirectives = directiveService.listAllDirectives()
+                                            result
+                                        },
                                     )
                                 }
                             }

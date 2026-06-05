@@ -6,6 +6,39 @@ package io.askimo.core.chat.service
 
 import io.askimo.core.chat.domain.ChatDirective
 import io.askimo.core.chat.repository.ChatDirectiveRepository
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
+/**
+ * Result of a directive import operation.
+ */
+data class DirectiveImportResult(
+    val imported: Int,
+    /** Directives that were renamed due to a name collision (e.g. "my-directive (2)"). */
+    val renamed: Int,
+    /** Directives skipped because they had blank name or content. */
+    val skipped: Int,
+)
+
+// ── Internal serialization models ────────────────────────────────────────────
+
+@Serializable
+private data class DirectiveExportFile(
+    val version: Int = 1,
+    val directives: List<DirectiveExportItem>,
+)
+
+@Serializable
+private data class DirectiveExportItem(
+    val name: String,
+    val content: String,
+)
+
+private val json = Json {
+    prettyPrint = true
+    ignoreUnknownKeys = true
+}
 
 /**
  * Service for managing chat directives and building system prompts for chat sessions.
@@ -54,4 +87,56 @@ class ChatDirectiveService(
      * List all directives.
      */
     fun listAllDirectives(): List<ChatDirective> = repository.list()
+
+    /**
+     * Serializes all (or a given subset of) directives to a shareable JSON string.
+     */
+    fun exportToJson(directives: List<ChatDirective> = repository.list()): String {
+        val file = DirectiveExportFile(
+            directives = directives.map { DirectiveExportItem(it.name, it.content) },
+        )
+        return json.encodeToString(file)
+    }
+
+    /**
+     * Parses [jsonString] and persists each directive.
+     * - Blank name/content entries are skipped.
+     * - Name collisions are resolved by appending a numeric suffix, e.g. "my-directive (2)".
+     *
+     * @return A [DirectiveImportResult] summarising the operation.
+     * @throws IllegalArgumentException if [jsonString] cannot be parsed.
+     */
+    fun importFromJson(jsonString: String): DirectiveImportResult {
+        val exportFile = try {
+            json.decodeFromString<DirectiveExportFile>(jsonString)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Invalid directive file format", e)
+        }
+
+        val existingNames = repository.list().map { it.name }.toMutableSet()
+        var imported = 0
+        var renamed = 0
+        var skipped = 0
+
+        for (item in exportFile.directives) {
+            if (item.name.isBlank() || item.content.isBlank()) {
+                skipped++
+                continue
+            }
+
+            var finalName = item.name
+            if (finalName in existingNames) {
+                var counter = 2
+                while ("$finalName ($counter)" in existingNames) counter++
+                finalName = "$finalName ($counter)"
+                renamed++
+            }
+
+            repository.save(ChatDirective(name = finalName, content = item.content))
+            existingNames.add(finalName)
+            imported++
+        }
+
+        return DirectiveImportResult(imported = imported, renamed = renamed, skipped = skipped)
+    }
 }

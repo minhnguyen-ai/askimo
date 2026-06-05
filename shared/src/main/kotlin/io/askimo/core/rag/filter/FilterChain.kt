@@ -52,7 +52,7 @@ class FilterChain(filters: List<IndexingFilter>) {
         val relativePath = if (rootPath != absolutePath) {
             rootPath.relativize(absolutePath).toString()
         } else {
-            path.fileName.toString()
+            path.fileName?.toString() ?: path.toString()
         }
 
         // Detect project types for this root path (cached)
@@ -85,7 +85,7 @@ class FilterChain(filters: List<IndexingFilter>) {
                 path.fileName.toString()
             }
         } catch (_: Exception) {
-            path.fileName.toString()
+            path.fileName?.toString() ?: path.toString()
         }
 
         // Detect project types for this root path (cached)
