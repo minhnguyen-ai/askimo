@@ -58,6 +58,7 @@ import io.askimo.core.logging.currentFileLogger
 import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
+import io.askimo.ui.common.preferences.AccountPreferences
 import io.askimo.ui.common.theme.AppComponents
 import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.theme.ThemePreferences
@@ -68,6 +69,7 @@ import io.askimo.ui.util.Platform
 import kotlinx.coroutines.delay
 import java.awt.Desktop
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 private val log = currentFileLogger()
 
@@ -112,6 +114,9 @@ fun advancedSettingsSection() {
 
                 // RAG Configuration Section
                 ragConfigurationSection()
+
+                // Hardware Acceleration Section
+                hardwareAccelerationSection()
 
                 // Analytics Section
                 analyticsSection()
@@ -345,6 +350,67 @@ private fun openInFileManager(file: File) {
         }
     } catch (e: Exception) {
         log.error("Failed to open log directory: ${file.absolutePath}", e)
+    }
+}
+
+@Composable
+private fun hardwareAccelerationSection() {
+    var isEnabled by remember { mutableStateOf(AccountPreferences.device().getHardwareAccelerationEnabled()) }
+    var showRestartNotice by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = AppComponents.bannerCardColors(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.large),
+            verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+                ) {
+                    Text(
+                        text = stringResource("settings.hardware.acceleration.title"),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                    Text(
+                        text = if (Platform.isWindows) {
+                            stringResource("settings.hardware.acceleration.description.windows")
+                        } else {
+                            stringResource("settings.hardware.acceleration.description")
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                    )
+                }
+                Switch(
+                    checked = isEnabled,
+                    onCheckedChange = { checked ->
+                        isEnabled = checked
+                        AccountPreferences.device().setHardwareAccelerationEnabled(checked)
+                        showRestartNotice = true
+                    },
+                )
+            }
+
+            // Restart notice — shown after toggling
+            if (showRestartNotice) {
+                Text(
+                    text = stringResource("settings.hardware.acceleration.restart.notice"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
     }
 }
 
@@ -633,7 +699,7 @@ private fun ragIntField(
 
     LaunchedEffect(showSavedIndicator) {
         if (showSavedIndicator) {
-            delay(2000)
+            delay(2000.milliseconds)
             showSavedIndicator = false
         }
     }
@@ -793,7 +859,7 @@ private fun ragOptionalIntField(
 
     LaunchedEffect(showSavedIndicator) {
         if (showSavedIndicator) {
-            delay(2000)
+            delay(2000.milliseconds)
             showSavedIndicator = false
         }
     }
