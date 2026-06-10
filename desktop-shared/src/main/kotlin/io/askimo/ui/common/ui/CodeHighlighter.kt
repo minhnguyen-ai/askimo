@@ -17,6 +17,11 @@ import androidx.compose.ui.text.withStyle
  * Supports multiple programming languages with color-coded syntax.
  */
 object CodeHighlighter {
+    private data class LanguageProfile(
+        val keywords: Set<String>,
+        val commentPrefix: String,
+    )
+
     data class Theme(
         val keyword: Color,
         val string: Color,
@@ -105,33 +110,146 @@ object CodeHighlighter {
         "popd", "dirs", "let", "eval", "exec", "trap", "wait", "jobs", "bg", "fg", "kill",
     )
 
-    fun highlight(code: String, language: String?, theme: Theme): AnnotatedString {
-        val lang = language?.lowercase()?.trim() ?: ""
+    private val goKeywords = setOf(
+        "break", "case", "chan", "const", "continue", "default", "defer", "else", "fallthrough",
+        "for", "func", "go", "goto", "if", "import", "interface", "map", "package", "range",
+        "return", "select", "struct", "switch", "type", "var", "nil", "true", "false", "iota",
+    )
+
+    private val cKeywords = setOf(
+        "auto", "break", "case", "char", "const", "continue", "default", "do", "double", "else",
+        "enum", "extern", "float", "for", "goto", "if", "inline", "int", "long", "register",
+        "restrict", "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef",
+        "union", "unsigned", "void", "volatile", "while", "_Bool", "_Complex", "_Imaginary",
+    )
+
+    private val cppKeywords = setOf(
+        "alignas", "alignof", "and", "asm", "auto", "bool", "break", "case", "catch", "char",
+        "class", "const", "constexpr", "continue", "decltype", "default", "delete", "do", "double",
+        "else", "enum", "explicit", "export", "extern", "false", "float", "for", "friend", "goto",
+        "if", "inline", "int", "long", "mutable", "namespace", "new", "noexcept", "not", "nullptr",
+        "operator", "or", "private", "protected", "public", "register", "reinterpret_cast", "return",
+        "short", "signed", "sizeof", "static", "struct", "switch", "template", "this", "throw", "true",
+        "try", "typedef", "typeid", "typename", "union", "unsigned", "using", "virtual", "void", "volatile",
+        "wchar_t", "while",
+    )
+
+    private val csharpKeywords = setOf(
+        "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class",
+        "const", "continue", "decimal", "default", "delegate", "do", "double", "else", "enum", "event",
+        "explicit", "extern", "false", "finally", "fixed", "float", "for", "foreach", "goto", "if",
+        "implicit", "in", "int", "interface", "internal", "is", "lock", "long", "namespace", "new", "null",
+        "object", "operator", "out", "override", "params", "private", "protected", "public", "readonly",
+        "ref", "return", "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string", "struct",
+        "switch", "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort",
+        "using", "virtual", "void", "volatile", "while", "async", "await", "var",
+    )
+
+    private val rustKeywords = setOf(
+        "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn", "for", "if",
+        "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "self", "Self",
+        "static", "struct", "super", "trait", "true", "type", "unsafe", "use", "where", "while", "async", "await",
+        "dyn",
+    )
+
+    private val rubyKeywords = setOf(
+        "BEGIN", "END", "alias", "and", "begin", "break", "case", "class", "def", "defined?", "do", "else",
+        "elsif", "end", "ensure", "false", "for", "if", "in", "module", "next", "nil", "not", "or", "redo",
+        "rescue", "retry", "return", "self", "super", "then", "true", "undef", "unless", "until", "when", "while",
+        "yield",
+    )
+
+    private val phpKeywords = setOf(
+        "abstract", "and", "array", "as", "break", "callable", "case", "catch", "class", "clone", "const",
+        "continue", "declare", "default", "do", "echo", "else", "elseif", "empty", "enddeclare", "endfor", "endforeach",
+        "endif", "endswitch", "endwhile", "eval", "exit", "extends", "final", "finally", "fn", "for", "foreach", "function",
+        "global", "goto", "if", "implements", "include", "include_once", "instanceof", "insteadof", "interface", "isset", "list",
+        "match", "namespace", "new", "null", "or", "print", "private", "protected", "public", "readonly", "require",
+        "require_once", "return", "static", "switch", "throw", "trait", "try", "unset", "use", "var", "while", "xor", "yield",
+        "true", "false",
+    )
+
+    private val swiftKeywords = setOf(
+        "associatedtype", "class", "deinit", "enum", "extension", "fileprivate", "func", "import", "init", "inout",
+        "internal", "let", "open", "operator", "private", "protocol", "public", "rethrows", "static", "struct", "subscript",
+        "typealias", "var", "break", "case", "continue", "default", "defer", "do", "else", "fallthrough", "for", "guard",
+        "if", "in", "repeat", "return", "switch", "where", "while", "as", "Any", "catch", "false", "is", "nil", "super",
+        "self", "Self", "throw", "throws", "true", "try",
+    )
+
+    private val yamlKeywords = setOf("true", "false", "null", "yes", "no", "on", "off")
+    private val tomlKeywords = setOf("true", "false")
+
+    private val languageProfiles = mapOf(
+        "kotlin" to LanguageProfile(kotlinKeywords, "//"),
+        "java" to LanguageProfile(javaKeywords, "//"),
+        "python" to LanguageProfile(pythonKeywords, "#"),
+        "javascript" to LanguageProfile(jsKeywords, "//"),
+        "typescript" to LanguageProfile(jsKeywords, "//"),
+        "sql" to LanguageProfile(sqlKeywords, "--"),
+        "shell" to LanguageProfile(shellKeywords, "#"),
+        "go" to LanguageProfile(goKeywords, "//"),
+        "c" to LanguageProfile(cKeywords, "//"),
+        "cpp" to LanguageProfile(cppKeywords, "//"),
+        "csharp" to LanguageProfile(csharpKeywords, "//"),
+        "rust" to LanguageProfile(rustKeywords, "//"),
+        "ruby" to LanguageProfile(rubyKeywords, "#"),
+        "php" to LanguageProfile(phpKeywords, "//"),
+        "swift" to LanguageProfile(swiftKeywords, "//"),
+        "yaml" to LanguageProfile(yamlKeywords, "#"),
+        "toml" to LanguageProfile(tomlKeywords, "#"),
+    )
+
+    fun highlight(code: String, language: String?, theme: Theme, codeFontFamily: FontFamily = FontFamily.Monospace): AnnotatedString {
+        val lang = normalizeLanguage(language)
+
+        languageProfiles[lang]?.let { profile ->
+            return highlightCode(
+                code = code,
+                keywords = profile.keywords,
+                theme = theme,
+                commentPrefix = profile.commentPrefix,
+                codeFontFamily = codeFontFamily,
+            )
+        }
 
         return when {
-            lang in listOf("kotlin", "kt", "kts") -> highlightCode(code, kotlinKeywords, theme)
+            lang in listOf("json") -> highlightJSON(code, theme, codeFontFamily)
 
-            lang in listOf("java") -> highlightCode(code, javaKeywords, theme)
-
-            lang in listOf("python", "py") -> highlightCode(code, pythonKeywords, theme, "#")
-
-            lang in listOf("javascript", "js", "typescript", "ts", "jsx", "tsx") ->
-                highlightCode(code, jsKeywords, theme)
-
-            lang in listOf("sql", "mysql", "postgresql", "sqlite") ->
-                highlightCode(code, sqlKeywords, theme, "--")
-
-            lang in listOf("bash", "sh", "shell", "zsh") -> highlightCode(code, shellKeywords, theme, "#")
-
-            lang in listOf("json") -> highlightJSON(code, theme)
-
-            lang in listOf("xml", "html") -> highlightXML(code, theme)
+            lang in listOf("xml", "html") -> highlightXML(code, theme, codeFontFamily)
 
             else -> buildAnnotatedString {
-                withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) {
+                withStyle(SpanStyle(fontFamily = codeFontFamily)) {
                     append(code)
                 }
             }
+        }
+    }
+
+    private fun normalizeLanguage(language: String?): String {
+        val raw = language?.trim()?.lowercase().orEmpty()
+        if (raw.isEmpty()) return ""
+
+        // Support info strings like "go title=main.go" and aliases like "golang".
+        val token = raw
+            .substringBefore(' ')
+            .substringBefore('\t')
+            .substringBefore(',')
+            .substringBefore('{')
+
+        return when (token) {
+            "kt", "kts" -> "kotlin"
+            "py", "python3" -> "python"
+            "js", "jsx", "node" -> "javascript"
+            "ts", "tsx" -> "typescript"
+            "mysql", "postgres", "postgresql", "sqlite" -> "sql"
+            "bash", "sh", "zsh", "fish", "shellscript" -> "shell"
+            "golang" -> "go"
+            "c++", "cc", "cxx" -> "cpp"
+            "c#", "cs" -> "csharp"
+            "rb" -> "ruby"
+            "yml" -> "yaml"
+            else -> token
         }
     }
 
@@ -140,6 +258,7 @@ object CodeHighlighter {
         keywords: Set<String>,
         theme: Theme,
         commentPrefix: String = "//",
+        codeFontFamily: FontFamily = FontFamily.Monospace,
     ): AnnotatedString = buildAnnotatedString {
         val lines = code.split("\n")
         var inMultiLineComment = false
@@ -150,7 +269,7 @@ object CodeHighlighter {
             // Check for multi-line comment start/end
             if (line.trim().startsWith("/*")) inMultiLineComment = true
             if (inMultiLineComment) {
-                withStyle(SpanStyle(color = theme.comment, fontFamily = FontFamily.Monospace)) {
+                withStyle(SpanStyle(color = theme.comment, fontFamily = codeFontFamily)) {
                     append(line)
                 }
                 if (line.trim().endsWith("*/")) inMultiLineComment = false
@@ -164,12 +283,12 @@ object CodeHighlighter {
 
             // Process code
             if (codeBeforeComment.isNotEmpty()) {
-                highlightLine(codeBeforeComment, keywords, theme)
+                highlightLine(codeBeforeComment, keywords, theme, codeFontFamily)
             }
 
             // Process comment
             if (comment != null) {
-                withStyle(SpanStyle(color = theme.comment, fontFamily = FontFamily.Monospace)) {
+                withStyle(SpanStyle(color = theme.comment, fontFamily = codeFontFamily)) {
                     append(comment)
                 }
             }
@@ -180,8 +299,10 @@ object CodeHighlighter {
         line: String,
         keywords: Set<String>,
         theme: Theme,
+        codeFontFamily: FontFamily,
     ) {
         // Regex patterns
+        val annotationPattern = """@[a-zA-Z_][\w.]*""".toRegex()
         val stringPattern = """"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'""".toRegex()
         val numberPattern = """\b\d+\.?\d*[fFlL]?\b""".toRegex()
         val wordPattern = """\b[a-zA-Z_]\w*\b""".toRegex()
@@ -194,7 +315,22 @@ object CodeHighlighter {
                 Triple(
                     match.range,
                     "string",
-                    SpanStyle(color = theme.string, fontFamily = FontFamily.Monospace),
+                    SpanStyle(color = theme.string, fontFamily = codeFontFamily),
+                ),
+            )
+        }
+
+        // Find annotations/decorators (e.g., @RestController, @RequestMapping)
+        annotationPattern.findAll(line).forEach { match ->
+            tokens.add(
+                Triple(
+                    match.range,
+                    "annotation",
+                    SpanStyle(
+                        color = theme.type,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = codeFontFamily,
+                    ),
                 ),
             )
         }
@@ -205,7 +341,7 @@ object CodeHighlighter {
                 Triple(
                     match.range,
                     "number",
-                    SpanStyle(color = theme.number, fontFamily = FontFamily.Monospace),
+                    SpanStyle(color = theme.number, fontFamily = codeFontFamily),
                 ),
             )
         }
@@ -221,7 +357,7 @@ object CodeHighlighter {
                         SpanStyle(
                             color = theme.keyword,
                             fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = codeFontFamily,
                         ),
                     ),
                 )
@@ -232,7 +368,7 @@ object CodeHighlighter {
                         Triple(
                             match.range,
                             "function",
-                            SpanStyle(color = theme.function, fontFamily = FontFamily.Monospace),
+                            SpanStyle(color = theme.function, fontFamily = codeFontFamily),
                         ),
                     )
             }
@@ -255,7 +391,7 @@ object CodeHighlighter {
         nonOverlapping.forEach { (range, _, style) ->
             // Append text before token
             if (currentIndex < range.first) {
-                withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) {
+                withStyle(SpanStyle(fontFamily = codeFontFamily)) {
                     append(line.substring(currentIndex, range.first))
                 }
             }
@@ -268,35 +404,61 @@ object CodeHighlighter {
 
         // Append remaining text
         if (currentIndex < line.length) {
-            withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) {
+            withStyle(SpanStyle(fontFamily = codeFontFamily)) {
                 append(line.substring(currentIndex))
             }
         }
     }
 
-    private fun highlightJSON(code: String, theme: Theme): AnnotatedString = buildAnnotatedString {
+    private fun highlightJSON(code: String, theme: Theme, codeFontFamily: FontFamily): AnnotatedString = buildAnnotatedString {
         val stringPattern = """"(?:[^"\\]|\\.)*"""".toRegex()
         val numberPattern = """-?\d+\.?\d*([eE][+-]?\d+)?""".toRegex()
         val boolNullPattern = """\b(true|false|null)\b""".toRegex()
 
-        val tokens = mutableListOf<Pair<IntRange, SpanStyle>>()
+        val tokens = collectTokens(
+            source = code,
+            stringPattern to SpanStyle(color = theme.string, fontFamily = codeFontFamily),
+            boolNullPattern to SpanStyle(
+                color = theme.keyword,
+                fontWeight = FontWeight.Bold,
+                fontFamily = codeFontFamily,
+            ),
+            numberPattern to SpanStyle(color = theme.number, fontFamily = codeFontFamily),
+        )
 
-        stringPattern.findAll(code).forEach { match ->
-            tokens.add(match.range to SpanStyle(color = theme.string, fontFamily = FontFamily.Monospace))
-        }
-        boolNullPattern.findAll(code).forEach { match ->
-            tokens.add(
-                match.range to SpanStyle(
-                    color = theme.keyword,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
-                ),
-            )
-        }
-        numberPattern.findAll(code).forEach { match ->
-            tokens.add(match.range to SpanStyle(color = theme.number, fontFamily = FontFamily.Monospace))
-        }
+        appendStyledRanges(code, tokens, codeFontFamily)
+    }
 
+    private fun highlightXML(code: String, theme: Theme, codeFontFamily: FontFamily): AnnotatedString = buildAnnotatedString {
+        val tagPattern = """</?[\w:.-]+|/?>""".toRegex()
+        val attrPattern = """\b[\w:.-]+(?==)""".toRegex()
+        val stringPattern = """"[^"]*"|'[^']*'""".toRegex()
+        val commentPattern = """<!--.*?-->""".toRegex()
+
+        val tokens = collectTokens(
+            source = code,
+            commentPattern to SpanStyle(color = theme.comment, fontFamily = codeFontFamily),
+            tagPattern to SpanStyle(
+                color = theme.keyword,
+                fontWeight = FontWeight.Bold,
+                fontFamily = codeFontFamily,
+            ),
+            attrPattern to SpanStyle(color = theme.function, fontFamily = codeFontFamily),
+            stringPattern to SpanStyle(color = theme.string, fontFamily = codeFontFamily),
+        )
+
+        appendStyledRanges(code, tokens, codeFontFamily)
+    }
+
+    /**
+     * Appends [source] with syntax tokens applied, keeping only the first non-overlapping token
+     * at each position and preserving plain text between token ranges.
+     */
+    private fun AnnotatedString.Builder.appendStyledRanges(
+        source: String,
+        tokens: List<Pair<IntRange, SpanStyle>>,
+        defaultFontFamily: FontFamily,
+    ) {
         val sorted = tokens.sortedBy { it.first.first }
         val nonOverlapping = mutableListOf<Pair<IntRange, SpanStyle>>()
         var lastEnd = -1
@@ -311,78 +473,39 @@ object CodeHighlighter {
         var currentIndex = 0
         nonOverlapping.forEach { (range, style) ->
             if (currentIndex < range.first) {
-                withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) {
-                    append(code.substring(currentIndex, range.first))
+                withStyle(SpanStyle(fontFamily = defaultFontFamily)) {
+                    append(source.substring(currentIndex, range.first))
                 }
             }
             withStyle(style) {
-                append(code.substring(range))
+                append(source.substring(range))
             }
             currentIndex = range.last + 1
         }
 
-        if (currentIndex < code.length) {
-            withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) {
-                append(code.substring(currentIndex))
+        if (currentIndex < source.length) {
+            withStyle(SpanStyle(fontFamily = defaultFontFamily)) {
+                append(source.substring(currentIndex))
             }
         }
     }
 
-    private fun highlightXML(code: String, theme: Theme): AnnotatedString = buildAnnotatedString {
-        val tagPattern = """</?[\w:]+|/?>""".toRegex()
-        val attrPattern = """\b[\w:-]+(?==)""".toRegex()
-        val stringPattern = """"[^"]*"|'[^']*'""".toRegex()
-        val commentPattern = """<!--.*?-->""".toRegex()
-
-        val tokens = mutableListOf<Pair<IntRange, SpanStyle>>()
-
-        commentPattern.findAll(code).forEach { match ->
-            tokens.add(match.range to SpanStyle(color = theme.comment, fontFamily = FontFamily.Monospace))
+    private fun MutableList<Pair<IntRange, SpanStyle>>.addMatches(
+        pattern: Regex,
+        source: String,
+        style: SpanStyle,
+    ) {
+        pattern.findAll(source).forEach { match ->
+            add(match.range to style)
         }
-        tagPattern.findAll(code).forEach { match ->
-            tokens.add(
-                match.range to SpanStyle(
-                    color = theme.keyword,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
-                ),
-            )
-        }
-        attrPattern.findAll(code).forEach { match ->
-            tokens.add(match.range to SpanStyle(color = theme.function, fontFamily = FontFamily.Monospace))
-        }
-        stringPattern.findAll(code).forEach { match ->
-            tokens.add(match.range to SpanStyle(color = theme.string, fontFamily = FontFamily.Monospace))
-        }
+    }
 
-        val sorted = tokens.sortedBy { it.first.first }
-        val nonOverlapping = mutableListOf<Pair<IntRange, SpanStyle>>()
-        var lastEnd = -1
-
-        sorted.forEach { token ->
-            if (token.first.first > lastEnd) {
-                nonOverlapping.add(token)
-                lastEnd = token.first.last
-            }
-        }
-
-        var currentIndex = 0
-        nonOverlapping.forEach { (range, style) ->
-            if (currentIndex < range.first) {
-                withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) {
-                    append(code.substring(currentIndex, range.first))
-                }
-            }
-            withStyle(style) {
-                append(code.substring(range))
-            }
-            currentIndex = range.last + 1
-        }
-
-        if (currentIndex < code.length) {
-            withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) {
-                append(code.substring(currentIndex))
-            }
+    private fun collectTokens(
+        source: String,
+        vararg patternStyles: Pair<Regex, SpanStyle>,
+    ): MutableList<Pair<IntRange, SpanStyle>> = mutableListOf<Pair<IntRange, SpanStyle>>().also { tokens ->
+        patternStyles.forEach { (pattern, style) ->
+            tokens.addMatches(pattern, source, style)
         }
     }
 }

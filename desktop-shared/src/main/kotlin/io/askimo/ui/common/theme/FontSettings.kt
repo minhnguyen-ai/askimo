@@ -6,16 +6,21 @@ package io.askimo.ui.common.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.FontFamily
+import java.awt.GraphicsEnvironment
 
 val LocalFontScale = compositionLocalOf { 1f }
+val LocalCodeFontFamily = compositionLocalOf<FontFamily> { FontFamily.Monospace }
 
 data class FontSettings(
-    val fontFamily: String = "System Default",
+    val uiFontFamily: String = "System Default",
+    val codeFontFamily: String = "System Monospace",
     val fontSize: FontSize = FontSize.MEDIUM,
 ) {
     companion object {
         const val SYSTEM_DEFAULT = "System Default"
+        const val SYSTEM_MONOSPACE = "System Monospace"
     }
 }
 
@@ -29,9 +34,23 @@ enum class FontSize(val displayName: String, val scale: Float) {
 /**
  * Maps font family names to predefined [FontFamily] types.
  */
-fun loadFontFamily(fontName: String): FontFamily = when (fontName.lowercase()) {
+private val installedFontFamiliesByLowercase: Map<String, String> by lazy {
+    GraphicsEnvironment
+        .getLocalGraphicsEnvironment()
+        .availableFontFamilyNames
+        .associateBy { it.lowercase() }
+}
+
+@OptIn(ExperimentalTextApi::class)
+private fun resolveInstalledFontFamily(fontName: String): FontFamily? {
+    val installedName = installedFontFamiliesByLowercase[fontName.lowercase()] ?: return null
+    return FontFamily(installedName)
+}
+
+private fun classifyGenericFontFamily(fontName: String): FontFamily = when (fontName.lowercase()) {
     "monospace", "courier", "courier new", "consolas", "monaco", "menlo",
-    "dejavu sans mono", "lucida console",
+    "dejavu sans mono", "lucida console", "jetbrains mono", "fira code", "source code pro",
+    "sf mono", "ui-monospace", "ubuntu mono", "inconsolata",
     -> FontFamily.Monospace
 
     "serif", "times", "times new roman", "georgia", "palatino",
@@ -43,15 +62,27 @@ fun loadFontFamily(fontName: String): FontFamily = when (fontName.lowercase()) {
     else -> FontFamily.SansSerif
 }
 
+fun loadUiFontFamily(fontName: String): FontFamily = when (fontName) {
+    FontSettings.SYSTEM_DEFAULT -> FontFamily.Default
+
+    else -> resolveInstalledFontFamily(fontName)
+        ?: classifyGenericFontFamily(fontName)
+}
+
+fun loadCodeFontFamily(fontName: String): FontFamily = when (fontName) {
+    FontSettings.SYSTEM_MONOSPACE -> FontFamily.Monospace
+
+    FontSettings.SYSTEM_DEFAULT -> FontFamily.Default
+
+    else -> resolveInstalledFontFamily(fontName)
+        ?: classifyGenericFontFamily(fontName)
+}
+
 /**
  * Creates a [Typography] scaled and set to the font in [fontSettings].
  */
 fun createCustomTypography(fontSettings: FontSettings): Typography {
-    val fontFamily = if (fontSettings.fontFamily == FontSettings.SYSTEM_DEFAULT) {
-        FontFamily.Default
-    } else {
-        loadFontFamily(fontSettings.fontFamily)
-    }
+    val fontFamily = loadUiFontFamily(fontSettings.uiFontFamily)
     val scale = fontSettings.fontSize.scale
     val base = Typography()
     return Typography(

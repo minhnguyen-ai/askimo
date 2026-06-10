@@ -27,9 +27,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.LocalCodeFontFamily
 
 /**
  * Reusable code/text viewer with:
@@ -53,9 +53,15 @@ fun codeViewerBlock(
     hScrollState: ScrollState = rememberScrollState(),
     modifier: Modifier = Modifier,
 ) {
+    val codeFontFamily = LocalCodeFontFamily.current
     val isDark = AppComponents.isCodeBlockDark()
     val theme = if (isDark) CodeHighlighter.darkTheme() else CodeHighlighter.lightTheme()
-    val highlightedCode = CodeHighlighter.highlight(code = code, language = language, theme = theme)
+    val highlightedCode = CodeHighlighter.highlight(
+        code = code,
+        language = language,
+        theme = theme,
+        codeFontFamily = codeFontFamily,
+    )
 
     val backgroundColor = AppComponents.codeBlockBackground()
     val contentColor = AppComponents.codeBlockContentColor()
@@ -102,7 +108,7 @@ fun codeViewerBlock(
                         Text(
                             text = "${index + 1}",
                             style = MaterialTheme.typography.bodyMedium,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = codeFontFamily,
                             color = lineNumberColor,
                             modifier = Modifier.padding(end = 8.dp),
                         )
@@ -120,7 +126,7 @@ fun codeViewerBlock(
             Text(
                 text = highlightedCode,
                 style = MaterialTheme.typography.bodyMedium,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = codeFontFamily,
                 color = contentColor,
                 softWrap = false,
                 modifier = Modifier

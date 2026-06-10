@@ -51,10 +51,11 @@ import io.askimo.core.config.AppConfig
 import io.askimo.core.i18n.LocalizationManager
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
-import io.askimo.ui.common.theme.FontSettings
 import io.askimo.ui.common.theme.FontSize
 import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.theme.ThemePreferences
+import io.askimo.ui.common.theme.loadCodeFontFamily
+import io.askimo.ui.common.theme.loadUiFontFamily
 import io.askimo.ui.common.ui.clickableCard
 import io.askimo.ui.common.ui.themedTooltip
 import java.util.Locale
@@ -353,7 +354,6 @@ private fun preferredAIResponseLanguageField(availableLanguages: Map<Locale, Str
 private fun fontSettingsCard() {
     val currentFontSettings by ThemePreferences.fontSettings.collectAsState()
     val availableFonts = remember { ThemePreferences.getAvailableSystemFonts() }
-    var fontDropdownExpanded by remember { mutableStateOf(false) }
     var fontSizeDropdownExpanded by remember { mutableStateOf(false) }
 
     Card(
@@ -366,95 +366,27 @@ private fun fontSettingsCard() {
                 .padding(Spacing.large),
             verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
-            // Font Family
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                Text(
-                    text = stringResource("settings.font.family"),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickableCard { fontDropdownExpanded = true },
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                        ),
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = currentFontSettings.fontFamily,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Icon(
-                                Icons.Default.Edit,
-                                contentDescription = "Change font",
-                                tint = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                    }
+            fontFamilySelector(
+                label = stringResource("settings.font.family.ui"),
+                selectedFontFamily = currentFontSettings.uiFontFamily,
+                availableFonts = availableFonts,
+                previewResolver = ::loadUiFontFamily,
+                onSelected = { selected ->
+                    ThemePreferences.setFontSettings(currentFontSettings.copy(uiFontFamily = selected))
+                },
+            )
 
-                    AppComponents.dropdownMenu(
-                        expanded = fontDropdownExpanded,
-                        onDismissRequest = { fontDropdownExpanded = false },
-                        modifier = Modifier.fillMaxWidth(0.5f),
-                    ) {
-                        availableFonts.forEach { fontFamily ->
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = fontFamily,
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            fontFamily = if (fontFamily == FontSettings.SYSTEM_DEFAULT) {
-                                                FontFamily.Default
-                                            } else {
-                                                when (fontFamily.lowercase()) {
-                                                    "monospace", "courier", "courier new", "consolas", "monaco", "menlo",
-                                                    "dejavu sans mono", "lucida console",
-                                                    -> FontFamily.Monospace
+            HorizontalDivider()
 
-                                                    "serif", "times", "times new roman", "georgia", "palatino",
-                                                    "garamond", "baskerville", "book antiqua",
-                                                    -> FontFamily.Serif
-
-                                                    "cursive", "comic sans ms", "apple chancery", "brush script mt" -> FontFamily.Cursive
-
-                                                    else -> FontFamily.SansSerif
-                                                }
-                                            },
-                                        ),
-                                    )
-                                },
-                                onClick = {
-                                    ThemePreferences.setFontSettings(
-                                        currentFontSettings.copy(fontFamily = fontFamily),
-                                    )
-                                    fontDropdownExpanded = false
-                                },
-                                leadingIcon = if (fontFamily == currentFontSettings.fontFamily) {
-                                    {
-                                        Icon(
-                                            Icons.Default.Check,
-                                            contentDescription = "Selected",
-                                            tint = MaterialTheme.colorScheme.onSurface,
-                                        )
-                                    }
-                                } else {
-                                    null
-                                },
-                            )
-                        }
-                    }
-                }
-            }
+            fontFamilySelector(
+                label = stringResource("settings.font.family.code"),
+                selectedFontFamily = currentFontSettings.codeFontFamily,
+                availableFonts = availableFonts,
+                previewResolver = ::loadCodeFontFamily,
+                onSelected = { selected ->
+                    ThemePreferences.setFontSettings(currentFontSettings.copy(codeFontFamily = selected))
+                },
+            )
 
             HorizontalDivider()
 
@@ -526,6 +458,88 @@ private fun fontSettingsCard() {
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun fontFamilySelector(
+    label: String,
+    selectedFontFamily: String,
+    availableFonts: List<String>,
+    previewResolver: (String) -> FontFamily,
+    onSelected: (String) -> Unit,
+) {
+    var dropdownExpanded by remember { mutableStateOf(false) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickableCard { dropdownExpanded = true },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = selectedFontFamily,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Change font",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+
+            AppComponents.dropdownMenu(
+                expanded = dropdownExpanded,
+                onDismissRequest = { dropdownExpanded = false },
+                modifier = Modifier.fillMaxWidth(0.5f),
+            ) {
+                availableFonts.forEach { fontFamily ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = fontFamily,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontFamily = previewResolver(fontFamily),
+                                ),
+                            )
+                        },
+                        onClick = {
+                            onSelected(fontFamily)
+                            dropdownExpanded = false
+                        },
+                        leadingIcon = if (fontFamily == selectedFontFamily) {
+                            {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                )
+                            }
+                        } else {
+                            null
+                        },
+                    )
                 }
             }
         }

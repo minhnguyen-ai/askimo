@@ -26,7 +26,8 @@ object ThemePreferences {
     val CONTENT_MAX_WIDTH = 1200.dp
 
     private const val THEME_MODE_KEY = "theme_mode"
-    private const val FONT_FAMILY_KEY = "font_family"
+    private const val UI_FONT_FAMILY_KEY = "ui_font_family"
+    private const val CODE_FONT_FAMILY_KEY = "code_font_family"
     private const val FONT_SIZE_KEY = "font_size"
     private const val LOCALE_KEY = "locale"
     private const val LOG_LEVEL_KEY = "log_level"
@@ -66,7 +67,8 @@ object ThemePreferences {
     }
 
     private fun loadFontSettings(): FontSettings {
-        val fontFamily = prefs.get(FONT_FAMILY_KEY, FontSettings.SYSTEM_DEFAULT)
+        val uiFontFamily = prefs.get(UI_FONT_FAMILY_KEY, FontSettings.SYSTEM_DEFAULT)
+        val codeFontFamily = prefs.get(CODE_FONT_FAMILY_KEY, FontSettings.SYSTEM_MONOSPACE)
         val fontSizeName = prefs.get(FONT_SIZE_KEY, FontSize.MEDIUM.name)
         val fontSize = try {
             FontSize.valueOf(fontSizeName)
@@ -74,7 +76,11 @@ object ThemePreferences {
             log.debug("Unknown FontSize '{}', falling back to MEDIUM", fontSizeName, e)
             FontSize.MEDIUM
         }
-        return FontSettings(fontFamily, fontSize)
+        return FontSettings(
+            uiFontFamily = uiFontFamily,
+            codeFontFamily = codeFontFamily,
+            fontSize = fontSize,
+        )
     }
 
     private fun loadLocale(): Locale {
@@ -130,7 +136,8 @@ object ThemePreferences {
 
     fun setFontSettings(settings: io.askimo.ui.common.theme.FontSettings) {
         _fontSettings.value = settings
-        prefs.put(FONT_FAMILY_KEY, settings.fontFamily)
+        prefs.put(UI_FONT_FAMILY_KEY, settings.uiFontFamily)
+        prefs.put(CODE_FONT_FAMILY_KEY, settings.codeFontFamily)
         prefs.put(FONT_SIZE_KEY, settings.fontSize.name)
     }
 
@@ -151,7 +158,7 @@ object ThemePreferences {
     fun getAvailableSystemFonts(): List<String> {
         val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
         val fonts = ge.availableFontFamilyNames.toList()
-        return listOf(FontSettings.SYSTEM_DEFAULT) + fonts.sorted()
+        return listOf(FontSettings.SYSTEM_DEFAULT, FontSettings.SYSTEM_MONOSPACE) + fonts.sorted()
     }
 
     // Window state management

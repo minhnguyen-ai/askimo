@@ -84,6 +84,7 @@ import io.askimo.core.util.JsonUtils.json
 import io.askimo.tools.chart.MermaidChartData
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.LocalCodeFontFamily
 import io.askimo.ui.common.ui.util.FileDialogUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -322,21 +323,22 @@ private fun renderNode(node: Node, viewportTopY: Float? = null, isStreaming: Boo
 
 @Composable
 private fun renderSingleNode(node: Node, viewportTopY: Float? = null, isStreaming: Boolean = false, onRunRequest: ((String, String) -> Unit)? = null, messageId: String? = null, onLinkClick: ((url: String) -> Unit)? = null) {
+    val codeFontFamily = LocalCodeFontFamily.current
     when (node) {
         is Paragraph -> {
             val videoUrl = extractVideoUrl(node)
             if (videoUrl != null) {
                 renderVideo(videoUrl)
             } else {
-                renderParagraph(node, onLinkClick)
+                renderParagraph(node, codeFontFamily, onLinkClick)
             }
         }
 
-        is Heading -> renderHeading(node, onLinkClick)
+        is Heading -> renderHeading(node, codeFontFamily, onLinkClick)
 
-        is BulletList -> renderBulletList(node, onLinkClick)
+        is BulletList -> renderBulletList(node, codeFontFamily, onLinkClick)
 
-        is OrderedList -> renderOrderedList(node, onLinkClick)
+        is OrderedList -> renderOrderedList(node, codeFontFamily, onLinkClick)
 
         is FencedCodeBlock -> renderCodeBlock(
             node,
@@ -369,7 +371,11 @@ private fun renderSingleNode(node: Node, viewportTopY: Float? = null, isStreamin
 }
 
 @Composable
-private fun renderParagraph(paragraph: Paragraph, onLinkClick: ((url: String) -> Unit)? = null) {
+private fun renderParagraph(
+    paragraph: Paragraph,
+    codeFontFamily: FontFamily,
+    onLinkClick: ((url: String) -> Unit)? = null,
+) {
     // Check if this paragraph contains only an image
     val firstChild = paragraph.firstChild
     if (firstChild is Image && firstChild.next == null) {
@@ -570,7 +576,7 @@ private fun renderParagraph(paragraph: Paragraph, onLinkClick: ((url: String) ->
 
         // No LaTeX at all, render normally with full markdown support
         val annotatedText =
-            buildInlineContent(paragraph, inlineCodeBg, linkColor, onLinkClick)
+            buildInlineContent(paragraph, inlineCodeBg, linkColor, codeFontFamily, onLinkClick)
         Text(
             text = annotatedText,
             style = MaterialTheme.typography.bodyMedium,
@@ -621,7 +627,11 @@ private fun fixMarkdownMangledLatex(latex: String): String {
 }
 
 @Composable
-private fun renderHeading(heading: Heading, onLinkClick: ((url: String) -> Unit)? = null) {
+private fun renderHeading(
+    heading: Heading,
+    codeFontFamily: FontFamily,
+    onLinkClick: ((url: String) -> Unit)? = null,
+) {
     val inlineCodeBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
     val linkColor = MaterialTheme.colorScheme.tertiary
 
@@ -635,7 +645,7 @@ private fun renderHeading(heading: Heading, onLinkClick: ((url: String) -> Unit)
     }
 
     Text(
-        text = buildInlineContent(heading, inlineCodeBg, linkColor, onLinkClick),
+        text = buildInlineContent(heading, inlineCodeBg, linkColor, codeFontFamily, onLinkClick),
         style = style,
         fontWeight = FontWeight.Bold,
         modifier = Modifier
@@ -645,14 +655,14 @@ private fun renderHeading(heading: Heading, onLinkClick: ((url: String) -> Unit)
 }
 
 @Composable
-private fun renderBulletList(list: BulletList, onLinkClick: ((url: String) -> Unit)? = null) {
+private fun renderBulletList(list: BulletList, codeFontFamily: FontFamily, onLinkClick: ((url: String) -> Unit)? = null) {
     val inlineCodeBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
 
     Column(modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)) {
         var item = list.firstChild
         while (item != null) {
             if (item is ListItem) {
-                renderListItem(item, "• ", inlineCodeBg, onLinkClick)
+                renderListItem(item, "• ", inlineCodeBg, codeFontFamily, onLinkClick)
             }
             item = item.next
         }
@@ -660,7 +670,7 @@ private fun renderBulletList(list: BulletList, onLinkClick: ((url: String) -> Un
 }
 
 @Composable
-private fun renderOrderedList(list: OrderedList, onLinkClick: ((url: String) -> Unit)? = null) {
+private fun renderOrderedList(list: OrderedList, codeFontFamily: FontFamily, onLinkClick: ((url: String) -> Unit)? = null) {
     val inlineCodeBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
 
     Column(modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)) {
@@ -669,7 +679,7 @@ private fun renderOrderedList(list: OrderedList, onLinkClick: ((url: String) -> 
         var index = list.markerStartNumber
         while (item != null) {
             if (item is ListItem) {
-                renderListItem(item, "$index. ", inlineCodeBg, onLinkClick)
+                renderListItem(item, "$index. ", inlineCodeBg, codeFontFamily, onLinkClick)
                 index++
             }
             item = item.next
@@ -682,6 +692,7 @@ private fun renderListItem(
     item: ListItem,
     marker: String,
     inlineCodeBg: Color,
+    codeFontFamily: FontFamily,
     onLinkClick: ((url: String) -> Unit)? = null,
 ) {
     val linkColor = MaterialTheme.colorScheme.tertiary
@@ -710,6 +721,7 @@ private fun renderListItem(
                             node,
                             inlineCodeBg,
                             linkColor,
+                            codeFontFamily,
                             onLinkClick,
                         ),
                     )
@@ -725,8 +737,8 @@ private fun renderListItem(
         // Render nested lists
         nestedBlocks.forEach { block ->
             when (block) {
-                is BulletList -> renderBulletList(block, onLinkClick)
-                is OrderedList -> renderOrderedList(block, onLinkClick)
+                is BulletList -> renderBulletList(block, codeFontFamily, onLinkClick)
+                is OrderedList -> renderOrderedList(block, codeFontFamily, onLinkClick)
             }
         }
     }
@@ -1318,6 +1330,7 @@ private fun buildInlineContent(
     node: Node,
     inlineCodeBg: Color,
     linkColor: Color,
+    codeFontFamily: FontFamily,
     onLinkClick: ((url: String) -> Unit)? = null,
 ): AnnotatedString = buildAnnotatedString {
     var child = node.firstChild
@@ -1468,20 +1481,20 @@ private fun buildInlineContent(
 
             is StrongEmphasis -> {
                 withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(buildInlineContent(child, inlineCodeBg, linkColor, onLinkClick))
+                    append(buildInlineContent(child, inlineCodeBg, linkColor, codeFontFamily, onLinkClick))
                 }
             }
 
             is Emphasis -> {
                 withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
-                    append(buildInlineContent(child, inlineCodeBg, linkColor, onLinkClick))
+                    append(buildInlineContent(child, inlineCodeBg, linkColor, codeFontFamily, onLinkClick))
                 }
             }
 
             is Code -> {
                 withStyle(
                     SpanStyle(
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = codeFontFamily,
                         background = inlineCodeBg,
                     ),
                 ) {
@@ -1493,7 +1506,7 @@ private fun buildInlineContent(
                 // Treat fenced code blocks as inline code when they appear in inline contexts
                 withStyle(
                     SpanStyle(
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = codeFontFamily,
                         background = inlineCodeBg,
                     ),
                 ) {
@@ -1504,7 +1517,7 @@ private fun buildInlineContent(
             is Link -> {
                 // Add link annotation for clickable links using the new LinkAnnotation API
                 // Build styled content for link children (e.g., inline code with backticks)
-                val linkContent = buildInlineContent(child, inlineCodeBg, linkColor, onLinkClick)
+                val linkContent = buildInlineContent(child, inlineCodeBg, linkColor, codeFontFamily, onLinkClick)
                 val displayContent = linkContent.ifEmpty {
                     AnnotatedString(child.destination)
                 }
@@ -1562,9 +1575,9 @@ private fun buildInlineContent(
 
             is HardLineBreak, is SoftLineBreak -> append("\n")
 
-            is Paragraph -> append(buildInlineContent(child, inlineCodeBg, linkColor, onLinkClick))
+            is Paragraph -> append(buildInlineContent(child, inlineCodeBg, linkColor, codeFontFamily, onLinkClick))
 
-            else -> append(buildInlineContent(child, inlineCodeBg, linkColor, onLinkClick))
+            else -> append(buildInlineContent(child, inlineCodeBg, linkColor, codeFontFamily, onLinkClick))
         }
         child = child.next
     }
@@ -1577,9 +1590,10 @@ private fun buildInlineContentForNode(
     node: Node,
     inlineCodeBg: Color,
     linkColor: Color,
+    codeFontFamily: FontFamily,
     onLinkClick: ((url: String) -> Unit)? = null,
 ): AnnotatedString = buildAnnotatedString {
-    append(buildInlineContent(node, inlineCodeBg, linkColor, onLinkClick))
+    append(buildInlineContent(node, inlineCodeBg, linkColor, codeFontFamily, onLinkClick))
 }
 
 /**

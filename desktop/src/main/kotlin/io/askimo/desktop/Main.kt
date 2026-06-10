@@ -118,6 +118,7 @@ import io.askimo.ui.common.theme.DarkColorScheme
 import io.askimo.ui.common.theme.IndigoColorScheme
 import io.askimo.ui.common.theme.LightColorScheme
 import io.askimo.ui.common.theme.LocalBackgroundActive
+import io.askimo.ui.common.theme.LocalCodeFontFamily
 import io.askimo.ui.common.theme.LocalFontScale
 import io.askimo.ui.common.theme.NordColorScheme
 import io.askimo.ui.common.theme.OceanColorScheme
@@ -128,6 +129,7 @@ import io.askimo.ui.common.theme.ThemeMode
 import io.askimo.ui.common.theme.ThemePreferences
 import io.askimo.ui.common.theme.appBackground
 import io.askimo.ui.common.theme.createCustomTypography
+import io.askimo.ui.common.theme.loadCodeFontFamily
 import io.askimo.ui.common.ui.util.CustomUriHandler
 import io.askimo.ui.common.ui.util.FileDialogUtils
 import io.askimo.ui.discover.DiscoverViewModel
@@ -682,6 +684,9 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
     val customTypography = remember(fontSettings) {
         createCustomTypography(fontSettings)
     }
+    val customCodeFontFamily = remember(fontSettings.codeFontFamily) {
+        loadCodeFontFamily(fontSettings.codeFontFamily)
+    }
 
     val handleResumeSession: (String) -> Unit = { sessionId ->
         sessionManager.switchToSession(sessionId)
@@ -692,6 +697,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
     provideLocalization(locale = locale) {
         CompositionLocalProvider(
             LocalFontScale provides fontSettings.fontSize.scale,
+            LocalCodeFontFamily provides customCodeFontFamily,
             LocalUriHandler provides CustomUriHandler(
                 onShowFileViewer = { title, filePath, content ->
                     fileViewerTitle = title
