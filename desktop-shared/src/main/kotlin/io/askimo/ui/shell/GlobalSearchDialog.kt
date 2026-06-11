@@ -72,6 +72,7 @@ import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -218,8 +219,8 @@ fun globalSearchDialog(
             modifier = Modifier.fillMaxSize(),
         ) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxSize().padding(Spacing.extraLarge),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 // Header
                 Row(
@@ -274,7 +275,7 @@ fun globalSearchDialog(
                 // Filters Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                 ) {
                     // Date Filter
                     ExposedDropdownMenuBox(
@@ -381,7 +382,7 @@ fun globalSearchDialog(
                                         color = MaterialTheme.colorScheme.onSurface,
                                         trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
                                     )
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(Spacing.large))
                                     Text(
                                         text = stringResource("global.search.searching"),
                                         style = MaterialTheme.typography.bodyMedium,
@@ -404,13 +405,13 @@ fun globalSearchDialog(
                                         modifier = Modifier.size(64.dp),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                                     )
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(Spacing.large))
                                     Text(
                                         text = stringResource("global.search.no.results"),
                                         style = MaterialTheme.typography.titleMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(Spacing.small))
                                     Text(
                                         text = stringResource("global.search.no.results.hint"),
                                         style = MaterialTheme.typography.bodyMedium,
@@ -430,12 +431,12 @@ fun globalSearchDialog(
                                     },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(bottom = 8.dp),
+                                    modifier = Modifier.padding(bottom = Spacing.small),
                                 )
 
                                 LazyColumn(
                                     modifier = Modifier.fillMaxSize(),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
                                 ) {
                                     items(searchResults) { result ->
                                         searchResultItem(
@@ -462,7 +463,7 @@ fun globalSearchDialog(
                                         modifier = Modifier.size(64.dp),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                                     )
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(Spacing.large))
                                     Text(
                                         text = stringResource("global.search.initial.message"),
                                         style = MaterialTheme.typography.bodyLarge,
@@ -477,7 +478,7 @@ fun globalSearchDialog(
                 // Action Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     secondaryButton(
@@ -493,7 +494,7 @@ fun globalSearchDialog(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = null,
-                            modifier = Modifier.padding(end = 8.dp),
+                            modifier = Modifier.padding(end = Spacing.small),
                         )
                         Text(stringResource("global.search.button"))
                     }
@@ -538,7 +539,7 @@ private fun searchResultItem(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Spacing.large),
         ) {
             // Session title and timestamp
             Row(
@@ -555,7 +556,7 @@ private fun searchResultItem(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(Spacing.small))
                 Text(
                     text = formattedDate,
                     style = MaterialTheme.typography.bodySmall,
@@ -563,7 +564,7 @@ private fun searchResultItem(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.small))
 
             // Message preview with sender icon and highlighted search terms
             Row(
@@ -576,7 +577,7 @@ private fun searchResultItem(
                     modifier = Modifier.size(16.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(Spacing.small))
                 Text(
                     text = highlightedText,
                     style = MaterialTheme.typography.bodyMedium,

@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import io.askimo.core.context.AppContext
 import io.askimo.core.telemetry.TelemetryMetrics
 import io.askimo.ui.common.i18n.stringResource
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.themedTooltip
 import io.askimo.ui.util.formatDuration
 import io.askimo.ui.util.formatDurationDetailed
@@ -77,8 +78,8 @@ internal fun telemetryPanel(metrics: TelemetryMetrics, maxHeight: Dp) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(scrollState)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(Spacing.large),
+                verticalArrangement = Arrangement.spacedBy(Spacing.medium),
             ) {
                 // Header with title and reset button
                 Row(
@@ -115,7 +116,7 @@ internal fun telemetryPanel(metrics: TelemetryMetrics, maxHeight: Dp) {
                         text = stringResource("telemetry.no.data"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 8.dp),
+                        modifier = Modifier.padding(vertical = Spacing.small),
                     )
                     return@Column
                 }
@@ -132,7 +133,7 @@ internal fun telemetryPanel(metrics: TelemetryMetrics, maxHeight: Dp) {
                     // Summary stats
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                     ) {
                         telemetryStat(
                             label = stringResource("telemetry.rag.total.queries"),
@@ -154,7 +155,7 @@ internal fun telemetryPanel(metrics: TelemetryMetrics, maxHeight: Dp) {
                     // Detail cards
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                     ) {
                         telemetryMetricCard(
                             label = stringResource("telemetry.rag.efficiency"),
@@ -267,7 +268,7 @@ internal fun telemetryPanel(metrics: TelemetryMetrics, maxHeight: Dp) {
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .fillMaxHeight()
-                    .padding(end = 4.dp),
+                    .padding(end = Spacing.extraSmall),
                 adapter = rememberScrollbarAdapter(scrollState),
             )
         }
@@ -451,7 +452,7 @@ private fun telemetryMetricCard(
     ) {
         Column(
             modifier = Modifier.padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
         ) {
             if (valueTooltip != null) {
                 themedTooltip(text = valueTooltip) {

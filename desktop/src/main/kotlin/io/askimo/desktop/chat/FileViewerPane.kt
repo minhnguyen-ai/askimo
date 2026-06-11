@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import io.askimo.core.logging.currentFileLogger
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.codeViewerBlock
 import io.askimo.ui.common.ui.themedTooltip
 import kotlinx.coroutines.Dispatchers
@@ -120,13 +121,13 @@ fun fileViewerPane(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = Spacing.small, vertical = Spacing.extraSmall),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // File name + line count
             Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f),
             ) {
@@ -207,7 +208,7 @@ fun fileViewerPane(
         when (val state = viewerState) {
             ViewerState.Loading -> {
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(Spacing.extraLarge),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -326,12 +327,12 @@ private fun viewerPlaceholder(
     onAction: () -> Unit,
 ) {
     Box(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(Spacing.large),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
         ) {
             icon()
             Text(

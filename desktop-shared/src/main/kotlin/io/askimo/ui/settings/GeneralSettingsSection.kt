@@ -75,7 +75,7 @@ fun generalSettingsSection() {
                 modifier = Modifier
                     .widthIn(max = ThemePreferences.CONTENT_MAX_WIDTH)
                     .fillMaxWidth()
-                    .padding(start = 24.dp, top = 24.dp, bottom = 24.dp, end = 36.dp), // end room for scrollbar
+                    .padding(start = Spacing.extraLarge, top = Spacing.extraLarge, bottom = Spacing.extraLarge, end = 36.dp), // end room for scrollbar
                 verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 Text(
@@ -143,7 +143,7 @@ private fun languageSelectionCard() {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
+                            .padding(Spacing.medium),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -268,7 +268,7 @@ private fun preferredAIResponseLanguageField(availableLanguages: Map<Locale, Str
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
+                        .padding(Spacing.medium),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -409,7 +409,7 @@ private fun fontSettingsCard() {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
+                                .padding(Spacing.medium),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -492,7 +492,7 @@ private fun fontFamilySelector(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
+                        .padding(Spacing.medium),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

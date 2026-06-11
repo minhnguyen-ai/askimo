@@ -66,6 +66,7 @@ import com.pty4j.WinSize
 import io.askimo.core.util.AskimoHome
 import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.components.secondaryButton
+import io.askimo.ui.common.theme.Spacing
 import kotlinx.coroutines.delay
 import java.awt.Color
 import java.awt.Cursor
@@ -252,7 +253,7 @@ fun terminalPanel(
                                 text = {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                                     ) {
                                         // Tab title — single click switches tab, double click renames
                                         @OptIn(ExperimentalFoundationApi::class)
@@ -410,7 +411,7 @@ fun terminalPanel(
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
                 ) {
                     Text(
                         text = "Rename Terminal",

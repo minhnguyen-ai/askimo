@@ -39,7 +39,7 @@ echo "✅ Detekt passed."
 #fi
 #
 #echo "✅ i18n keys check passed."
-#EOF
+EOF
 
 # Make the hook executable
 chmod +x .git/hooks/pre-commit

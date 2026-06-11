@@ -33,6 +33,7 @@ import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 
 /**
  * A styled dialog for renaming a chat session.
@@ -73,13 +74,13 @@ fun renameSessionDialog(
         Surface(
             modifier = Modifier
                 .width(500.dp)
-                .padding(16.dp),
+                .padding(Spacing.large),
             shape = MaterialTheme.shapes.large,
             tonalElevation = 8.dp,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(Spacing.extraLarge),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 Text(
                     text = stringResource("session.rename.title"),
@@ -108,7 +109,7 @@ fun renameSessionDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     secondaryButton(

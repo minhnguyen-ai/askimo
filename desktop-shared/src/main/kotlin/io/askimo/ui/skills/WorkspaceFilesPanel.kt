@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.codeViewerBlock
 import io.askimo.ui.common.ui.themedTooltip
 import kotlinx.coroutines.Dispatchers
@@ -125,7 +126,7 @@ internal fun workspaceFilesPanel(
                     .fillMaxWidth()
                     .padding(start = 10.dp, end = 4.dp, top = 8.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
                 Icon(
                     Icons.Default.FolderOpen,
@@ -173,7 +174,7 @@ internal fun workspaceFilesPanel(
                         stringResource("skills.view.workspace.empty"),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(Spacing.large),
                     )
                 }
 
@@ -182,7 +183,7 @@ internal fun workspaceFilesPanel(
                         buildWorkspaceRenderList(rootChildren, depth = 0, expandedPaths = expandedPaths)
                     }
                     Box(modifier = Modifier.fillMaxSize()) {
-                        LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(vertical = 4.dp)) {
+                        LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(vertical = Spacing.extraSmall)) {
                             items(renderItems, key = { it.node.file.absolutePath }) { item ->
                                 workspaceNodeRow(
                                     node = item.node,
@@ -275,7 +276,7 @@ private fun workspaceNodeRow(
                     )
                     .padding(start = (depth * 14 + 8).dp, top = 4.dp, bottom = 4.dp, end = 8.dp)
                     .pointerHoverIcon(PointerIcon.Hand),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 when (node) {
@@ -438,7 +439,7 @@ private fun workspaceFileViewer(
         ) {
             // File name + line count
             Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f),
             ) {
@@ -505,7 +506,7 @@ private fun workspaceFileViewer(
         when (val state = viewerState) {
             WorkspaceViewerState.Loading -> {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    modifier = Modifier.fillMaxSize().padding(Spacing.extraLarge),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -569,7 +570,7 @@ private fun workspaceFileViewer(
 
             is WorkspaceViewerState.TooLarge -> {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    modifier = Modifier.fillMaxSize().padding(Spacing.extraLarge),
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -585,7 +586,7 @@ private fun workspaceFileViewer(
 
             WorkspaceViewerState.Binary -> {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    modifier = Modifier.fillMaxSize().padding(Spacing.extraLarge),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -598,7 +599,7 @@ private fun workspaceFileViewer(
 
             is WorkspaceViewerState.Error -> {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    modifier = Modifier.fillMaxSize().padding(Spacing.extraLarge),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(

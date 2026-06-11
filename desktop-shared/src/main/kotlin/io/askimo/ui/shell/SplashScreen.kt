@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.askimo.core.VersionInfo
+import io.askimo.ui.common.theme.Spacing
 import org.jetbrains.skia.Image
 
 /**
@@ -51,7 +52,7 @@ fun splashScreen(isConnecting: Boolean = false) {
         Column(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.large),
         ) {
             Image(
                 painter = BitmapPainter(bitmap),
@@ -75,9 +76,9 @@ fun splashScreen(isConnecting: Boolean = false) {
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(24.dp),
+                    .padding(Spacing.extraLarge),
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(16.dp),

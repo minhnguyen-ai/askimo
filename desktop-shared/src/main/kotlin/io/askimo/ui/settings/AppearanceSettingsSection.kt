@@ -37,6 +37,8 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.ViewComfy
+import androidx.compose.material.icons.filled.ViewCompact
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -63,6 +65,7 @@ import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
 import io.askimo.ui.common.theme.BackgroundImage
+import io.askimo.ui.common.theme.LayoutDensity
 import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.theme.ThemeMode
 import io.askimo.ui.common.theme.ThemePreferences
@@ -79,6 +82,7 @@ import org.jetbrains.skia.Image as SkiaImage
 @Composable
 fun appearanceSettingsSection() {
     val currentThemeMode by ThemePreferences.themeMode.collectAsState()
+    val currentLayoutDensity by ThemePreferences.layoutDensity.collectAsState()
     val currentBackground by ThemePreferences.backgroundImage.collectAsState()
     val scrollState = rememberScrollState()
 
@@ -227,6 +231,35 @@ fun appearanceSettingsSection() {
                     onClick = { ThemePreferences.setThemeMode(ThemeMode.INDIGO) },
                 )
 
+                // Layout Density Section
+                Spacer(modifier = Modifier.height(Spacing.small))
+                Text(
+                    text = stringResource("settings.layout.density"),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    text = stringResource("settings.layout.density.description"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                themeOption(
+                    title = stringResource("layout.density.comfortable"),
+                    description = stringResource("layout.density.comfortable.description"),
+                    icon = { Icon(Icons.Default.ViewComfy, contentDescription = null) },
+                    selected = currentLayoutDensity == LayoutDensity.COMFORTABLE,
+                    onClick = { ThemePreferences.setLayoutDensity(LayoutDensity.COMFORTABLE) },
+                )
+
+                themeOption(
+                    title = stringResource("layout.density.compact"),
+                    description = stringResource("layout.density.compact.description"),
+                    icon = { Icon(Icons.Default.ViewCompact, contentDescription = null) },
+                    selected = currentLayoutDensity == LayoutDensity.COMPACT,
+                    onClick = { ThemePreferences.setLayoutDensity(LayoutDensity.COMPACT) },
+                )
+
                 // Background Image Section
                 Spacer(modifier = Modifier.height(Spacing.small))
                 Text(
@@ -325,12 +358,12 @@ private fun themeOption(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Spacing.large),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.large),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f),
             ) {
@@ -427,12 +460,12 @@ private fun avatarSetting(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Spacing.large),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f),
             ) {
@@ -474,7 +507,7 @@ private fun avatarSetting(
             }
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
                 primaryButton(
                     onClick = {

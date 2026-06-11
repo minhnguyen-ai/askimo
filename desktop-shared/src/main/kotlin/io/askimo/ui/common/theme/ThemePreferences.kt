@@ -26,6 +26,7 @@ object ThemePreferences {
     val CONTENT_MAX_WIDTH = 1200.dp
 
     private const val THEME_MODE_KEY = "theme_mode"
+    private const val LAYOUT_DENSITY_KEY = "layout_density"
     private const val UI_FONT_FAMILY_KEY = "ui_font_family"
     private const val CODE_FONT_FAMILY_KEY = "code_font_family"
     private const val FONT_SIZE_KEY = "font_size"
@@ -47,6 +48,9 @@ object ThemePreferences {
 
     private val _fontSettings = MutableStateFlow(loadFontSettings())
     val fontSettings: StateFlow<FontSettings> = _fontSettings.asStateFlow()
+
+    private val _layoutDensity = MutableStateFlow(loadLayoutDensity())
+    val layoutDensity: StateFlow<LayoutDensity> = _layoutDensity.asStateFlow()
 
     private val _locale = MutableStateFlow(loadLocale())
     val locale: StateFlow<Locale> = _locale.asStateFlow()
@@ -81,6 +85,11 @@ object ThemePreferences {
             codeFontFamily = codeFontFamily,
             fontSize = fontSize,
         )
+    }
+
+    private fun loadLayoutDensity(): LayoutDensity {
+        val densityName = prefs.get(LAYOUT_DENSITY_KEY, LayoutDensity.COMFORTABLE.name)
+        return LayoutDensity.fromPreference(densityName)
     }
 
     private fun loadLocale(): Locale {
@@ -139,6 +148,11 @@ object ThemePreferences {
         prefs.put(UI_FONT_FAMILY_KEY, settings.uiFontFamily)
         prefs.put(CODE_FONT_FAMILY_KEY, settings.codeFontFamily)
         prefs.put(FONT_SIZE_KEY, settings.fontSize.name)
+    }
+
+    fun setLayoutDensity(density: LayoutDensity) {
+        _layoutDensity.value = density
+        prefs.put(LAYOUT_DENSITY_KEY, density.name)
     }
 
     fun setLocale(locale: Locale) {

@@ -68,6 +68,7 @@ import io.askimo.core.providers.ProviderSettings
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.monitoring.SystemResourceMonitor
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.clickableCard
 import io.askimo.ui.common.ui.themedTooltip
 import io.askimo.ui.shell.notificationIcon
@@ -94,7 +95,7 @@ private fun aiConfigInfo(onConfigureAiProvider: () -> Unit) {
     }
 
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         providerButton(
@@ -139,7 +140,7 @@ private fun providerButton(
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
@@ -212,7 +213,7 @@ private fun modelDropdown(
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -247,7 +248,7 @@ private fun modelDropdown(
                     DropdownMenuItem(
                         text = {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 CircularProgressIndicator(
@@ -304,7 +305,7 @@ private fun modelDropdown(
                         colors = AppComponents.outlinedTextFieldColors(),
                     )
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.extraSmall))
 
                     // Filter models based on search
                     val filteredModels = availableModels.filter {
@@ -326,7 +327,7 @@ private fun modelDropdown(
                                 text = stringResource("settings.model.no.results"),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                modifier = Modifier.padding(16.dp),
+                                modifier = Modifier.padding(Spacing.large),
                             )
                         } else {
                             // Use LazyColumn so item clicks are not swallowed by the scroll modifier
@@ -435,7 +436,7 @@ fun footerBar(
             Row(
                 modifier = Modifier
                     .align(Alignment.CenterStart),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 systemResourcesDropdown(
@@ -452,7 +453,7 @@ fun footerBar(
 
             Row(
                 modifier = Modifier.align(Alignment.CenterEnd),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 themedTooltip(text = stringResource("system.share.feedback")) {
@@ -516,11 +517,11 @@ private fun systemResourcesDropdown(
             Column {
                 Column(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
                 ) {
                     // Memory usage
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -544,7 +545,7 @@ private fun systemResourcesDropdown(
 
                     // CPU usage
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(

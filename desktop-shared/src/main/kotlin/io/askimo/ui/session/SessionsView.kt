@@ -66,6 +66,7 @@ import io.askimo.ui.common.components.tablePageSizeSelector
 import io.askimo.ui.common.components.tablePagination
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.theme.ThemePreferences
 
 private enum class SessionSortColumn { UPDATED, CREATED }
@@ -118,23 +119,23 @@ fun sessionsView(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Spacing.large))
 
                 // ── Success banner ────────────────────────────────────────────
                 viewModel.successMessage?.let { message ->
                     Surface(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.small),
                         color = MaterialTheme.colorScheme.primaryContainer,
                         shape = MaterialTheme.shapes.medium,
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(Spacing.large),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Row(
                                 modifier = Modifier.weight(1f),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -157,7 +158,7 @@ fun sessionsView(
 
                     viewModel.errorMessage != null -> {
                         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                                 Text(
                                     text = stringResource("sessions.error", viewModel.errorMessage ?: ""),
                                     style = MaterialTheme.typography.bodyLarge,
@@ -175,7 +176,7 @@ fun sessionsView(
 
                     viewModel.pagedSessions?.isEmpty == true -> {
                         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                                 Text(stringResource("sessions.empty"), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(stringResource("sessions.empty.hint"), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
@@ -205,7 +206,7 @@ fun sessionsView(
                 // ── Pagination ────────────────────────────────────────────────
                 val pagedSessions = viewModel.pagedSessions
                 if (pagedSessions != null && pagedSessions.totalPages > 1) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.small))
                     tablePagination(
                         currentPage = pagedSessions.currentPage,
                         totalPages = pagedSessions.totalPages,
@@ -221,7 +222,7 @@ fun sessionsView(
                     )
                 } else if (viewModel.pagedSessions != null) {
                     // Still show page size selector even on single page
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.small))
                     tablePageSizeSelector(
                         pageSize = pageSize,
                         onPageSizeChange = { size ->
@@ -306,7 +307,7 @@ private fun sessionTable(
                     currentColumn = sortColumn,
                     direction = sortDirection,
                     onClick = { onSortChange(SessionSortColumn.CREATED) },
-                    modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = 16.dp),
+                    modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = Spacing.large),
                 )
                 // Updated sortable header
                 sortableHeader(
@@ -315,7 +316,7 @@ private fun sessionTable(
                     currentColumn = sortColumn,
                     direction = sortDirection,
                     onClick = { onSortChange(SessionSortColumn.UPDATED) },
-                    modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = 16.dp),
+                    modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = Spacing.large),
                 )
                 // Actions column spacer
                 Spacer(modifier = Modifier.size(36.dp))
@@ -353,7 +354,7 @@ private fun sortableHeader(
             .clickable(onClick = onClick)
             .pointerHoverIcon(PointerIcon.Hand),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
         Text(
             text = label,
@@ -448,7 +449,7 @@ private fun sessionRow(
             text = TimeUtil.formatDisplay(session.createdAt),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = 16.dp),
+            modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = Spacing.large),
         )
 
         // Updated date
@@ -456,7 +457,7 @@ private fun sessionRow(
             text = TimeUtil.formatDisplay(session.updatedAt),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = 16.dp),
+            modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = Spacing.large),
         )
 
         // Actions menu

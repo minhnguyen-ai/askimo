@@ -99,6 +99,7 @@ import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.preferences.ApplicationPreferences
 import io.askimo.ui.common.theme.AppComponents
 import io.askimo.ui.common.theme.AppComponents.appOutlinedTextField
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.theme.ThemePreferences
 import io.askimo.ui.common.ui.revealingMarkdownText
 import io.askimo.ui.common.ui.themedTooltip
@@ -419,8 +420,8 @@ private fun skillsMainContent(
                 modifier = Modifier
                     .widthIn(max = ThemePreferences.CONTENT_MAX_WIDTH)
                     .fillMaxWidth()
-                    .padding(start = 24.dp, top = 24.dp, bottom = 24.dp, end = 36.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(start = Spacing.extraLarge, top = Spacing.extraLarge, bottom = Spacing.extraLarge, end = 36.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 // Header row
                 Row(
@@ -438,16 +439,16 @@ private fun skillsMainContent(
                         val runtimesLabel = runtimes.mapIndexed { i, r ->
                             if (i == runtimes.lastIndex) "or $r" else r
                         }.joinToString(", ")
-                        Spacer(Modifier.height(4.dp))
+                        Spacer(Modifier.height(Spacing.extraSmall))
                         Text(
                             text = stringResource("settings.skills.description", runtimesLabel),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         )
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(Spacing.small))
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                         ) {
                             Text(
                                 text = stringResource("settings.skills.runtimes"),
@@ -463,7 +464,7 @@ private fun skillsMainContent(
                                         text = runtime,
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                        modifier = Modifier.padding(horizontal = Spacing.small, vertical = 3.dp),
                                     )
                                 }
                             }
@@ -493,12 +494,12 @@ private fun skillsMainContent(
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                         ) {
                             Row(
-                                modifier = Modifier.padding(16.dp),
+                                modifier = Modifier.padding(Spacing.large),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.weight(1f),
                                 ) {
@@ -569,7 +570,7 @@ private fun skillsMainSelectPrompt() {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
             Icon(
                 Icons.Default.Extension,
@@ -596,7 +597,7 @@ private fun skillsMainEmptyState() {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
             Icon(
                 Icons.Default.Extension,
@@ -691,11 +692,11 @@ private fun skillEditorContent(
         autoSave()
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
         // ── Header: name (inline edit) · description (inline edit) · path ──
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Name + description column
@@ -703,7 +704,7 @@ private fun skillEditorContent(
                 // ── Name row ──
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (isEditingName) {
@@ -752,7 +753,7 @@ private fun skillEditorContent(
                 // ── Description row ──
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (isEditingDesc) {
@@ -806,7 +807,7 @@ private fun skillEditorContent(
 
         // ── System prompt editor (auto-save on focus loss) ────────────────────
         var isPreviewMode by remember(skill.relativePath) { mutableStateOf(true) }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -929,7 +930,7 @@ private fun fileEditorContent(
         isRenaming = false
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
         // ── Header: emoji · filename (with inline rename)  |  Read/Edit toggle ──
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -938,7 +939,7 @@ private fun fileEditorContent(
         ) {
             // Left: file icon + filename or rename input (takes all available space)
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = if (isRenaming) Modifier.fillMaxWidth() else Modifier.weight(1f),
             ) {
@@ -1300,7 +1301,7 @@ private fun skillTreeNodeItem(
                         .pointerHoverIcon(PointerIcon.Hand)
                         .padding(start = (depth * 12).dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 ) {
                     // Expand/collapse arrow for all folders
                     if (node.children.isNotEmpty()) {
@@ -1436,7 +1437,7 @@ private fun skillTreeNodeItem(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f),
                 ) {
@@ -1598,7 +1599,7 @@ private fun previewEditSegmentButton(
         contentAlignment = Alignment.Center,
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -1658,7 +1659,7 @@ private fun newSkillInFolderDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource("settings.skills.new.skill")) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 Text(
                     text = "📁 $parentPath/",
                     style = MaterialTheme.typography.labelSmall,
@@ -1703,7 +1704,7 @@ private fun importFromGitHubDialog(
         onDismissRequest = { if (!isImporting) onDismiss() },
         title = { Text(stringResource("settings.skills.import.github")) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 Text(
                     text = stringResource("settings.skills.import.github.description"),
                     style = MaterialTheme.typography.bodySmall,
@@ -1781,7 +1782,7 @@ private fun importFromZipDialog(
         onDismissRequest = { if (!isImporting) onDismiss() },
         title = { Text(stringResource("settings.skills.import.zip")) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 Text(
                     text = stringResource("settings.skills.import.zip.description"),
                     style = MaterialTheme.typography.bodySmall,
@@ -1874,7 +1875,7 @@ private fun addFileInFolderDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource("settings.skills.add.file")) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 Text(
                     text = "📁 $parentPath/",
                     style = MaterialTheme.typography.labelSmall,
@@ -1915,7 +1916,7 @@ private fun addFolderInFolderDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource("settings.skills.add.folder")) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 Text(
                     text = "📁 $parentPath/",
                     style = MaterialTheme.typography.labelSmall,

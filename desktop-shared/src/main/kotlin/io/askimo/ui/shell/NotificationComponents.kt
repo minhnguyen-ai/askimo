@@ -61,6 +61,7 @@ import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.preferences.AccountPreferences
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import java.awt.Desktop
 import java.net.URI
 
@@ -166,7 +167,7 @@ fun notificationIcon(onShowUpdateDetails: () -> Unit) {
                 },
             ) {
                 Card(
-                    modifier = Modifier.padding(8.dp),
+                    modifier = Modifier.padding(Spacing.small),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                     ),
@@ -220,12 +221,12 @@ fun notificationPopup(
     Column(
         modifier = Modifier
             .width(560.dp)
-            .padding(8.dp),
+            .padding(Spacing.small),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 8.dp),
+                .padding(bottom = Spacing.small),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -258,7 +259,7 @@ fun notificationPopup(
                 text = stringResource("event.notification.empty"),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(Spacing.large),
             )
         } else {
             val listState = rememberLazyListState()
@@ -272,11 +273,11 @@ fun notificationPopup(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(dynamicHeight)
-                    .padding(top = 8.dp),
+                    .padding(top = Spacing.small),
             ) {
                 LazyColumn(
                     state = listState,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
                 ) {
                     // Pinned group
                     if (pinnedEvents.isNotEmpty()) {
@@ -299,9 +300,9 @@ fun notificationPopup(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
+                                    .padding(vertical = Spacing.extraSmall),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                             ) {
                                 HorizontalDivider(modifier = Modifier.weight(1f))
                                 Text(
@@ -392,8 +393,8 @@ fun notificationEventCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .padding(Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -423,7 +424,7 @@ fun notificationEventCard(
             // Version badge for update events
             if (event is UpdateAvailableEvent) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
@@ -496,8 +497,8 @@ fun notificationEventCard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                        .padding(top = Spacing.small),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     linkButton(

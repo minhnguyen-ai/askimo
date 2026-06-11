@@ -85,6 +85,7 @@ import io.askimo.tools.chart.MermaidChartData
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
 import io.askimo.ui.common.theme.LocalCodeFontFamily
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.util.FileDialogUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -489,7 +490,7 @@ private fun renderParagraph(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(vertical = Spacing.extraSmall),
         ) {
             var lastIndex = 0
             latexMatches.forEach { (start, end, latexContent) ->
@@ -535,7 +536,7 @@ private fun renderParagraph(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = Spacing.extraSmall),
                 ) {
                     var lastIdx = 0
                     dollarMatches.forEach { match ->
@@ -582,7 +583,7 @@ private fun renderParagraph(
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(vertical = Spacing.extraSmall),
         )
     }
 }
@@ -650,7 +651,7 @@ private fun renderHeading(
         fontWeight = FontWeight.Bold,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = Spacing.small),
     )
 }
 
@@ -658,7 +659,7 @@ private fun renderHeading(
 private fun renderBulletList(list: BulletList, codeFontFamily: FontFamily, onLinkClick: ((url: String) -> Unit)? = null) {
     val inlineCodeBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
 
-    Column(modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)) {
+    Column(modifier = Modifier.padding(start = Spacing.large, top = Spacing.extraSmall, bottom = Spacing.extraSmall)) {
         var item = list.firstChild
         while (item != null) {
             if (item is ListItem) {
@@ -673,7 +674,7 @@ private fun renderBulletList(list: BulletList, codeFontFamily: FontFamily, onLin
 private fun renderOrderedList(list: OrderedList, codeFontFamily: FontFamily, onLinkClick: ((url: String) -> Unit)? = null) {
     val inlineCodeBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
 
-    Column(modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)) {
+    Column(modifier = Modifier.padding(start = Spacing.large, top = Spacing.extraSmall, bottom = Spacing.extraSmall)) {
         var item = list.firstChild
 
         var index = list.markerStartNumber
@@ -763,7 +764,7 @@ private fun renderCodeBlock(codeBlock: FencedCodeBlock, viewportTopY: Float? = n
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp)
+                .padding(vertical = Spacing.extraSmall)
                 .border(
                     width = 1.dp,
                     color = AppComponents.codeBlockBorderColor(),
@@ -781,7 +782,7 @@ private fun renderCodeBlock(codeBlock: FencedCodeBlock, viewportTopY: Float? = n
             Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 4.dp, end = 8.dp),
+                    .padding(top = Spacing.extraSmall, end = Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CircularProgressIndicator(
@@ -817,14 +818,14 @@ private fun renderCodeBlock(codeBlock: FencedCodeBlock, viewportTopY: Float? = n
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(400.dp)
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = Spacing.small),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.small))
                     Text(
                         text = "Rendering diagram...",
                         style = MaterialTheme.typography.bodySmall,
@@ -838,7 +839,7 @@ private fun renderCodeBlock(codeBlock: FencedCodeBlock, viewportTopY: Float? = n
             modifier = Modifier
                 .fillMaxWidth()
                 .height(400.dp)
-                .padding(vertical = 8.dp)
+                .padding(vertical = Spacing.small)
                 .border(
                     width = 1.dp,
                     color = MaterialTheme.colorScheme.outline,
@@ -852,7 +853,7 @@ private fun renderCodeBlock(codeBlock: FencedCodeBlock, viewportTopY: Float? = n
         ) {
             mermaidChart(
                 data = chartData,
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(Spacing.large),
                 entityId = messageId,
             )
         }
@@ -890,7 +891,7 @@ private fun renderCodeBlock(codeBlock: FencedCodeBlock, viewportTopY: Float? = n
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = Spacing.extraSmall)
             .border(
                 width = 1.dp,
                 color = AppComponents.codeBlockBorderColor(),
@@ -930,11 +931,11 @@ private fun renderCodeBlock(codeBlock: FencedCodeBlock, viewportTopY: Float? = n
                                 MaterialTheme.colorScheme.primaryContainer,
                                 shape = MaterialTheme.shapes.small,
                             )
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = Spacing.large, vertical = Spacing.small),
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         style = MaterialTheme.typography.labelLarge,
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Spacing.small))
                 }
 
                 // Run button — shown only when the language is runnable and its executable is on PATH
@@ -964,7 +965,7 @@ private fun renderCodeBlock(codeBlock: FencedCodeBlock, viewportTopY: Float? = n
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(Spacing.extraSmall))
                 }
 
                 // Copy button
@@ -1005,9 +1006,9 @@ private fun renderBlockQuote(blockQuote: BlockQuote, viewportTopY: Float? = null
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 12.dp, top = 4.dp, bottom = 4.dp)
+            .padding(start = Spacing.medium, top = Spacing.extraSmall, bottom = Spacing.extraSmall)
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-            .padding(8.dp),
+            .padding(Spacing.small),
     ) {
         renderNode(blockQuote, viewportTopY, false, onRunRequest, null, onLinkClick)
     }
@@ -1060,7 +1061,7 @@ private fun renderImage(image: Image) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = Spacing.small),
     ) {
         // Check if it's a base64 data URL
         if (destination.startsWith("data:image/")) {
@@ -1114,7 +1115,7 @@ private fun renderImage(image: Image) {
                         text = "Error loading image: ${error.message}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(8.dp),
+                        modifier = Modifier.padding(Spacing.small),
                     )
                 },
             )
@@ -1154,7 +1155,7 @@ private fun renderImage(image: Image) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp),
+                    .padding(top = Spacing.extraSmall),
             )
         }
     }
@@ -1167,7 +1168,7 @@ private fun renderVideo(videoUrl: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = Spacing.small)
             .clickable { uriHandler.openUri(videoUrl) },
     ) {
         Box(
@@ -1190,13 +1191,13 @@ private fun renderVideo(videoUrl: String) {
                             Color.Black.copy(alpha = 0.5f),
                             shape = CircleShape,
                         )
-                        .padding(16.dp),
+                        .padding(Spacing.large),
                     tint = Color.White,
                 )
                 Text(
                     text = "Click to play video",
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = Spacing.small),
                 )
             }
         }
@@ -1207,7 +1208,7 @@ private fun renderVideo(videoUrl: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 4.dp),
+                .padding(top = Spacing.extraSmall),
         )
     }
 }
@@ -1219,7 +1220,7 @@ private fun renderTable(table: TableBlock) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = Spacing.small)
             .border(1.dp, borderColor),
     ) {
         var child = table.firstChild
@@ -1246,7 +1247,7 @@ private fun renderTable(table: TableBlock) {
                                                 .weight(1f)
                                                 .fillMaxHeight()
                                                 .border(1.dp, borderColor)
-                                                .padding(8.dp),
+                                                .padding(Spacing.small),
                                             contentAlignment = Alignment.TopStart,
                                         ) {
                                             Text(
@@ -1283,7 +1284,7 @@ private fun renderTable(table: TableBlock) {
                                                 .weight(1f)
                                                 .fillMaxHeight()
                                                 .border(1.dp, borderColor)
-                                                .padding(8.dp),
+                                                .padding(Spacing.small),
                                             contentAlignment = Alignment.TopStart,
                                         ) {
                                             Text(

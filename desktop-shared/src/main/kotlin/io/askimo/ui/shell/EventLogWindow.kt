@@ -35,6 +35,7 @@ import io.askimo.core.event.Event
 import io.askimo.core.i18n.LocalizationManager
 import io.askimo.core.util.TimeUtil
 import io.askimo.ui.common.components.linkButton
+import io.askimo.ui.common.theme.Spacing
 
 /**
  * Developer Event Log Window - Shows ONLY developer events (isDeveloperEvent = true).
@@ -64,7 +65,7 @@ fun eventLogWindow(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp),
+                .padding(Spacing.large),
         ) {
             // Header
             Row(
@@ -80,7 +81,7 @@ fun eventLogWindow(
                 )
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.large),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     linkButton(onClick = onReattach) {
@@ -95,7 +96,7 @@ fun eventLogWindow(
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.large))
 
             // Event list
             if (events.isEmpty()) {
@@ -115,7 +116,7 @@ fun eventLogWindow(
                 Box(modifier = Modifier.fillMaxSize()) {
                     LazyColumn(
                         state = listState,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.small),
                     ) {
                         items(events) { event ->
                             eventLogItem(event)
@@ -146,8 +147,8 @@ private fun eventLogItem(event: Event) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(Spacing.large),
+            verticalArrangement = Arrangement.spacedBy(Spacing.small),
         ) {
             // Event type and source
             Row(

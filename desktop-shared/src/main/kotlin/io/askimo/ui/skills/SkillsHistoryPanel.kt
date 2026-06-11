@@ -181,7 +181,7 @@ internal fun skillsHistoryContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(panelScrollState)
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = Spacing.extraSmall),
             ) {
                 runHistory.forEach { record ->
                     skillRunHistoryPanelRow(

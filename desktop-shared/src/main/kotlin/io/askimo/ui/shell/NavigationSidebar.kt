@@ -344,14 +344,14 @@ private fun expandedNavigationSidebar(
                                     IconButton(
                                         onClick = onNewProject,
                                         modifier = Modifier
-                                            .size(24.dp)
+                                            .size((24 * fontScale).dp)
                                             .pointerHoverIcon(PointerIcon.Hand),
                                     ) {
                                         Icon(
                                             Icons.Default.Add,
                                             contentDescription = stringResource("project.new.dialog.title"),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(18.dp),
+                                            modifier = Modifier.size((18 * fontScale).dp),
                                         )
                                     }
                                 }
@@ -422,7 +422,7 @@ private fun expandedNavigationSidebar(
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy((4 * fontScale).dp),
                     ) {
                         if (!isSessionsExpanded && sessionsViewModel.totalSessionCount > 0) {
                             val count = sessionsViewModel.totalSessionCount
@@ -763,12 +763,12 @@ private fun pinnedProjectItem(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp)
+            .padding(vertical = (2 * fontScale).dp)
             .hoverable(interactionSource),
     ) {
         themedTooltip(text = project.name) {
             NavigationDrawerItem(
-                icon = { Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                icon = { Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size((16 * fontScale).dp)) },
                 label = {
                     navigationItemLabelWithMenu(
                         text = project.name,
@@ -785,7 +785,7 @@ private fun pinnedProjectItem(
             )
         }
 
-        Box(modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)) {
+        Box(modifier = Modifier.align(Alignment.CenterEnd).padding(end = (8 * fontScale).dp)) {
             dropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                 DropdownMenuItem(
                     text = { Text(stringResource("action.unpin")) },
@@ -845,6 +845,7 @@ private fun pinnedSessionItem(
     var showDeleteDialog by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val fontScale = LocalFontScale.current
 
     if (showDeleteDialog) {
         deleteSessionDialog(
@@ -860,7 +861,7 @@ private fun pinnedSessionItem(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp)
+            .padding(vertical = (2 * fontScale).dp)
             .hoverable(interactionSource),
     ) {
         sessionTooltip(session = session) {
@@ -868,8 +869,8 @@ private fun pinnedSessionItem(
                 icon = if (isChatInProgress) {
                     {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(14.dp),
-                            strokeWidth = 2.dp,
+                            modifier = Modifier.size((14 * fontScale).dp),
+                            strokeWidth = (2 * fontScale).dp,
                             color = LocalContentColor.current,
                         )
                     }
@@ -892,7 +893,7 @@ private fun pinnedSessionItem(
             )
         }
 
-        Box(modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)) {
+        Box(modifier = Modifier.align(Alignment.CenterEnd).padding(end = (8 * fontScale).dp)) {
             dropdownMenu(
                 expanded = showMenu,
                 onDismissRequest = { showMenu = false },
@@ -1043,6 +1044,7 @@ private fun sessionItemWithMenu(
     var showDeleteDialog by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val fontScale = LocalFontScale.current
     val sessionRepository = remember { DatabaseManager.getInstance().getChatSessionRepository() }
 
     if (showDeleteDialog) {
@@ -1059,7 +1061,7 @@ private fun sessionItemWithMenu(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp)
+            .padding(vertical = (2 * fontScale).dp)
             .hoverable(interactionSource),
     ) {
         sessionTooltip(session = session) {
@@ -1067,8 +1069,8 @@ private fun sessionItemWithMenu(
                 icon = if (isChatInProgress) {
                     {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(14.dp),
-                            strokeWidth = 2.dp,
+                            modifier = Modifier.size((14 * fontScale).dp),
+                            strokeWidth = (2 * fontScale).dp,
                             color = LocalContentColor.current,
                         )
                     }
@@ -1091,7 +1093,7 @@ private fun sessionItemWithMenu(
             )
         }
 
-        Box(modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)) {
+        Box(modifier = Modifier.align(Alignment.CenterEnd).padding(end = (8 * fontScale).dp)) {
             dropdownMenu(
                 expanded = showMenu,
                 onDismissRequest = { showMenu = false },
@@ -1133,6 +1135,7 @@ private fun navigationItemLabelWithMenu(
     onMenuClick: () -> Unit,
     isHovered: Boolean,
 ) {
+    val fontScale = LocalFontScale.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -1146,18 +1149,18 @@ private fun navigationItemLabelWithMenu(
             modifier = Modifier.weight(1f),
         )
         if (isHovered) {
-            Box(modifier = Modifier.padding(start = 4.dp)) {
+            Box(modifier = Modifier.padding(start = (4 * fontScale).dp)) {
                 IconButton(
                     onClick = onMenuClick,
                     modifier = Modifier
-                        .size(24.dp)
+                        .size((24 * fontScale).dp)
                         .pointerHoverIcon(PointerIcon.Hand),
                 ) {
                     Icon(
                         Icons.Default.MoreVert,
                         contentDescription = "More options",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size((18 * fontScale).dp),
                     )
                 }
             }

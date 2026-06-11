@@ -62,6 +62,7 @@ import io.askimo.ui.common.components.rememberDialogState
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.util.FileDialogUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -146,8 +147,8 @@ fun mcpToolsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .verticalScroll(scrollState)
-                        .padding(end = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                        .padding(end = Spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
                 ) {
                     // ── Instance info card ─────────────────────────────────
                     Card(
@@ -157,8 +158,8 @@ fun mcpToolsDialog(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                                .padding(Spacing.medium),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.small),
                         ) {
                             Text(
                                 text = stringResource("mcp.tools.dialog.instance.info"),
@@ -193,7 +194,7 @@ fun mcpToolsDialog(
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
-                                    modifier = Modifier.padding(top = 4.dp),
+                                    modifier = Modifier.padding(top = Spacing.extraSmall),
                                 )
                                 instance.parameterValues.forEach { (key, value) ->
                                     val isSecret = SecretDetector.isSecret(key, serverDefinition)
@@ -201,7 +202,7 @@ fun mcpToolsDialog(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(start = 8.dp),
+                                            .padding(start = Spacing.small),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
@@ -225,7 +226,7 @@ fun mcpToolsDialog(
                                                         text = value,
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                        modifier = Modifier.padding(start = 8.dp),
+                                                        modifier = Modifier.padding(start = Spacing.small),
                                                         maxLines = 1,
                                                         overflow = TextOverflow.Ellipsis,
                                                     )
@@ -237,7 +238,7 @@ fun mcpToolsDialog(
                                                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                                                     modifier = Modifier
                                                         .weight(1f, fill = false)
-                                                        .padding(start = 8.dp),
+                                                        .padding(start = Spacing.small),
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis,
                                                 )
@@ -291,7 +292,7 @@ fun mcpToolsDialog(
                     when {
                         isLoading -> {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 CircularProgressIndicator(
@@ -346,8 +347,8 @@ fun mcpToolsDialog(
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(12.dp),
-                                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                                                .padding(Spacing.medium),
+                                            verticalArrangement = Arrangement.spacedBy(Spacing.small),
                                         ) {
                                             SelectionContainer {
                                                 Text(
@@ -367,7 +368,7 @@ fun mcpToolsDialog(
                                                 }
                                             }
                                             Row(
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                                                 verticalAlignment = Alignment.CenterVertically,
                                             ) {
                                                 toolCategoryChip(tool.category)
@@ -407,7 +408,7 @@ fun mcpToolsDialog(
             val exportFailedMsg = stringResource("mcp.tools.dialog.export.failed")
             val exportDialogTitle = stringResource("mcp.tools.dialog.export")
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 // Export button — only enabled when tools are loaded
                 if (!tools.isNullOrEmpty()) {
                     secondaryButton(

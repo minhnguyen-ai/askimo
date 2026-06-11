@@ -87,6 +87,7 @@ import io.askimo.ui.common.components.successIcon
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
 import io.askimo.ui.common.theme.AppComponents.dropdownMenu
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.theme.ThemePreferences
 import io.askimo.ui.common.ui.clickableCard
 import io.askimo.ui.common.ui.themedTooltip
@@ -178,7 +179,7 @@ fun projectView(
                     // ── Back navigation (same style as PlanDetailView) ─────────
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 8.dp),
+                        modifier = Modifier.padding(bottom = Spacing.small),
                     ) {
                         IconButton(
                             onClick = onBack,
@@ -205,11 +206,11 @@ fun projectView(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 16.dp),
+                            .padding(bottom = Spacing.large),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Top,
                     ) {
-                        Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                        Column(modifier = Modifier.weight(1f).padding(end = Spacing.small)) {
                             Text(
                                 text = currentProject.name,
                                 style = MaterialTheme.typography.headlineMedium,
@@ -221,7 +222,7 @@ fun projectView(
                                     text = desc,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 4.dp),
+                                    modifier = Modifier.padding(top = Spacing.extraSmall),
                                 )
                             }
                         }
@@ -273,7 +274,7 @@ fun projectView(
                         currentProject = currentProject,
                         viewModel = viewModel,
                         onShowAddDialog = { showAddReferenceMaterialDialog = true },
-                        modifier = Modifier.padding(bottom = 24.dp),
+                        modifier = Modifier.padding(bottom = Spacing.extraLarge),
                     )
 
                     // Sessions Section
@@ -283,7 +284,7 @@ fun projectView(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(bottom = 12.dp),
+                            modifier = Modifier.padding(bottom = Spacing.medium),
                         )
                     }
 
@@ -293,12 +294,12 @@ fun projectView(
                             text = stringResource("project.no.chats"),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 16.dp),
+                            modifier = Modifier.padding(vertical = Spacing.large),
                         )
                     } else {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.small),
                         ) {
                             projectSessions.forEach { session ->
                                 sessionCard(
@@ -346,7 +347,7 @@ fun projectView(
                         onNavigateToMcpSettings = onNavigateToMcpSettings,
                         sessionId = currentProject.id,
                         placeholder = stringResource("project.new.chat.placeholder", currentProject.name),
-                        modifier = Modifier.padding(top = 16.dp),
+                        modifier = Modifier.padding(top = Spacing.large),
                     )
                 }
             }
@@ -453,7 +454,7 @@ private fun sessionCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(Spacing.medium),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -464,7 +465,7 @@ private fun sessionCard(
             )
 
             Column(
-                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+                modifier = Modifier.weight(1f).padding(horizontal = Spacing.medium),
             ) {
                 themedTooltip(text = session.title) {
                     Text(
@@ -577,13 +578,13 @@ private fun knowledgeSourcesPanel(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Spacing.large),
         ) {
             // Collapsible header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = Spacing.extraSmall),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -598,7 +599,7 @@ private fun knowledgeSourcesPanel(
                                 interactionSource = remember { MutableInteractionSource() },
                             )
                             .pointerHoverIcon(PointerIcon.Hand),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -663,7 +664,7 @@ private fun knowledgeSourcesPanel(
                     // Empty state header
                     Row(
                         modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -684,7 +685,7 @@ private fun knowledgeSourcesPanel(
 
                 // Right side - Guide link + Add button (always visible)
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     linkButton(
@@ -739,8 +740,8 @@ private fun knowledgeSourcesPanel(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                            .padding(top = Spacing.medium),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.medium),
                     ) {
                         HorizontalDivider(
                             modifier = Modifier.fillMaxWidth(),
@@ -777,8 +778,8 @@ private fun knowledgeSourcesPanel(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                        .padding(top = Spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
                 ) {
                     HorizontalDivider(
                         modifier = Modifier.fillMaxWidth(),
@@ -810,7 +811,7 @@ private fun knowledgeSourceItem(
         // Resource identifier (path/URL) with bullet point
         Row(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -859,7 +860,7 @@ private fun indexProgressIndicator(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CircularProgressIndicator(
@@ -882,7 +883,7 @@ private fun indexProgressIndicator(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

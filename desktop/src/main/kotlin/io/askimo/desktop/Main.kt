@@ -120,11 +120,15 @@ import io.askimo.ui.common.theme.LightColorScheme
 import io.askimo.ui.common.theme.LocalBackgroundActive
 import io.askimo.ui.common.theme.LocalCodeFontFamily
 import io.askimo.ui.common.theme.LocalFontScale
+import io.askimo.ui.common.theme.LocalLayoutDensity
+import io.askimo.ui.common.theme.LocalSpacing
 import io.askimo.ui.common.theme.NordColorScheme
 import io.askimo.ui.common.theme.OceanColorScheme
 import io.askimo.ui.common.theme.RoseColorScheme
 import io.askimo.ui.common.theme.SageColorScheme
 import io.askimo.ui.common.theme.SepiaColorScheme
+import io.askimo.ui.common.theme.Spacing
+import io.askimo.ui.common.theme.SpacingValues
 import io.askimo.ui.common.theme.ThemeMode
 import io.askimo.ui.common.theme.ThemePreferences
 import io.askimo.ui.common.theme.appBackground
@@ -540,6 +544,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
     val themeState = rememberThemeState()
     val themeMode = themeState.themeMode
     val fontSettings = themeState.fontSettings
+    val layoutDensity = themeState.layoutDensity
     val locale = themeState.locale
     val backgroundImage = themeState.backgroundImage
     val useDarkMode = themeState.useDarkMode
@@ -698,6 +703,8 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
         CompositionLocalProvider(
             LocalFontScale provides fontSettings.fontSize.scale,
             LocalCodeFontFamily provides customCodeFontFamily,
+            LocalLayoutDensity provides layoutDensity,
+            LocalSpacing provides SpacingValues(scale = layoutDensity.scale),
             LocalUriHandler provides CustomUriHandler(
                 onShowFileViewer = { title, filePath, content ->
                     fileViewerTitle = title
@@ -1480,16 +1487,16 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
                                 tonalElevation = 8.dp,
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(24.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    modifier = Modifier.padding(Spacing.extraLarge),
+                                    verticalArrangement = Arrangement.spacedBy(Spacing.large),
                                 ) {
                                     Row(
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                                         verticalAlignment = Alignment.Top,
                                     ) {
                                         successIcon(size = 32.dp)
                                         Column(
-                                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(Spacing.small),
                                             modifier = Modifier.weight(1f),
                                         ) {
                                             Text(
@@ -1525,11 +1532,11 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
                                 tonalElevation = 8.dp,
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(24.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    modifier = Modifier.padding(Spacing.extraLarge),
+                                    verticalArrangement = Arrangement.spacedBy(Spacing.large),
                                 ) {
                                     Row(
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                                         verticalAlignment = Alignment.Top,
                                     ) {
                                         Icon(
@@ -1539,7 +1546,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
                                             modifier = Modifier.size(32.dp),
                                         )
                                         Column(
-                                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(Spacing.small),
                                             modifier = Modifier.weight(1f),
                                         ) {
                                             Text(
@@ -1557,7 +1564,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
                                                     text = path,
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    modifier = Modifier.padding(top = 4.dp),
+                                                    modifier = Modifier.padding(top = Spacing.extraSmall),
                                                 )
                                             }
                                         }
@@ -1565,7 +1572,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                                        horizontalArrangement = Arrangement.spacedBy(Spacing.small, Alignment.End),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         secondaryButton(

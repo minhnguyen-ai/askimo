@@ -191,13 +191,13 @@ fun plansGalleryView(
 
                 viewModel.plansError?.let { error ->
                     Surface(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.large),
                         color = MaterialTheme.colorScheme.errorContainer,
                         shape = MaterialTheme.shapes.medium,
                     ) {
                         Text(
                             text = error,
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(Spacing.large),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                         )
@@ -221,7 +221,7 @@ fun plansGalleryView(
                                 text = if (viewModel.galleryShowAll) "📋" else "🤖",
                                 style = MaterialTheme.typography.displayMedium,
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(Spacing.small))
                             Text(
                                 text = if (viewModel.galleryShowAll) {
                                     stringResource("plans.empty")
@@ -275,7 +275,7 @@ fun plansGalleryView(
 
         VerticalScrollbar(
             adapter = rememberScrollbarAdapter(scrollState),
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(end = 4.dp),
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(end = Spacing.extraSmall),
             style = ScrollbarStyle(
                 minimalHeight = 16.dp,
                 thickness = 8.dp,
@@ -309,7 +309,7 @@ private fun planTab(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -322,7 +322,7 @@ private fun planTab(
         }
 
         if (selected) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(Spacing.extraSmall))
             Box(
                 modifier = Modifier
                     .height(2.dp)

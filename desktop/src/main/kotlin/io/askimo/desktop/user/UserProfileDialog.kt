@@ -56,6 +56,7 @@ import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.service.AvatarService
 import kotlinx.coroutines.launch
 import java.io.File
@@ -144,7 +145,7 @@ fun userProfileDialog(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(Spacing.extraLarge),
             ) {
                 // Header
                 Row(
@@ -165,14 +166,14 @@ fun userProfileDialog(
                     }
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Spacing.large))
 
                 // Scrollable content
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.large),
                 ) {
                     // Avatar section
                     Column(
@@ -217,7 +218,7 @@ fun userProfileDialog(
                             }
                         }
 
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(Spacing.small))
 
                         Text(
                             text = stringResource("user.profile.avatar.click_to_change"),
@@ -302,8 +303,8 @@ fun userProfileDialog(
                     // Predefined interest chips
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.small),
                     ) {
                         UserInterestCategory.entries.forEach { category ->
                             FilterChip(
@@ -338,7 +339,7 @@ fun userProfileDialog(
                     )
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Spacing.large))
 
                 // Action buttons
                 Row(
@@ -352,7 +353,7 @@ fun userProfileDialog(
                         Text(stringResource("action.cancel"))
                     }
 
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(Spacing.small))
 
                     primaryButton(
                         onClick = {

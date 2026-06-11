@@ -379,6 +379,12 @@ object AppConfig {
     val analytics: AnalyticsConfig get() = delegate.analytics
 
     /**
+     * Raw proxy configuration **without** keychain/secure-storage lookup.
+     * All fields except password are accurate; password may be a placeholder (`***keychain***`).
+     */
+    val rawProxy: ProxyConfig get() = delegate.proxy
+
+    /**
      * Proxy configuration with password loaded from secure storage.
      * If password is a placeholder (***keychain***), loads actual password from keychain/encrypted storage.
      */

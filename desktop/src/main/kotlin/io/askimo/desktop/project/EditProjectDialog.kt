@@ -61,6 +61,7 @@ import io.askimo.ui.common.components.rememberDialogState
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -106,7 +107,7 @@ fun editProjectDialog(
         Surface(
             modifier = Modifier
                 .width(600.dp)
-                .padding(16.dp),
+                .padding(Spacing.large),
             shape = MaterialTheme.shapes.large,
             tonalElevation = 8.dp,
         ) {
@@ -126,8 +127,8 @@ fun editProjectDialog(
                 dialogState.errorMessage != null -> {
                     // Error state
                     Column(
-                        modifier = Modifier.padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(Spacing.extraLarge),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.large),
                     ) {
                         Text(
                             text = "Error",
@@ -265,15 +266,15 @@ private fun editProjectForm(
         Surface(
             modifier = Modifier
                 .width(600.dp)
-                .padding(16.dp),
+                .padding(Spacing.large),
             shape = MaterialTheme.shapes.large,
             tonalElevation = 8.dp,
         ) {
             Column(
                 modifier = Modifier
-                    .padding(24.dp)
+                    .padding(Spacing.extraLarge)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 Text(
                     text = stringResource("project.edit.dialog.title"),
@@ -312,7 +313,7 @@ private fun editProjectForm(
                 )
 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
                 ) {
                     Text(
                         text = stringResource("project.new.dialog.sources.label"),
@@ -333,7 +334,7 @@ private fun editProjectForm(
                             modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(Spacing.small))
                             Text(stringResource("project.new.dialog.sources.add"))
                             Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                         }
@@ -349,7 +350,7 @@ private fun editProjectForm(
                                             Icon(
                                                 typeInfo.icon,
                                                 contentDescription = null,
-                                                modifier = Modifier.padding(end = 8.dp).size(20.dp),
+                                                modifier = Modifier.padding(end = Spacing.small).size(20.dp),
                                             )
                                             Text(stringResource(typeInfo.typeLabelKey))
                                         }
@@ -376,7 +377,7 @@ private fun editProjectForm(
                         Text(stringResource("action.cancel"))
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Spacing.small))
 
                     primaryButton(
                         onClick = ::performSave,
@@ -413,7 +414,7 @@ fun knowledgeSourceRow(
     onRemove: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.extraSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -424,7 +425,7 @@ fun knowledgeSourceRow(
             Icon(
                 source.typeInfo.icon,
                 contentDescription = null,
-                modifier = Modifier.padding(end = 8.dp).size(20.dp),
+                modifier = Modifier.padding(end = Spacing.small).size(20.dp),
                 tint = MaterialTheme.colorScheme.onSurface,
             )
             Text(

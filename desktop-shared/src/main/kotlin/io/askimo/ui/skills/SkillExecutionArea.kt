@@ -303,10 +303,10 @@ internal fun skillExecutionArea(
                     if (skill.supplementalFileNames.isNotEmpty()) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
                         SelectionContainer {
-                            Column(modifier = Modifier.padding(Spacing.large), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Column(modifier = Modifier.padding(Spacing.large), verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
                                 Text(stringResource("skills.view.system.prompt.also.included"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                                 skill.supplementalFileNames.forEach { fileName ->
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
                                         Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                                         Text(fileName, style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                                     }

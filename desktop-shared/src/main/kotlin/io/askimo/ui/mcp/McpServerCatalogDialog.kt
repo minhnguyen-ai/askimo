@@ -100,7 +100,7 @@ fun mcpServerCatalogDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 0.dp),
+                        .padding(start = Spacing.extraLarge, end = Spacing.extraLarge, top = Spacing.extraLarge, bottom = 0.dp),
                     verticalArrangement = Arrangement.spacedBy(Spacing.small),
                 ) {
                     Text(
@@ -137,7 +137,7 @@ fun mcpServerCatalogDialog(
 
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                     ) {
                         McpServerTemplateRegistry.CATEGORIES.forEach { cat ->
                             FilterChip(
@@ -205,7 +205,7 @@ fun mcpServerCatalogDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                        .padding(horizontal = Spacing.extraLarge, vertical = Spacing.large),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

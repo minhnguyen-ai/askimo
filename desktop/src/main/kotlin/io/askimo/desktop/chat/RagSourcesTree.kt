@@ -80,6 +80,7 @@ import io.askimo.core.chat.domain.UrlKnowledgeSourceConfig
 import io.askimo.core.logging.currentFileLogger
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.themedTooltip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -179,7 +180,7 @@ fun ragSourcesTree(
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .padding(horizontal = Spacing.medium, vertical = Spacing.small),
             placeholder = {
                 Text(
                     text = stringResource("rag.tree.search.placeholder"),
@@ -227,9 +228,9 @@ fun ragSourcesTree(
                 when {
                     flatIndex == null -> {
                         // Index is still building
-                        Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(Spacing.large), contentAlignment = Alignment.Center) {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
@@ -243,7 +244,7 @@ fun ragSourcesTree(
                     }
 
                     searchResults.isEmpty() -> {
-                        Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(Spacing.large), contentAlignment = Alignment.Center) {
                             Text(
                                 text = stringResource("rag.tree.search.no.results"),
                                 style = MaterialTheme.typography.bodySmall,
@@ -269,7 +270,7 @@ fun ragSourcesTree(
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    modifier = Modifier.padding(vertical = Spacing.extraSmall),
                                 )
                             }
                             items(searchResults, key = { it }) { path ->
@@ -304,7 +305,7 @@ fun ragSourcesTree(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 22.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                 ) {
                     items(treeNodes) { node ->
                         treeNodeItem(
@@ -341,15 +342,15 @@ fun ragSourcesTree(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f))
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                    .padding(horizontal = Spacing.medium, vertical = Spacing.small),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small), verticalAlignment = Alignment.CenterVertically) {
                     Icon(imageVector = Icons.Default.AttachFile, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(16.dp))
                     Text(text = stringResource("rag.tree.chat.selected", chatSelection.size), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall), verticalAlignment = Alignment.CenterVertically) {
                     TextButton(onClick = { chatSelection.clear() }, modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)) {
                         Text(text = stringResource("rag.tree.chat.clear"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
                     }
@@ -407,7 +408,7 @@ private fun searchResultItem(
                 )
                 .padding(horizontal = 4.dp, vertical = 3.dp)
                 .pointerHoverIcon(PointerIcon.Hand),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -575,7 +576,7 @@ private fun folderNodeItem(
                         .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = { showContextMenu = true })
                         .padding(start = (level * 16).dp, top = 4.dp, bottom = 4.dp, end = 4.dp)
                         .pointerHoverIcon(PointerIcon.Hand),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
@@ -649,7 +650,7 @@ private fun fileNodeItem(
                     .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = { showContextMenu = true })
                     .padding(start = (level * 16 + 16).dp, top = 4.dp, bottom = 4.dp, end = 4.dp)
                     .pointerHoverIcon(PointerIcon.Hand),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(imageVector = Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, tint = AppComponents.secondaryIconColor(), modifier = Modifier.size(18.dp))
@@ -730,7 +731,7 @@ private fun urlNodeItem(
                     .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = { showContextMenu = true })
                     .padding(start = (level * 16).dp, top = 4.dp, bottom = 4.dp, end = 4.dp)
                     .pointerHoverIcon(PointerIcon.Hand),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(imageVector = Icons.Default.Language, contentDescription = null, tint = AppComponents.secondaryIconColor(), modifier = Modifier.size(18.dp))

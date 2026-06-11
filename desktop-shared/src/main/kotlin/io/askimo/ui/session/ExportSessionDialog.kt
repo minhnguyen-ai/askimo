@@ -57,6 +57,7 @@ import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.export.ExportFormat
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.util.FileDialogUtils
 import java.io.File
 
@@ -121,18 +122,18 @@ fun exportSessionDialog(
         Surface(
             modifier = Modifier
                 .width(600.dp)
-                .padding(16.dp),
+                .padding(Spacing.large),
             shape = MaterialTheme.shapes.large,
             tonalElevation = 8.dp,
         ) {
             Column(
                 modifier = Modifier
-                    .padding(24.dp)
+                    .padding(Spacing.extraLarge)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                 ) {
                     Text(
                         text = stringResource("session.export.title"),
@@ -185,7 +186,7 @@ fun exportSessionDialog(
                     onClick = { onFormatChange(ExportFormat.HTML) },
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Spacing.extraSmall))
 
                 // File path selection
                 Text(
@@ -196,7 +197,7 @@ fun exportSessionDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     OutlinedTextField(
@@ -220,12 +221,12 @@ fun exportSessionDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(Spacing.small))
 
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     secondaryButton(
@@ -278,7 +279,7 @@ private fun formatCard(
         tooltip = {
             PlainTooltip {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                 ) {
                     format.getBenefits().forEach { benefit ->
                         Row(
@@ -301,7 +302,7 @@ private fun formatCard(
                 .border(2.dp, borderColor, RoundedCornerShape(12.dp))
                 .clickable(onClick = onClick)
                 .pointerHoverIcon(PointerIcon.Hand)
-                .padding(16.dp),
+                .padding(Spacing.large),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Icon
@@ -316,12 +317,12 @@ private fun formatCard(
                 modifier = Modifier.size(32.dp),
             )
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(Spacing.large))
 
             // Content
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
             ) {
                 // Format name and extension
                 Row(
@@ -336,7 +337,7 @@ private fun formatCard(
                             MaterialTheme.colorScheme.onSurface
                         },
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Spacing.small))
                     Text(
                         text = ".${format.extension}",
                         style = MaterialTheme.typography.labelSmall,

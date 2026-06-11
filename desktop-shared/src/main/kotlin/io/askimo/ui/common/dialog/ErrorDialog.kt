@@ -34,10 +34,10 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
-import androidx.compose.ui.unit.dp
 import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 
 @Composable
 fun errorDialog(
@@ -55,7 +55,7 @@ fun errorDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
@@ -71,8 +71,8 @@ fun errorDialog(
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.small),
+                modifier = Modifier.padding(vertical = Spacing.small),
             ) {
                 if (linkText != null && linkUrl != null) {
                     val annotatedString = buildAnnotatedString {
@@ -113,7 +113,7 @@ fun errorDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { showDetails = !showDetails }
-                            .padding(top = 4.dp),
+                            .padding(top = Spacing.extraSmall),
                     ) {
                         Icon(
                             imageVector = if (showDetails) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
@@ -136,7 +136,7 @@ fun errorDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .verticalScroll(rememberScrollState())
-                                .padding(8.dp),
+                                .padding(Spacing.small),
                         )
                     }
                 }

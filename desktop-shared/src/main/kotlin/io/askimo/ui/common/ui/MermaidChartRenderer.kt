@@ -68,6 +68,7 @@ import io.askimo.core.event.internal.DiagramFixedEvent
 import io.askimo.core.logging.currentFileLogger
 import io.askimo.tools.chart.MermaidChartData
 import io.askimo.ui.common.i18n.stringResource
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.util.FileDialogUtils
 import io.askimo.ui.service.MermaidCliNotAvailableException
 import io.askimo.ui.service.MermaidSvgService
@@ -353,7 +354,7 @@ fun mermaidChart(
                         CircularProgressIndicator(
                             color = MaterialTheme.colorScheme.onSurface,
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(Spacing.large))
                         Text("Checking Mermaid CLI...", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
@@ -375,7 +376,7 @@ fun mermaidChart(
                         CircularProgressIndicator(
                             color = MaterialTheme.colorScheme.onSurface,
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(Spacing.large))
                         Text(stringResource("mermaid.rendering.progress"), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
@@ -383,32 +384,32 @@ fun mermaidChart(
 
             // Error rendering (CLI is available but conversion failed)
             error != null && error != "mermaid_cli_not_available" && isMermaidCliAvailable == true -> {
-                Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxSize().padding(Spacing.large), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = stringResource("mermaid.error.rendering.title"),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.error,
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(Spacing.small))
                         Text(
                             text = error!!,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(Spacing.large))
                         Text(
                             text = stringResource("mermaid.error.rendering.raw.label"),
                             style = MaterialTheme.typography.bodySmall,
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(Spacing.small))
                         Text(
                             text = data.diagram,
                             style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(8.dp).background(
+                            modifier = Modifier.padding(Spacing.small).background(
                                 MaterialTheme.colorScheme.surfaceVariant,
                                 shape = MaterialTheme.shapes.small,
-                            ).padding(8.dp),
+                            ).padding(Spacing.small),
                         )
                     }
                 }
@@ -472,7 +473,7 @@ private fun mermaidSetupInstructions(
 
     Column(
         modifier = modifier
-            .padding(24.dp)
+            .padding(Spacing.extraLarge)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -484,7 +485,7 @@ private fun mermaidSetupInstructions(
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Spacing.large))
 
         Text(
             text = stringResource("mermaid.setup.required.title"),
@@ -492,7 +493,7 @@ private fun mermaidSetupInstructions(
             color = MaterialTheme.colorScheme.onSurface,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Spacing.small))
 
         Text(
             text = stringResource("mermaid.setup.privacy.note"),
@@ -500,7 +501,7 @@ private fun mermaidSetupInstructions(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
         // Setup instructions
         Column(
@@ -510,7 +511,7 @@ private fun mermaidSetupInstructions(
                     MaterialTheme.colorScheme.surfaceVariant,
                     shape = MaterialTheme.shapes.medium,
                 )
-                .padding(16.dp),
+                .padding(Spacing.large),
         ) {
             Text(
                 text = stringResource("mermaid.setup.instructions.title"),
@@ -518,14 +519,14 @@ private fun mermaidSetupInstructions(
                 color = MaterialTheme.colorScheme.onSurface,
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Spacing.medium))
 
             Text(
                 text = stringResource("mermaid.setup.instructions.text"),
                 style = MaterialTheme.typography.bodyMedium,
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.small))
 
             Text(
                 text = setupLink,
@@ -537,14 +538,14 @@ private fun mermaidSetupInstructions(
                         MaterialTheme.colorScheme.surface,
                         shape = MaterialTheme.shapes.small,
                     )
-                    .padding(12.dp),
+                    .padding(Spacing.medium),
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
             Button(
                 onClick = {
@@ -569,7 +570,7 @@ private fun mermaidSetupInstructions(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(Spacing.extraLarge))
 
         // Show raw diagram
         Text(
@@ -578,7 +579,7 @@ private fun mermaidSetupInstructions(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Spacing.small))
 
         Text(
             text = diagram,
@@ -590,7 +591,7 @@ private fun mermaidSetupInstructions(
                     MaterialTheme.colorScheme.surfaceVariant,
                     shape = MaterialTheme.shapes.small,
                 )
-                .padding(12.dp),
+                .padding(Spacing.medium),
         )
     }
 }
@@ -651,7 +652,7 @@ private fun diagramViewer(
                             MaterialTheme.colorScheme.primaryContainer,
                             shape = MaterialTheme.shapes.small,
                         )
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = Spacing.large, vertical = Spacing.small),
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     style = MaterialTheme.typography.labelLarge,
                 )
@@ -661,7 +662,7 @@ private fun diagramViewer(
         // Zoom controls
         Column(
             modifier = Modifier
-                .padding(start = if (onFullScreen != null) 8.dp else 16.dp)
+                .padding(start = if (onFullScreen != null) Spacing.small else Spacing.large)
                 .width(if (onFullScreen != null) 48.dp else 56.dp),
             verticalArrangement = if (onFullScreen != null) Arrangement.Top else Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -682,7 +683,7 @@ private fun diagramViewer(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(Spacing.small))
             }
 
             // Copy diagram code button
@@ -695,7 +696,7 @@ private fun diagramViewer(
                         clipboardManager.setText(AnnotatedString(sanitizedDiagram))
                         showCopyFeedback = true
                         coroutineScope.launch {
-                            delay(2000)
+                            delay(2000.milliseconds)
                             showCopyFeedback = false
                         }
                     },
@@ -829,7 +830,7 @@ private fun diagramImage(
                     .fillMaxSize()
                     .verticalScroll(verticalScrollState)
                     .horizontalScroll(horizontalScrollState)
-                    .padding(end = 12.dp, bottom = 12.dp)
+                    .padding(end = Spacing.medium, bottom = Spacing.medium)
                     .pointerHoverIcon(PointerIcon.Hand)
                     .pointerInput(Unit) {
                         detectDragGestures { change, dragAmount ->
@@ -932,7 +933,7 @@ private fun fullScreenDiagramDialog(
                 onFullScreen = null,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(Spacing.large),
             )
         }
     }

@@ -186,7 +186,7 @@ fun planDetailView(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-                        modifier = Modifier.padding(bottom = 4.dp),
+                        modifier = Modifier.padding(bottom = Spacing.extraSmall),
                     ) {
                         Text(
                             text = plan.icon.ifBlank { "📋" },
@@ -571,7 +571,7 @@ fun planDetailView(
 
                 VerticalScrollbar(
                     adapter = rememberScrollbarAdapter(scrollState),
-                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(end = 4.dp),
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(end = Spacing.extraSmall),
                     style = ScrollbarStyle(
                         minimalHeight = 16.dp,
                         thickness = 8.dp,
@@ -941,7 +941,7 @@ private fun interactiveQuestionPanel(
             )
             TextButton(
                 onClick = onSkip,
-                modifier = Modifier.padding(top = 4.dp).pointerHoverIcon(PointerIcon.Hand),
+                modifier = Modifier.padding(top = Spacing.extraSmall).pointerHoverIcon(PointerIcon.Hand),
             ) {
                 Text(
                     text = stringResource("plans.interactive.skip"),

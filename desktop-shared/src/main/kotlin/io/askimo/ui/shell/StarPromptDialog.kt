@@ -47,6 +47,7 @@ import io.askimo.core.analytics.AnalyticsEvent
 import io.askimo.core.service.StatsService
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -81,7 +82,7 @@ fun happinessGateDialog(
                 )
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
                 ) {
                     Text(
                         text = stringResource("happiness.gate.title"),
@@ -99,7 +100,7 @@ fun happinessGateDialog(
                 }
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
                 ) {
                     sentimentButton(
                         label = stringResource("happiness.gate.happy"),
@@ -186,7 +187,7 @@ fun feedbackPromptDialog(
                 )
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
                 ) {
                     Text(
                         text = stringResource("happiness.gate.feedback.title"),
@@ -204,7 +205,7 @@ fun feedbackPromptDialog(
                 }
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
                 ) {
                     sentimentButton(
                         label = stringResource("happiness.gate.feedback.yes"),
@@ -251,11 +252,11 @@ fun starPromptDialog(
             tonalElevation = 8.dp,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(Spacing.extraLarge),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 // Header
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                     Text(
                         text = stringResource("star.prompt.title"),
                         style = MaterialTheme.typography.titleLarge,
@@ -281,7 +282,7 @@ fun starPromptDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                 ) {
                     supportActionCard(
                         icon = Icons.Default.Star,
@@ -344,9 +345,9 @@ private fun shareActionCard(modifier: Modifier = Modifier) {
             contentColor = if (isHovered) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(Spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
                 Icon(
                     imageVector = Icons.Default.Share,
@@ -414,9 +415,9 @@ private fun supportActionCard(
         contentColor = if (isHovered) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(Spacing.large),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.small),
         ) {
             Icon(
                 imageVector = icon,

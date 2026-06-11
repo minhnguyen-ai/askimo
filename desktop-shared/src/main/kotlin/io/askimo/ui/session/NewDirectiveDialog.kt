@@ -32,6 +32,7 @@ import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 
 @Composable
 fun newDirectiveDialog(
@@ -57,13 +58,13 @@ fun newDirectiveDialog(
         Surface(
             modifier = Modifier
                 .width(800.dp)
-                .padding(16.dp),
+                .padding(Spacing.large),
             shape = MaterialTheme.shapes.large,
             tonalElevation = 8.dp,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(Spacing.extraLarge),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 // Title
                 Text(
@@ -116,7 +117,7 @@ fun newDirectiveDialog(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 ) {
                     Checkbox(
                         checked = applyToCurrent,
@@ -133,7 +134,7 @@ fun newDirectiveDialog(
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     secondaryButton(

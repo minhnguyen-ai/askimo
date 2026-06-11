@@ -79,6 +79,7 @@ import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.markdownText
 import io.askimo.ui.common.ui.revealingMarkdownText
 import io.askimo.ui.common.ui.themedTooltip
@@ -120,14 +121,14 @@ fun messageList(
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
     ) {
         // Show loading indicator when loading previous messages
         if (isLoadingPrevious) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {
@@ -191,7 +192,7 @@ fun messageList(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start,
             ) {
@@ -369,8 +370,8 @@ private fun userMessageBubble(
                     Column {
                         if (message.attachments.isNotEmpty()) {
                             Column(
-                                modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.padding(start = Spacing.medium, end = Spacing.medium, top = Spacing.medium),
+                                verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                             ) {
                                 message.attachments.forEach { attachment ->
                                     fileAttachmentChip(attachment = attachment, onDownload = onDownloadAttachment)
@@ -388,13 +389,13 @@ private fun userMessageBubble(
                                         isActiveResult = isActiveSearchResult,
                                         activeHighlightColor = Color(0xFFFF8F00), // amber-800 — bold active match
                                     ),
-                                    modifier = Modifier.padding(12.dp),
+                                    modifier = Modifier.padding(Spacing.medium),
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                             } else {
                                 Text(
                                     text = message.content,
-                                    modifier = Modifier.padding(12.dp),
+                                    modifier = Modifier.padding(Spacing.medium),
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                             }
@@ -406,7 +407,7 @@ private fun userMessageBubble(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                                 fontStyle = FontStyle.Italic,
-                                modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 8.dp, top = 4.dp),
+                                modifier = Modifier.padding(start = Spacing.medium, end = Spacing.medium, bottom = Spacing.small, top = Spacing.extraSmall),
                             )
                         }
                     }
@@ -440,7 +441,7 @@ private fun userMessageBubble(
             }
 
             // Action controls — reserve space, show on hover
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.small))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
@@ -451,7 +452,7 @@ private fun userMessageBubble(
                         text = stringResource("mermaid.feedback.copied"),
                         modifier = Modifier
                             .background(MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.small)
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = Spacing.large, vertical = Spacing.small),
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         style = MaterialTheme.typography.labelLarge,
                     )
@@ -471,8 +472,8 @@ private fun userMessageBubble(
                             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.padding(horizontal = Spacing.small, vertical = Spacing.extraSmall),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 themedTooltip(text = stringResource("message.copy")) {
@@ -599,8 +600,8 @@ private fun aiMessageBubble(
                         Column {
                             if (message.attachments.isNotEmpty()) {
                                 Column(
-                                    modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.padding(start = Spacing.medium, end = Spacing.medium, top = Spacing.medium),
+                                    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                                 ) {
                                     message.attachments.forEach { attachment ->
                                         fileAttachmentChip(attachment = attachment, onDownload = onDownloadAttachment)
@@ -618,7 +619,7 @@ private fun aiMessageBubble(
                                             isActiveResult = isActiveSearchResult,
                                             activeHighlightColor = Color(0xFFFF8F00),
                                         ),
-                                        modifier = Modifier.padding(start = 12.dp, end = 48.dp, top = 12.dp, bottom = 12.dp),
+                                        modifier = Modifier.padding(start = Spacing.medium, end = 48.dp, top = Spacing.medium, bottom = Spacing.medium),
                                         style = MaterialTheme.typography.bodyMedium,
                                     )
                                 }
@@ -643,7 +644,7 @@ private fun aiMessageBubble(
                                 if (isStreaming) {
                                     markdownText(
                                         markdown = message.content,
-                                        modifier = Modifier.padding(start = 12.dp, end = 48.dp, top = 12.dp, bottom = 12.dp),
+                                        modifier = Modifier.padding(start = Spacing.medium, end = 48.dp, top = Spacing.medium, bottom = Spacing.medium),
                                         viewportTopY = viewportTopY,
                                         isStreaming = true,
                                         onRunRequest = { cmd, lang -> pendingRunRequest = Pair(cmd, lang) },
@@ -653,7 +654,7 @@ private fun aiMessageBubble(
                                 } else {
                                     revealingMarkdownText(
                                         markdown = message.content,
-                                        modifier = Modifier.padding(start = 12.dp, end = 48.dp, top = 12.dp, bottom = 12.dp),
+                                        modifier = Modifier.padding(start = Spacing.medium, end = 48.dp, top = Spacing.medium, bottom = Spacing.medium),
                                         onRunRequest = { cmd, lang -> pendingRunRequest = Pair(cmd, lang) },
                                         messageId = message.id,
                                         onLinkClick = onLinkClickHandler,
@@ -667,7 +668,7 @@ private fun aiMessageBubble(
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                                     fontStyle = FontStyle.Italic,
-                                    modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 8.dp, top = 4.dp),
+                                    modifier = Modifier.padding(start = Spacing.medium, end = Spacing.medium, bottom = Spacing.small, top = Spacing.extraSmall),
                                 )
                             }
                         }

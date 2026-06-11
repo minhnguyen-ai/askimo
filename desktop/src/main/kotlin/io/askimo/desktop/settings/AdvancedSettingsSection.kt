@@ -278,7 +278,7 @@ private fun logViewerCard(
 
             // Buttons Row
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
                 // View Logs Button
                 primaryButton(

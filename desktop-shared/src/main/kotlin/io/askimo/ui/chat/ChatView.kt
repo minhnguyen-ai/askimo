@@ -108,6 +108,7 @@ import io.askimo.ui.common.preferences.ApplicationPreferences
 import io.askimo.ui.common.theme.AppComponents
 import io.askimo.ui.common.theme.AppComponents.dropdownMenu
 import io.askimo.ui.common.theme.LocalBackgroundActive
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.theme.ThemePreferences
 import io.askimo.ui.common.ui.TooltipPlacement
 import io.askimo.ui.common.ui.themedTooltip
@@ -519,7 +520,7 @@ fun chatView(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = Spacing.large, vertical = Spacing.small),
                         colors = CardDefaults.cardColors(
                             containerColor = AppComponents.sidebarSurfaceColor(),
                             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -528,19 +529,19 @@ fun chatView(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
+                                .padding(Spacing.medium),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.weight(1f, fill = false),
                             ) {
                                 // Breadcrumb navigation for project
                                 if (project != null) {
                                     Row(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         // Clickable project name as breadcrumb
@@ -640,14 +641,14 @@ fun chatView(
                                         overflow = TextOverflow.Ellipsis,
                                         modifier = Modifier
                                             .weight(1f, fill = false)
-                                            .padding(end = 8.dp),
+                                            .padding(end = Spacing.small),
                                     )
                                 }
                             }
 
                             // Right side: Directive selector and session actions
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 var showManageDirectivesDialog by remember { mutableStateOf(false) }

@@ -52,6 +52,7 @@ import io.askimo.ui.common.components.linkButton
 import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.service.AvatarService
 import kotlinx.coroutines.launch
 
@@ -98,7 +99,7 @@ fun welcomeProfileDialog(
                         textAlign = TextAlign.Center,
                     )
 
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(Spacing.small))
 
                     Text(
                         text = stringResource("welcome.subtitle"),
@@ -108,14 +109,14 @@ fun welcomeProfileDialog(
                     )
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(Spacing.extraLarge))
 
                 // Scrollable content
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.large),
                 ) {
                     // Avatar section (optional)
                     Column(
@@ -160,7 +161,7 @@ fun welcomeProfileDialog(
                             }
                         }
 
-                        Spacer(Modifier.height(4.dp))
+                        Spacer(Modifier.height(Spacing.extraSmall))
 
                         Text(
                             text = stringResource("welcome.avatar.optional"),
@@ -211,8 +212,8 @@ fun welcomeProfileDialog(
                     // Top interest chips (show 8 most common)
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.small),
                     ) {
                         listOf(
                             UserInterestCategory.TECHNOLOGY,
@@ -240,7 +241,7 @@ fun welcomeProfileDialog(
                     }
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(Spacing.extraLarge))
 
                 // Action buttons
                 Row(
@@ -279,7 +280,7 @@ fun welcomeProfileDialog(
                     text = stringResource("welcome.required_note"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = Spacing.small),
                 )
             }
         }

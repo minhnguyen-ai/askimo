@@ -56,6 +56,7 @@ import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.themedTooltip
 import io.askimo.ui.common.ui.util.FileDialogUtils
 import kotlinx.coroutines.Dispatchers
@@ -114,15 +115,15 @@ fun manageDirectivesDialog(
             modifier = Modifier
                 .width(900.dp)
                 .height(700.dp)
-                .padding(16.dp),
+                .padding(Spacing.large),
             shape = MaterialTheme.shapes.large,
             tonalElevation = 8.dp,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(Spacing.extraLarge),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 // Title
                 Row(
@@ -161,7 +162,7 @@ fun manageDirectivesDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.medium),
                     ) {
                         items(directives, key = { it.id }) { directive ->
                             val isExpanded = directive.id in expandedDirectives
@@ -174,8 +175,8 @@ fun manageDirectivesDialog(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        .padding(Spacing.large),
+                                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -184,7 +185,7 @@ fun manageDirectivesDialog(
                                     ) {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                                             modifier = Modifier.weight(1f),
                                         ) {
                                             Surface(
@@ -196,7 +197,7 @@ fun manageDirectivesDialog(
                                                     Icons.Outlined.Description,
                                                     contentDescription = null,
                                                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                    modifier = Modifier.padding(8.dp),
+                                                    modifier = Modifier.padding(Spacing.small),
                                                 )
                                             }
                                             Text(
@@ -206,7 +207,7 @@ fun manageDirectivesDialog(
                                             )
                                         }
 
-                                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
                                             IconButton(
                                                 onClick = { editingDirective = directive },
                                                 modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
@@ -222,7 +223,7 @@ fun manageDirectivesDialog(
                                         }
                                     }
 
-                                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                                         Text(
                                             text = directive.content,
                                             style = MaterialTheme.typography.bodyMedium,
@@ -307,7 +308,7 @@ fun manageDirectivesDialog(
                             } else {
                                 MaterialTheme.colorScheme.onSecondaryContainer
                             },
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
                         )
                     }
                 }
@@ -320,7 +321,7 @@ fun manageDirectivesDialog(
                 ) {
                     // Left side: New / Import / Export
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         primaryButton(onClick = { showNewDirectiveDialog = true }) {

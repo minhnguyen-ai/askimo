@@ -65,6 +65,7 @@ import io.askimo.ui.common.components.tablePageSizeSelector
 import io.askimo.ui.common.components.tablePagination
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.theme.ThemePreferences
 import io.askimo.ui.common.ui.themedTooltip
 
@@ -126,7 +127,7 @@ fun projectsView(
                     modifier = Modifier.padding(top = 6.dp, bottom = 4.dp),
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Spacing.large))
 
                 // ── Loading / error / empty ────────────────────────────────────
                 when {
@@ -138,7 +139,7 @@ fun projectsView(
 
                     viewModel.errorMessage != null -> {
                         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                                 Text(
                                     stringResource("projects.error", viewModel.errorMessage ?: ""),
                                     style = MaterialTheme.typography.bodyLarge,
@@ -156,7 +157,7 @@ fun projectsView(
 
                     viewModel.pagedProjects?.isEmpty == true -> {
                         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                                 Text(stringResource("projects.empty"), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(stringResource("projects.empty.hint"), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
@@ -187,7 +188,7 @@ fun projectsView(
                 // ── Pagination ─────────────────────────────────────────────────
                 val pagedProjects = viewModel.pagedProjects
                 if (pagedProjects != null && pagedProjects.totalPages > 1) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.small))
                     tablePagination(
                         currentPage = pagedProjects.currentPage,
                         totalPages = pagedProjects.totalPages,
@@ -202,7 +203,7 @@ fun projectsView(
                         },
                     )
                 } else if (viewModel.pagedProjects != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.small))
                     tablePageSizeSelector(
                         pageSize = pageSize,
                         onPageSizeChange = { size ->
@@ -291,7 +292,7 @@ private fun projectTable(
                     currentColumn = sortColumn,
                     direction = sortDirection,
                     onClick = { onSortChange(ProjectSortColumn.CREATED) },
-                    modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = 16.dp),
+                    modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = Spacing.large),
                 )
                 // Modified sortable header
                 projectSortableHeader(
@@ -300,7 +301,7 @@ private fun projectTable(
                     currentColumn = sortColumn,
                     direction = sortDirection,
                     onClick = { onSortChange(ProjectSortColumn.MODIFIED) },
-                    modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = 16.dp),
+                    modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = Spacing.large),
                 )
                 // Actions column spacer
                 Spacer(modifier = Modifier.size(36.dp))
@@ -339,7 +340,7 @@ private fun projectSortableHeader(
             .clickable(onClick = onClick)
             .pointerHoverIcon(PointerIcon.Hand),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
         Text(
             text = label,
@@ -446,7 +447,7 @@ private fun projectRow(
             text = TimeUtil.formatDisplay(project.createdAt),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = 16.dp),
+            modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = Spacing.large),
         )
 
         // Modified date
@@ -454,7 +455,7 @@ private fun projectRow(
             text = TimeUtil.formatDisplay(project.updatedAt),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = 16.dp),
+            modifier = Modifier.widthIn(min = 140.dp).padding(horizontal = Spacing.large),
         )
 
         // Actions

@@ -277,16 +277,16 @@ private fun skillsMainContent(
                         val runtimesLabel = runtimes.mapIndexed { i, r ->
                             if (i == runtimes.lastIndex) "or $r" else r
                         }.joinToString(", ")
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(Spacing.extraSmall))
                         Text(
                             text = stringResource("settings.skills.description", runtimesLabel),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(Spacing.small))
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                         ) {
                             Text(
                                 text = stringResource("settings.skills.runtimes"),
@@ -349,12 +349,12 @@ private fun skillsMainContent(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Spacing.large))
 
                 if (selectedSkill != null) {
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier.padding(bottom = Spacing.large),
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -378,10 +378,10 @@ private fun skillsMainContent(
                             }
                             // ── Last run status chip ───────────────────────
                             if (lastRunRecord != null) {
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(Spacing.extraSmall))
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                                 ) {
                                     Icon(
                                         if (lastRunRecord.error != null) Icons.Default.Close else Icons.Default.CheckCircle,
@@ -464,7 +464,7 @@ private fun skillsMainContent(
 
         VerticalScrollbar(
             adapter = rememberScrollbarAdapter(scrollState),
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(end = 4.dp),
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(end = Spacing.extraSmall),
             style = ScrollbarStyle(
                 minimalHeight = 16.dp,
                 thickness = 8.dp,
@@ -628,7 +628,7 @@ private fun skillsUnifiedPanel(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                        .padding(vertical = 12.dp),
+                        .padding(vertical = Spacing.medium),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     themedTooltip(
@@ -678,7 +678,7 @@ private fun railSectionHeader(
             .pointerHoverIcon(PointerIcon.Hand)
             .padding(start = 8.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
         Icon(
             if (isExpanded) Icons.Default.ExpandMore else Icons.Default.ChevronRight,

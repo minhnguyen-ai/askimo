@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
 import io.askimo.ui.common.theme.LocalBackgroundActive
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.theme.ThemePreferences
 import io.askimo.ui.settings.appearanceSettingsSection
 import io.askimo.ui.settings.generalSettingsSection
@@ -97,13 +98,13 @@ fun settingsViewWithSidebar(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(AppComponents.sidebarHeaderColor())
-                .padding(16.dp),
+                .padding(Spacing.large),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
             ) {
                 Icon(
                     painter = remember {
@@ -333,8 +334,8 @@ private fun settingsSidebarItem(
         },
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(Spacing.large),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(

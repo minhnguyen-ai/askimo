@@ -75,6 +75,7 @@ import io.askimo.desktop.project.mergeKnowledgeSourceConfigs
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.preferences.ApplicationPreferences
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.themedTooltip
 import kotlinx.coroutines.flow.filterIsInstance
 import java.awt.Cursor
@@ -145,12 +146,12 @@ fun communityProjectSidePanel(
                     var showContextMenu by remember { mutableStateOf(false) }
 
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.large).padding(top = Spacing.large),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             if (selectedTab == PanelTab.RAG_SOURCES && project != null && project.knowledgeSources.isNotEmpty()) {
@@ -196,7 +197,7 @@ fun communityProjectSidePanel(
                             )
                         }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall), verticalAlignment = Alignment.CenterVertically) {
                             if (selectedTab == PanelTab.RAG_SOURCES) {
                                 Box {
                                     IconButton(
@@ -238,9 +239,9 @@ fun communityProjectSidePanel(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.large))
+                    Spacer(modifier = Modifier.height(Spacing.extraSmall))
 
                     Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                         when (selectedTab) {
@@ -274,9 +275,9 @@ fun communityProjectSidePanel(
                 modifier = Modifier
                     .width(56.dp).fillMaxHeight()
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                    .padding(vertical = 16.dp, horizontal = 8.dp),
+                    .padding(vertical = Spacing.large, horizontal = Spacing.small),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 PanelTab.entries.forEach { tab ->
                     panelTabIcon(tab = tab, isSelected = selectedTab == tab, onClick = {
@@ -421,9 +422,9 @@ private fun ragSourcesTabContent(
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                         Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(28.dp), tint = AppComponents.tertiaryIconColor())
-                        Text(text = stringResource("file.viewer.select.prompt"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp))
+                        Text(text = stringResource("file.viewer.select.prompt"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = Spacing.large))
                     }
                 }
             }
@@ -434,7 +435,7 @@ private fun ragSourcesTabContent(
 @Composable
 private fun ragSourcesEmptyState(project: Project?, onAddMaterial: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
             Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(64.dp), tint = AppComponents.tertiaryIconColor())
             Text(text = stringResource("rag.empty.title"), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
             Text(text = stringResource("rag.empty.description"), style = MaterialTheme.typography.bodySmall, color = AppComponents.secondaryTextColor(), textAlign = TextAlign.Center)
@@ -445,7 +446,7 @@ private fun ragSourcesEmptyState(project: Project?, onAddMaterial: () -> Unit) {
                 modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(Spacing.small))
                 Text(stringResource("rag.empty.button.add"))
             }
         }

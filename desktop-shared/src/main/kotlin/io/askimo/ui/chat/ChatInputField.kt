@@ -101,6 +101,7 @@ import io.askimo.core.util.formatFileSize
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.keymap.KeyMapManager
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.themedTooltip
 import io.askimo.ui.common.ui.util.FileDialogUtils
 import io.askimo.ui.util.Platform
@@ -315,18 +316,18 @@ fun chatInputField(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp),
+                    .padding(bottom = Spacing.small),
                 colors = AppComponents.bannerCardColors(),
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
+                        .padding(Spacing.medium),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -364,8 +365,8 @@ fun chatInputField(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                    .padding(bottom = Spacing.small),
+                verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
             ) {
                 attachments.forEach { attachment ->
                     fileAttachmentItem(
@@ -829,8 +830,8 @@ private fun toolsIndicatorButton(
                     tonalElevation = 2.dp,
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(Spacing.large),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.medium),
                     ) {
                         // Header
                         Row(
@@ -1188,13 +1189,13 @@ private fun fileAttachmentItem(
                             Modifier
                         },
                     )
-                    .padding(8.dp),
+                    .padding(Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                     modifier = Modifier.weight(1f),
                 ) {
                     Icon(
@@ -1257,7 +1258,7 @@ private fun fileAttachmentItem(
                     when {
                         isLoadingPreview -> {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)

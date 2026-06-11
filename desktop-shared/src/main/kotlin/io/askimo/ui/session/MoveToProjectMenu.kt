@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import io.askimo.core.chat.domain.Project
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 
 /**
  * Reusable component for "Move to Project" menu with popup submenu.
@@ -117,7 +118,7 @@ fun moveToProjectMenuItem(
                         // Separator
                         if (projects.isNotEmpty()) {
                             HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 4.dp),
+                                modifier = Modifier.padding(vertical = Spacing.extraSmall),
                             )
                         }
 

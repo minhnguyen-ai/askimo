@@ -38,6 +38,7 @@ import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.collections.plus
@@ -154,7 +155,7 @@ fun addReferenceMaterialDialog(
 
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.small),
                     ) {
                         knowledgeSources.forEach { source ->
                             knowledgeSourceRow(

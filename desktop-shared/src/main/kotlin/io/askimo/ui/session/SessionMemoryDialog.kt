@@ -48,6 +48,7 @@ import io.askimo.core.util.JsonUtils.prettyJson
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
@@ -87,13 +88,13 @@ fun sessionMemoryDialog(
         Surface(
             modifier = Modifier
                 .width(800.dp)
-                .padding(16.dp),
+                .padding(Spacing.large),
             shape = MaterialTheme.shapes.large,
             tonalElevation = 8.dp,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(Spacing.extraLarge),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 Text(
                     text = stringResource("developer.session.memory.title"),
@@ -111,7 +112,7 @@ fun sessionMemoryDialog(
                             text = stringResource("developer.session.memory.loading"),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(Spacing.large),
                         )
                     }
                 } else if (sessionMemory == null) {
@@ -123,7 +124,7 @@ fun sessionMemoryDialog(
                             text = stringResource("developer.session.memory.not.found"),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(Spacing.large),
                         )
                     }
                 } else {
@@ -132,7 +133,7 @@ fun sessionMemoryDialog(
                     // Memory Summary Section
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.small),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -171,7 +172,7 @@ fun sessionMemoryDialog(
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier
-                                            .padding(16.dp)
+                                            .padding(Spacing.large)
                                             .fillMaxWidth()
                                             .verticalScroll(scrollState),
                                     )
@@ -179,7 +180,7 @@ fun sessionMemoryDialog(
                                 VerticalScrollbar(
                                     modifier = Modifier
                                         .align(Alignment.CenterEnd)
-                                        .padding(end = 4.dp),
+                                        .padding(end = Spacing.extraSmall),
                                     adapter = rememberScrollbarAdapter(scrollState),
                                 )
                             }
@@ -191,7 +192,7 @@ fun sessionMemoryDialog(
                     // Memory Messages Section with Pagination
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.small),
                     ) {
                         // Parse messages and setup pagination - latest first
                         val messages = remember(memory.memoryMessages) {
@@ -224,7 +225,7 @@ fun sessionMemoryDialog(
 
                             if (messages.isNotEmpty()) {
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
@@ -238,7 +239,7 @@ fun sessionMemoryDialog(
 
                                     // Pagination controls
                                     Row(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         IconButton(
@@ -297,10 +298,10 @@ fun sessionMemoryDialog(
                                 SelectionContainer {
                                     Column(
                                         modifier = Modifier
-                                            .padding(16.dp)
+                                            .padding(Spacing.large)
                                             .fillMaxWidth()
                                             .verticalScroll(scrollState),
-                                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(Spacing.large),
                                     ) {
                                         if (currentMessages.isEmpty()) {
                                             Text(
@@ -313,7 +314,7 @@ fun sessionMemoryDialog(
                                                 memoryMessageItem(msg)
                                                 if (msg != currentMessages.last()) {
                                                     HorizontalDivider(
-                                                        modifier = Modifier.padding(vertical = 8.dp),
+                                                        modifier = Modifier.padding(vertical = Spacing.small),
                                                         color = MaterialTheme.colorScheme.outlineVariant,
                                                     )
                                                 }
@@ -324,7 +325,7 @@ fun sessionMemoryDialog(
                                 VerticalScrollbar(
                                     modifier = Modifier
                                         .align(Alignment.CenterEnd)
-                                        .padding(end = 4.dp),
+                                        .padding(end = Spacing.extraSmall),
                                     adapter = rememberScrollbarAdapter(scrollState),
                                 )
                             }
@@ -370,7 +371,7 @@ private fun memoryMessageItem(messageJson: String) {
         val (content, type, createdAt) = parsedMessage
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

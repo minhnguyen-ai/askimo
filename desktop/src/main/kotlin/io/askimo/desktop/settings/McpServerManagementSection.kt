@@ -345,7 +345,7 @@ private fun mcpInstanceCard(
             }
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 themedTooltip(

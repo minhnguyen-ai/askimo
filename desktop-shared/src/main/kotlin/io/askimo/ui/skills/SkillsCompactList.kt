@@ -149,7 +149,7 @@ internal fun skillsCompactList(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(scrollState)
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = Spacing.extraSmall),
                 ) {
                     groupedSkills.forEach { (category, entries) ->
                         val categoryLabel = if (category.isBlank()) stringResource("skills.view.category.uncategorized") else category

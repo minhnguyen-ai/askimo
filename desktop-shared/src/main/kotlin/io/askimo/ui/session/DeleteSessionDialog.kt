@@ -26,6 +26,7 @@ import androidx.compose.ui.window.Dialog
 import io.askimo.ui.common.components.dangerButton
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
+import io.askimo.ui.common.theme.Spacing
 
 /**
  *
@@ -46,12 +47,12 @@ fun deleteSessionDialog(
             tonalElevation = 8.dp,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(Spacing.extraLarge),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 // Title with warning icon
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
@@ -86,7 +87,7 @@ fun deleteSessionDialog(
                         Text(stringResource("session.delete.confirm.cancel"))
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Spacing.small))
 
                     dangerButton(
                         onClick = onConfirm,

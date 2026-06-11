@@ -62,6 +62,7 @@ import io.askimo.core.util.TimeUtil
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.preferences.ApplicationPreferences
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.themedTooltip
 import java.awt.Cursor
 
@@ -128,7 +129,7 @@ fun planHistorySidePanel(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .padding(16.dp),
+                        .padding(Spacing.large),
                 ) {
                     // Header row
                     Row(
@@ -138,7 +139,7 @@ fun planHistorySidePanel(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                         ) {
                             Icon(
                                 Icons.Default.History,
@@ -181,9 +182,9 @@ fun planHistorySidePanel(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(Spacing.medium))
                     HorizontalDivider()
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(Spacing.medium))
 
                     Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                         val scrollState = rememberScrollState()
@@ -191,16 +192,16 @@ fun planHistorySidePanel(
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(end = 8.dp) // room for scrollbar
+                                .padding(end = Spacing.small) // room for scrollbar
                                 .verticalScroll(scrollState),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.small),
                         ) {
                             if (executions.isEmpty()) {
                                 Text(
                                     text = stringResource("plans.history.empty"),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 8.dp),
+                                    modifier = Modifier.padding(top = Spacing.small),
                                 )
                             } else {
                                 executions.forEach { execution ->
@@ -241,9 +242,9 @@ fun planHistorySidePanel(
                     .width(56.dp)
                     .fillMaxHeight()
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                    .padding(vertical = 16.dp, horizontal = 8.dp),
+                    .padding(vertical = Spacing.large, horizontal = Spacing.small),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 themedTooltip(text = stringResource("plans.history.title")) {
                     IconButton(
@@ -300,12 +301,12 @@ private fun planHistoryItem(
             tonalElevation = 1.dp,
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f),
                 ) {
@@ -341,7 +342,7 @@ private fun planHistoryItem(
                         }
 
                         if (execution.inputs.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(Spacing.extraSmall))
                             execution.inputs.entries.take(3).forEach { (key, value) ->
                                 val preview = value.trim().take(40).let { if (value.length > 40) "$it…" else it }
                                 if (preview.isNotBlank()) {

@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +49,8 @@ import io.askimo.ui.common.theme.AppComponents
 import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.theme.ThemePreferences
 import io.askimo.ui.common.ui.clickableCard
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.Desktop
 import java.net.URI
 
@@ -66,7 +69,7 @@ fun networkSettingsSection() {
                 modifier = Modifier
                     .widthIn(max = ThemePreferences.CONTENT_MAX_WIDTH)
                     .fillMaxWidth()
-                    .padding(start = 24.dp, top = 24.dp, bottom = 24.dp, end = 36.dp),
+                    .padding(start = Spacing.extraLarge, top = Spacing.extraLarge, bottom = Spacing.extraLarge, end = 36.dp),
                 verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 Text(
@@ -106,12 +109,21 @@ fun networkSettingsSection() {
 
 @Composable
 private fun proxyConfigurationCard() {
-    var proxyType by remember { mutableStateOf(AppConfig.proxy.type) }
-    var proxyHost by remember { mutableStateOf(AppConfig.proxy.host) }
-    var proxyPort by remember { mutableStateOf(AppConfig.proxy.port.toString()) }
-    var proxyUsername by remember { mutableStateOf(AppConfig.proxy.username) }
-    var proxyPassword by remember { mutableStateOf(AppConfig.proxy.password) }
+    // Read from rawProxy (no keychain I/O) so the view renders instantly.
+    val raw = AppConfig.rawProxy
+    var proxyType by remember { mutableStateOf(raw.type) }
+    var proxyHost by remember { mutableStateOf(raw.host) }
+    var proxyPort by remember { mutableStateOf(raw.port.toString()) }
+    var proxyUsername by remember { mutableStateOf(raw.username) }
+    // Password starts empty; loaded off the UI thread below.
+    var proxyPassword by remember { mutableStateOf("") }
     var proxyTypeDropdownExpanded by remember { mutableStateOf(false) }
+
+    // Resolve the secure password on IO — never block the compose thread.
+    LaunchedEffect(Unit) {
+        val securePassword = withContext(Dispatchers.IO) { AppConfig.proxy.password }
+        proxyPassword = securePassword
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -216,7 +228,7 @@ private fun proxyConfigurationCard() {
                             DropdownMenuItem(
                                 text = {
                                     Column(
-                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                                     ) {
                                         Text(
                                             text = stringResource("settings.proxy.type.${type.name.lowercase()}"),

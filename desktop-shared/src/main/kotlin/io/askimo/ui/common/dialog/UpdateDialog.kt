@@ -33,6 +33,7 @@ import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.ui.markdownText
 
 @Composable
@@ -111,7 +112,7 @@ private fun newVersionDialog(
                 modifier = Modifier
                     .widthIn(max = 500.dp)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.large),
             ) {
                 // Urgency banner
                 val bannerColors = when (urgency) {
@@ -136,8 +137,8 @@ private fun newVersionDialog(
 
                 Card(modifier = Modifier.fillMaxWidth(), colors = bannerColors) {
                     Row(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.padding(Spacing.medium),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -159,7 +160,7 @@ private fun newVersionDialog(
                     colors = AppComponents.bannerCardColors(),
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(Spacing.large),
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Column {
@@ -191,7 +192,7 @@ private fun newVersionDialog(
                 }
 
                 // Release info
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
                     Text(
                         text = stringResource("update.dialog.release.date"),
                         style = MaterialTheme.typography.labelSmall,
@@ -204,7 +205,7 @@ private fun newVersionDialog(
                 }
 
                 // Release notes
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
                     Text(
                         text = stringResource("update.dialog.release.notes"),
                         style = MaterialTheme.typography.labelSmall,
@@ -219,7 +220,7 @@ private fun newVersionDialog(
                                 .fillMaxWidth()
                                 .height(300.dp)
                                 .verticalScroll(rememberScrollState())
-                                .padding(12.dp),
+                                .padding(Spacing.medium),
                         ) {
                             markdownText(
                                 markdown = releaseInfo.releaseNotes,
@@ -236,7 +237,7 @@ private fun newVersionDialog(
             }
         },
         dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 secondaryButton(onClick = onHowToUpdate) {
                     Text(stringResource("update.dialog.how.to.update"))
                 }
@@ -265,7 +266,7 @@ private fun upToDateDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
                 Text(
                     text = stringResource("update.check.up.to.date"),
                     style = MaterialTheme.typography.bodyMedium,
@@ -275,8 +276,8 @@ private fun upToDateDialog(
                     colors = AppComponents.bannerCardColors(),
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(Spacing.large),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
                     ) {
                         Text(
                             text = stringResource("update.dialog.current.version.label"),
@@ -324,7 +325,7 @@ private fun errorDialog(
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(Spacing.large),
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
             }

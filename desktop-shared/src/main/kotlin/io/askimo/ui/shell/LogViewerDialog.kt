@@ -47,6 +47,7 @@ import io.askimo.core.logging.currentFileLogger
 import io.askimo.ui.common.components.primaryButton
 import io.askimo.ui.common.components.secondaryButton
 import io.askimo.ui.common.i18n.stringResource
+import io.askimo.ui.common.theme.Spacing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -127,7 +128,7 @@ fun logViewerDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
+                        .padding(Spacing.extraLarge),
                 ) {
                     // Header
                     Text(
@@ -136,7 +137,7 @@ fun logViewerDialog(
                         color = MaterialTheme.colorScheme.onSurface,
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.small))
 
                     // Log file path
                     LoggingService.getLogFilePath()?.let { logPath ->
@@ -148,11 +149,11 @@ fun logViewerDialog(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.large))
 
                     // Action buttons
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                     ) {
                         // Refresh button
                         secondaryButton(
@@ -179,7 +180,7 @@ fun logViewerDialog(
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp),
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(Spacing.small))
                             Text(stringResource("settings.log.viewer.refresh"))
                         }
 
@@ -201,7 +202,7 @@ fun logViewerDialog(
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp),
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(Spacing.small))
                             Text(
                                 if (isCopied) {
                                     stringResource("settings.log.viewer.copied")
@@ -212,7 +213,7 @@ fun logViewerDialog(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.large))
 
                     // Log content display
                     Card(
@@ -229,7 +230,7 @@ fun logViewerDialog(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(24.dp),
+                                        .padding(Spacing.extraLarge),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center,
                                 ) {
@@ -246,14 +247,14 @@ fun logViewerDialog(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(24.dp),
+                                        .padding(Spacing.extraLarge),
                                 ) {
                                     Text(
                                         text = stringResource("settings.log.viewer.error"),
                                         style = MaterialTheme.typography.titleMedium,
                                         color = MaterialTheme.colorScheme.error,
                                     )
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(Spacing.small))
                                     Text(
                                         text = errorMessage ?: "",
                                         style = MaterialTheme.typography.bodySmall,
@@ -268,7 +269,7 @@ fun logViewerDialog(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(24.dp),
+                                        .padding(Spacing.extraLarge),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
                                     Text(
@@ -285,7 +286,7 @@ fun logViewerDialog(
                                     Text(
                                         text = logContent,
                                         modifier = Modifier
-                                            .padding(12.dp)
+                                            .padding(Spacing.medium)
                                             .verticalScroll(scrollState),
                                         fontFamily = FontFamily.Monospace,
                                         fontSize = 11.sp,
@@ -298,7 +299,7 @@ fun logViewerDialog(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.large))
 
                     // Close button
                     Row(

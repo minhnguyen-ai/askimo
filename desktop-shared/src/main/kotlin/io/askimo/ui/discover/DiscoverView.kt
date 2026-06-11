@@ -58,6 +58,7 @@ import io.askimo.core.user.domain.UserProfile
 import io.askimo.core.util.TimeUtil
 import io.askimo.ui.common.components.clickableCard
 import io.askimo.ui.common.i18n.stringResource
+import io.askimo.ui.common.theme.Spacing
 import io.askimo.ui.common.theme.ThemePreferences
 import io.askimo.ui.session.sessionTooltip
 import java.awt.Desktop
@@ -92,7 +93,7 @@ fun discoverView(
                     .widthIn(max = ThemePreferences.CONTENT_MAX_WIDTH)
                     .fillMaxWidth()
                     .padding(start = 24.dp, end = 36.dp, top = 32.dp, bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(32.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
             ) {
                 headerSection(
                     userProfile = userProfile,
@@ -154,7 +155,7 @@ private fun headerSection(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
             Text(
                 text = stringResource(greetingKey, firstName),
                 style = MaterialTheme.typography.headlineMedium,
@@ -189,7 +190,7 @@ private fun statCardsSection(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.large),
     ) {
         statCard(
             label = stringResource("discover.stat.chats"),
@@ -247,8 +248,8 @@ private fun statCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(Spacing.large),
+            verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -280,7 +281,7 @@ private fun statCard(
 
 @Composable
 private fun exploreFeaturesSection() {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
         Text(
             text = stringResource("discover.explore.title"),
             style = MaterialTheme.typography.titleMedium,
@@ -289,7 +290,7 @@ private fun exploreFeaturesSection() {
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.large),
         ) {
             exploreCard(
                 icon = { Icon(Icons.Default.Extension, contentDescription = null, modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) },
@@ -341,8 +342,8 @@ private fun exploreCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+                .padding(Spacing.large),
+            verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -377,7 +378,7 @@ private fun recentSessionsSection(
     sessions: List<ChatSession>,
     onResumeSession: (String) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
         Text(
             text = stringResource("discover.recent.title"),
             style = MaterialTheme.typography.titleMedium,
@@ -441,12 +442,12 @@ private fun recentSessionRow(
                 onClick = { onResumeSession(session.id) },
             )
             .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = Spacing.large, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f),
         ) {

@@ -22,6 +22,7 @@ import io.askimo.core.chat.dto.ChatMessageDTO
 import io.askimo.core.chat.dto.FileAttachmentDTO
 import io.askimo.ui.common.theme.BackgroundImage
 import io.askimo.ui.common.theme.FontSettings
+import io.askimo.ui.common.theme.LayoutDensity
 import io.askimo.ui.common.theme.ThemeMode
 import io.askimo.ui.common.theme.ThemePreferences
 import io.askimo.ui.common.theme.detectMacOSDarkMode
@@ -44,6 +45,7 @@ data class ThemeState(
     val themeMode: ThemeMode,
     val useDarkMode: Boolean,
     val fontSettings: FontSettings,
+    val layoutDensity: LayoutDensity,
     val locale: Locale,
     val backgroundImage: BackgroundImage,
 )
@@ -52,6 +54,7 @@ data class ThemeState(
 fun rememberThemeState(): ThemeState {
     val themeMode by ThemePreferences.themeMode.collectAsState()
     val fontSettings by ThemePreferences.fontSettings.collectAsState()
+    val layoutDensity by ThemePreferences.layoutDensity.collectAsState()
     val locale by ThemePreferences.locale.collectAsState()
     val backgroundImage by ThemePreferences.backgroundImage.collectAsState()
     var isSystemInDarkMode by remember { mutableStateOf(detectMacOSDarkMode()) }
@@ -73,6 +76,7 @@ fun rememberThemeState(): ThemeState {
         themeMode = themeMode,
         useDarkMode = useDarkMode,
         fontSettings = fontSettings,
+        layoutDensity = layoutDensity,
         locale = locale,
         backgroundImage = backgroundImage,
     )
