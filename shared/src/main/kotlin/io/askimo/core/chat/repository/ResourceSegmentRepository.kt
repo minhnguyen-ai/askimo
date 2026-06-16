@@ -34,8 +34,9 @@ class ResourceSegmentRepository(
     private val database: Database by lazy { Database.connect(databaseManager.dataSource) }
 
     /**
-     * Save multiple segment mappings in a batch
-     * @param resourceId String identifier for the resource (file path, URL, etc.)
+     * Save multiple segment mappings in a batch.
+     * @param resourceId String identifier for the resource (file path, URL, etc.).
+     *                   Backslashes are normalized to forward slashes for cross-platform consistency.
      */
     fun saveSegmentMappings(
         projectId: String,
@@ -44,13 +45,14 @@ class ResourceSegmentRepository(
     ) {
         if (segmentIds.isEmpty()) return
 
+        val normalizedId = resourceId.replace('\\', '/')
         transaction(database) {
             ResourceSegmentsTable.batchInsert(
                 data = segmentIds,
                 ignore = true,
             ) { (segmentId, chunkIndex) ->
                 this[ResourceSegmentsTable.projectId] = projectId
-                this[ResourceSegmentsTable.resourceId] = resourceId
+                this[ResourceSegmentsTable.resourceId] = normalizedId
                 this[ResourceSegmentsTable.segmentId] = segmentId
                 this[ResourceSegmentsTable.chunkIndex] = chunkIndex
                 this[ResourceSegmentsTable.createdAt] = Instant.now()
@@ -60,63 +62,68 @@ class ResourceSegmentRepository(
 
     /**
      * Save multiple segment mappings in a batch (backward compatible Path version)
-     * Converts Path to String automatically for backward compatibility
+     * Converts Path to String automatically for backward compatibility.
+     * Paths are normalized to forward slashes for cross-platform consistency.
      */
     fun saveSegmentMappings(
         projectId: String,
         filePath: Path,
         segmentIds: List<Pair<String, Int>>,
     ) {
-        saveSegmentMappings(projectId, filePath.toString(), segmentIds)
+        saveSegmentMappings(projectId, filePath.toNormalizedString(), segmentIds)
     }
 
     /**
-     * Get all segment IDs for a specific resource
-     * @param resourceId String identifier for the resource
+     * Get all segment IDs for a specific resource.
+     * @param resourceId String identifier for the resource; backslashes are normalized.
      */
     fun getSegmentIdsForResource(
         projectId: String,
         resourceId: String,
     ): List<String> = transaction(database) {
+        val normalizedId = resourceId.replace('\\', '/')
         ResourceSegmentsTable
             .selectAll()
             .where {
                 (ResourceSegmentsTable.projectId eq projectId) and
-                    (ResourceSegmentsTable.resourceId eq resourceId)
+                    (ResourceSegmentsTable.resourceId eq normalizedId)
             }
             .orderBy(ResourceSegmentsTable.chunkIndex)
             .map { it[ResourceSegmentsTable.segmentId] }
     }
 
     /**
-     * Get all segment IDs for a specific file (backward compatible Path version)
+     * Get all segment IDs for a specific file (backward compatible Path version).
+     * Paths are normalized to forward slashes for cross-platform consistency.
      */
     fun getSegmentIdsForFile(
         projectId: String,
         filePath: Path,
-    ): List<String> = getSegmentIdsForResource(projectId, filePath.toString())
+    ): List<String> = getSegmentIdsForResource(projectId, filePath.toNormalizedString())
 
     /**
-     * Remove all segment mappings for a specific resource
-     * @param resourceId String identifier for the resource
+     * Remove all segment mappings for a specific resource.
+     * @param resourceId String identifier for the resource; backslashes are normalized.
      */
     fun removeSegmentMappingsForResource(
         projectId: String,
         resourceId: String,
     ): Int = transaction(database) {
+        val normalizedId = resourceId.replace('\\', '/')
         ResourceSegmentsTable.deleteWhere {
             (ResourceSegmentsTable.projectId eq projectId) and
-                (ResourceSegmentsTable.resourceId eq resourceId)
+                (ResourceSegmentsTable.resourceId eq normalizedId)
         }
     }
 
     /**
-     * Remove all segment mappings for a specific file (backward compatible Path version)
+     * Remove all segment mappings for a specific file (backward compatible Path version).
+     * Paths are normalized to forward slashes for cross-platform consistency.
      */
     fun removeSegmentMappingsForFile(
         projectId: String,
         filePath: Path,
-    ): Int = removeSegmentMappingsForResource(projectId, filePath.toString())
+    ): Int = removeSegmentMappingsForResource(projectId, filePath.toNormalizedString())
 
     /**
      * Remove ALL segment mappings for an entire project.
@@ -131,9 +138,11 @@ class ResourceSegmentRepository(
     /**
      * Get all segment IDs whose resource path starts with [dirPrefix].
      * Used to clean up all segments under a deleted directory.
+     * [dirPrefix] is normalized to forward slashes for cross-platform consistency.
      */
     fun getSegmentIdsForDirectory(projectId: String, dirPrefix: String): List<String> {
-        val prefix = if (dirPrefix.endsWith("/")) dirPrefix else "$dirPrefix/"
+        val normalized = dirPrefix.replace('\\', '/')
+        val prefix = if (normalized.endsWith("/")) normalized else "$normalized/"
         return transaction(database) {
             ResourceSegmentsTable
                 .selectAll()
@@ -148,9 +157,11 @@ class ResourceSegmentRepository(
     /**
      * Remove all segment mappings whose resource path starts with [dirPrefix].
      * Returns the number of rows deleted.
+     * [dirPrefix] is normalized to forward slashes for cross-platform consistency.
      */
     fun removeSegmentMappingsForDirectory(projectId: String, dirPrefix: String): Int {
-        val prefix = if (dirPrefix.endsWith("/")) dirPrefix else "$dirPrefix/"
+        val normalized = dirPrefix.replace('\\', '/')
+        val prefix = if (normalized.endsWith("/")) normalized else "$normalized/"
         return transaction(database) {
             ResourceSegmentsTable.deleteWhere {
                 (ResourceSegmentsTable.projectId eq projectId) and
@@ -159,3 +170,6 @@ class ResourceSegmentRepository(
         }
     }
 }
+
+/** Normalize a [Path] to a forward-slash string for cross-platform DB storage. */
+private fun Path.toNormalizedString() = toString().replace('\\', '/')
