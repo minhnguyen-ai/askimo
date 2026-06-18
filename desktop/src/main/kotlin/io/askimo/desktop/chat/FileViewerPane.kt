@@ -142,6 +142,7 @@ fun fileViewerPane(
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
                 if (viewerState is ViewerState.Content) {
                     Text(
@@ -151,6 +152,8 @@ fun fileViewerPane(
                         ),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        softWrap = false,
                     )
                 }
             }

@@ -411,7 +411,7 @@ object CodeHighlighter {
     }
 
     private fun highlightJSON(code: String, theme: Theme, codeFontFamily: FontFamily): AnnotatedString = buildAnnotatedString {
-        val stringPattern = """"(?:[^"\\]|\\.)*"""".toRegex()
+        val stringPattern = """"[^"\\]*(?:\\.[^"\\]*)*"""".toRegex()
         val numberPattern = """-?\d+\.?\d*([eE][+-]?\d+)?""".toRegex()
         val boolNullPattern = """\b(true|false|null)\b""".toRegex()
 
