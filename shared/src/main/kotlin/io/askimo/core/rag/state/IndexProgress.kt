@@ -24,6 +24,7 @@ data class IndexProgress(
     val totalFiles: Int = 0,
     val processedFiles: Int = 0,
     val resourceIdentifier: String? = null,
+    val currentFile: String? = null,
     val error: String? = null,
 ) {
     val progressPercent: Int

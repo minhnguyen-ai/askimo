@@ -870,8 +870,6 @@ private fun indexProgressIndicator(
         }
 
         IndexStatus.INDEXING -> {
-            val resourceIdentifier = indexProgress.resourceIdentifier
-                ?: stringResource("project.indexing.resource.unknown")
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -883,11 +881,13 @@ private fun indexProgressIndicator(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        text = stringResource("project.indexing.label", resourceIdentifier),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    indexProgress.resourceIdentifier?.let { resourceIdentifier ->
+                        Text(
+                            text = stringResource("project.indexing.label", resourceIdentifier),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     if (indexProgress.totalFiles > 0) {
                         Text(
                             text = "${indexProgress.processedFiles} / ${indexProgress.totalFiles}",
@@ -908,6 +908,14 @@ private fun indexProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
                         color = MaterialTheme.colorScheme.onSurface,
                         trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    )
+                }
+                indexProgress.currentFile?.let { file ->
+                    Text(
+                        text = file,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }

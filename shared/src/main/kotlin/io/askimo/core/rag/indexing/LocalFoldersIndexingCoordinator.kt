@@ -169,7 +169,7 @@ class LocalFoldersIndexingCoordinator(
 
             if (previousHashes[absolutePath] == hash) {
                 log.trace("Skipping unchanged file: {}", filePath.pathString)
-                updateProgressAtomic()
+                updateProgressAtomic(filePath)
                 return
             }
 
@@ -183,14 +183,14 @@ class LocalFoldersIndexingCoordinator(
             if (segments == null) {
                 log.warn("Skipping file with no extractable content: {}", filePath.pathString)
                 changedHashes[absolutePath] = hash
-                updateProgressAtomic()
+                updateProgressAtomic(filePath)
                 return
             }
 
             if (segments.isEmpty()) {
                 log.debug("No valid chunks created for file: {}", filePath.pathString)
                 changedHashes[absolutePath] = hash
-                updateProgressAtomic()
+                updateProgressAtomic(filePath)
                 return
             }
 
@@ -200,7 +200,7 @@ class LocalFoldersIndexingCoordinator(
 
             changedHashes[absolutePath] = hash
             log.debug("Indexed {} ({} chunks) in {}ms", filePath.pathString, segments.size, System.currentTimeMillis() - startTime)
-            updateProgressAtomic()
+            updateProgressAtomic(filePath)
         } catch (e: Exception) {
             log.error("Failed to index file {} after {}ms: {}", filePath.pathString, System.currentTimeMillis() - startTime, e.message, e)
         }

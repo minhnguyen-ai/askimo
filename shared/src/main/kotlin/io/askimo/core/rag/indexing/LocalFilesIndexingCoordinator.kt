@@ -130,7 +130,7 @@ class LocalFilesIndexingCoordinator(
             // Skip if file hasn't changed (incremental indexing)
             if (previousHashes[absolutePath] == hash) {
                 log.debug("Skipping unchanged file: {}", filePath.fileName)
-                updateProgressAtomic()
+                updateProgressAtomic(filePath)
                 return true
             }
 
@@ -139,13 +139,13 @@ class LocalFilesIndexingCoordinator(
             // Skip files that can't be read, have blank content, or produce no valid chunks
             if (segments == null) {
                 log.debug("Skipping file with no extractable content: {}", filePath.fileName)
-                updateProgressAtomic()
+                updateProgressAtomic(filePath)
                 return true
             }
 
             if (segments.isEmpty()) {
                 log.debug("No valid chunks created for file: {}", filePath.fileName)
-                updateProgressAtomic()
+                updateProgressAtomic(filePath)
                 return true
             }
 
@@ -159,7 +159,7 @@ class LocalFilesIndexingCoordinator(
             val elapsedTime = System.currentTimeMillis() - startTime
             log.debug("Indexed {} ({} chunks) in {}ms", filePath.fileName, segments.size, elapsedTime)
 
-            updateProgressAtomic()
+            updateProgressAtomic(filePath)
             return true
         } catch (e: Exception) {
             val elapsedTime = System.currentTimeMillis() - startTime
