@@ -359,6 +359,7 @@ class ProjectViewModel(
                         totalFiles = event.totalFiles,
                         processedFiles = event.filesIndexed,
                         resourceIdentifier = event.resourceId,
+                        currentFile = event.currentFile,
                     )
 
                     is IndexingCompletedEvent -> IndexProgress(

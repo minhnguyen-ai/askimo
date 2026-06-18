@@ -59,10 +59,11 @@ abstract class BaseLocalIndexingCoordinator<T : KnowledgeSourceConfig>(
     /**
      * Update progress atomically and emit an [IndexingInProgressEvent] when appropriate.
      */
-    protected suspend fun updateProgressAtomic() {
+    protected suspend fun updateProgressAtomic(currentFile: Path? = null) {
         val processedFiles = processedFilesCounter.incrementAndGet()
         val totalFiles = totalFilesCounter.get()
-        updateProgress { copy(processedFiles = processedFiles) }
+        val currentFilePath = currentFile?.toAbsolutePath()?.toString()
+        updateProgress { copy(processedFiles = processedFiles, currentFile = currentFilePath) }
 
         if (processedFiles % 10 == 0 || processedFiles == totalFiles) {
             EventBus.emit(
@@ -72,6 +73,7 @@ abstract class BaseLocalIndexingCoordinator<T : KnowledgeSourceConfig>(
                     filesIndexed = processedFiles,
                     totalFiles = totalFiles,
                     resourceId = stateManager.resourceId,
+                    currentFile = currentFilePath,
                 ),
             )
         }
