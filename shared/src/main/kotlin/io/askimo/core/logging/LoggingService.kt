@@ -62,8 +62,13 @@ object LoggingService {
      * @return Path to the log file, or null if not found
      */
     fun getLogFilePath(): Path? {
-        val fileAppender = rootLogger.iteratorForAppenders()
-            .asSequence()
+        val candidates = sequenceOf(
+            loggerContext.getLogger("io.askimo"),
+            rootLogger,
+        )
+
+        val fileAppender = candidates
+            .flatMap { logger -> logger.iteratorForAppenders().asSequence() }
             .filterIsInstance<FileAppender<ILoggingEvent>>()
             .firstOrNull()
 

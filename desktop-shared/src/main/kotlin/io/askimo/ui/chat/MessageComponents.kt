@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -46,6 +47,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,7 +95,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Desktop
 import java.io.File
+import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -119,6 +128,20 @@ fun messageList(
     var showRetryConfirmDialog by remember { mutableStateOf(false) }
     var retryMessageId by remember { mutableStateOf<String?>(null) }
 
+    // Current date — re-evaluated at midnight so "Today"/"Yesterday" labels stay accurate
+    // when the user keeps the app open across a day boundary.
+    val zone = ZoneId.systemDefault()
+    var currentDate by remember { mutableStateOf(LocalDate.now(zone)) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val now = ZonedDateTime.now(zone)
+            val nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(zone)
+            val millisUntilMidnight = Duration.between(now, nextMidnight).toMillis()
+            delay(millisUntilMidnight.milliseconds)
+            currentDate = LocalDate.now(zone)
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
@@ -142,12 +165,24 @@ fun messageList(
 
         // Group messages into active and outdated branches
         val messageGroups = groupMessagesWithOutdatedBranches(messages)
+        val locale = LocalizationManager.getCurrentLocale()
 
         var messageIndex = 0
         var isFirstMessage = true
+        var lastDayLabel: String? = null
         messageGroups.forEach { group ->
             when (group) {
                 is MessageGroup.ActiveMessage -> {
+                    // Day separator — show when the message date is different from the previous one
+                    val ts = group.message.timestamp
+                    if (ts != null) {
+                        val dayLabel = formatDayLabel(ts, locale, currentDate)
+                        if (dayLabel != lastDayLabel) {
+                            messageDaySeparator(label = dayLabel)
+                            lastDayLabel = dayLabel
+                        }
+                    }
+
                     val isActiveResult = searchQuery.isNotBlank() && messageIndex == currentSearchResultIndex
                     // A message is streaming when it's the last AI message still without a persisted ID
                     val isStreamingMessage = !group.message.isUser && group.message.id == null
@@ -511,6 +546,16 @@ private fun userMessageBubble(
                                             )
                                         }
                                     }
+                                }
+
+                                // Timestamp — visible on hover, right side of action bar
+                                message.timestamp?.let { ts ->
+                                    Spacer(modifier = Modifier.width(Spacing.small))
+                                    Text(
+                                        text = formatMessageTime(ts),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                    )
                                 }
                             }
                         }
@@ -877,6 +922,18 @@ private fun aiMessageBubble(
                     )
                 }
             }
+
+            if (isHovered && !isStreaming) {
+                message.timestamp?.let { ts ->
+                    Spacer(modifier = Modifier.width(Spacing.small))
+                    val timestampPrefix = if (total != null && total > 0) "· " else ""
+                    Text(
+                        text = "$timestampPrefix${formatMessageTime(ts)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    )
+                }
+            }
         }
 
         // Edited indicator
@@ -1085,5 +1142,53 @@ fun aiMessageEditDialog(
                 }
             }
         }
+    }
+}
+
+/** Formats an [Instant] as "HH:mm" in the system default time zone using the current locale. */
+private fun formatMessageTime(timestamp: Instant): String {
+    val formatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+        .withLocale(LocalizationManager.getCurrentLocale())
+        .withZone(ZoneId.systemDefault())
+    return formatter.format(timestamp)
+}
+
+/** Formats an [Instant] as a day label relative to today (Today / Yesterday / full date). */
+private fun formatDayLabel(timestamp: Instant, locale: Locale, currentDate: LocalDate): String {
+    val zone = ZoneId.systemDefault()
+    return when (val msgDate = timestamp.atZone(zone).toLocalDate()) {
+        currentDate -> LocalizationManager.getString("message.date.today")
+
+        currentDate.minusDays(1) -> LocalizationManager.getString("message.date.yesterday")
+
+        else -> DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+            .withLocale(locale)
+            .format(msgDate)
+    }
+}
+
+/** Day separator shown between messages from different calendar days. */
+@Composable
+private fun messageDaySeparator(label: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+    ) {
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+        )
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+        )
     }
 }
