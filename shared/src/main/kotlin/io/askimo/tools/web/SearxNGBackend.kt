@@ -76,4 +76,3 @@ class SearxNGBackend(private val endpoint: String) : SearchBackend {
         emptyList()
     }
 }
-

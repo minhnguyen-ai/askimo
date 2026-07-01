@@ -15,4 +15,3 @@ data class SearchResult(
     /** Short snippet / description extracted from the result. */
     val snippet: String,
 )
-

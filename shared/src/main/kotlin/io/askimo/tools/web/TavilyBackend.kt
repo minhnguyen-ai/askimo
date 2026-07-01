@@ -79,4 +79,3 @@ class TavilyBackend(private val apiKey: String) : SearchBackend {
         emptyList()
     }
 }
-

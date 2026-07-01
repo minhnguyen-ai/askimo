@@ -113,4 +113,3 @@ class DuckDuckGoBackend : SearchBackend {
         }
     }
 }
-

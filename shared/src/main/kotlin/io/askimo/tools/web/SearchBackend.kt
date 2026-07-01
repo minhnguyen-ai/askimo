@@ -27,4 +27,3 @@ interface SearchBackend {
      */
     fun search(query: String, maxResults: Int = 5): List<SearchResult>
 }
-

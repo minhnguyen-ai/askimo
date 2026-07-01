@@ -8,7 +8,6 @@ import io.askimo.core.config.WebSearchBackend
 import io.askimo.core.config.WebSearchConfig
 import io.askimo.core.logging.logger
 
-
 /**
  * Selects the active [SearchBackend] based on the current [WebSearchConfig].
  *
@@ -76,4 +75,3 @@ object WebSearchDispatcher {
         "OK · ${backend.name} · \"${results.first().title}\""
     }
 }
-

@@ -58,9 +58,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.time.Duration.Companion.milliseconds
 import java.awt.Desktop
 import java.net.URI
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun webSearchSettingsSection() {
@@ -293,7 +293,9 @@ private fun webSearchConfigCard() {
                                 },
                                 leadingIcon = if (b == backend) {
                                     { Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.onSurface) }
-                                } else null,
+                                } else {
+                                    null
+                                },
                                 modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
                             )
                         }
@@ -378,6 +380,7 @@ private fun webSearchConfigCard() {
                     Text(
                         text = when (status) {
                             is TestStatus.Success -> stringResource("settings.web_search.test.success")
+
                             is TestStatus.Failure -> stringResource("settings.web_search.test.fail")
                                 .replace("{0}", status.message)
                         },
@@ -480,4 +483,3 @@ private sealed interface TestStatus {
     data class Success(val message: String) : TestStatus
     data class Failure(val message: String) : TestStatus
 }
-

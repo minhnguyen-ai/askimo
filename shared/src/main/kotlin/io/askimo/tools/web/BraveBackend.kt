@@ -74,4 +74,3 @@ class BraveBackend(private val apiKey: String) : SearchBackend {
         emptyList()
     }
 }
-

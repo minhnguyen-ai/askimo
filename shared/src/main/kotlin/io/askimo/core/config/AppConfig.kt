@@ -1425,8 +1425,11 @@ object AppConfig {
 
     private fun updateWebSearchField(config: WebSearchConfig, field: String, value: Any): WebSearchConfig = when (field) {
         "backend" -> config.copy(
-            backend = if (value is WebSearchBackend) value
-            else runCatching { WebSearchBackend.valueOf(value.toString()) }.getOrElse { config.backend },
+            backend = if (value is WebSearchBackend) {
+                value
+            } else {
+                runCatching { WebSearchBackend.valueOf(value.toString()) }.getOrElse { config.backend }
+            },
         )
 
         "searxngEndpoint" -> config.copy(searxngEndpoint = value as String)
@@ -1440,8 +1443,10 @@ object AppConfig {
                 when (result.method) {
                     SecureKeyManager.StorageMethod.KEYCHAIN ->
                         log.debug("Brave Search API key stored securely in keychain")
+
                     SecureKeyManager.StorageMethod.ENCRYPTED ->
                         log.warn("Brave Search API key stored with encryption ({})", result.warningMessage)
+
                     SecureKeyManager.StorageMethod.INSECURE_FALLBACK ->
                         log.warn("⚠️ Brave Search API key storage: {}", result.warningMessage)
                 }
@@ -1458,8 +1463,10 @@ object AppConfig {
                 when (result.method) {
                     SecureKeyManager.StorageMethod.KEYCHAIN ->
                         log.debug("Tavily API key stored securely in keychain")
+
                     SecureKeyManager.StorageMethod.ENCRYPTED ->
                         log.warn("Tavily API key stored with encryption ({})", result.warningMessage)
+
                     SecureKeyManager.StorageMethod.INSECURE_FALLBACK ->
                         log.warn("⚠️ Tavily API key storage: {}", result.warningMessage)
                 }
