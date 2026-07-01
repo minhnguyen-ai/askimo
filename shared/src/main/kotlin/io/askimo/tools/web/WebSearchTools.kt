@@ -7,6 +7,8 @@ package io.askimo.tools.web
 import dev.langchain4j.agent.tool.P
 import dev.langchain4j.agent.tool.Tool
 import io.askimo.core.AppConstants.DOMAIN
+import io.askimo.core.config.AppConfig
+import io.askimo.core.logging.logger
 import io.askimo.tools.ToolResponseBuilder
 import org.jsoup.HttpStatusException
 import org.jsoup.Jsoup
@@ -24,6 +26,89 @@ object WebSearchTools {
     private const val PAGE_TIMEOUT_MS = 15_000
     private const val USER_AGENT =
         "Mozilla/5.0 (compatible; Askimo/1.0; +https://$DOMAIN)"
+
+    private val log = logger<WebSearchTools>()
+
+    /**
+     * Search the web for current information using the configured backend.
+     *
+     * @param query      The search query string.
+     * @param maxResults Maximum number of results to return (1–10, default 5).
+     * @return JSON with a list of results (title, url, snippet) and the backend used.
+     */
+    @Tool(
+        """Search the web for current information, recent news, or any topic that needs up-to-date data.
+
+Use this tool when the user asks about:
+- Recent events, news, or anything that may have changed recently
+- Current prices, statistics, or live data
+- Topics the AI might not have knowledge about
+- Finding specific websites, products, people, or organisations
+
+WORKFLOW:
+1. Call searchWeb() with a concise, targeted query.
+2. Review the returned titles and snippets.
+3. Call readWebPage() on the most relevant URL(s) to get full content if needed.
+4. Summarise the findings directly to the user.
+
+OUTPUT FORMAT:
+Present results as a numbered list with title, URL, and a brief note about each.
+Always cite the source URLs in your response.
+        """,
+        metadata = "{ \"className\": \"$CLASS_NAME\", \"methodName\": \"searchWeb\" }",
+    )
+    fun searchWeb(
+        @P("The search query string — be concise and specific") query: String,
+        @P("Maximum number of results to return, between 1 and 10. Default 5.") maxResults: Int = 5,
+    ): String = try {
+        require(query.isNotBlank()) { "Query cannot be blank" }
+
+        val config = AppConfig.webSearch
+        if (!config.enabled) {
+            return ToolResponseBuilder.failure(
+                error = "Web search is disabled. Enable it in Settings → Web Search.",
+            )
+        }
+
+        val safeMax = maxResults.coerceIn(1, 10)
+        val backend = WebSearchDispatcher.activeBackend(config)
+
+        log.debug("searchWeb: query='{}', backend='{}', maxResults={}", query, backend.name, safeMax)
+
+        val results = backend.search(query, safeMax)
+
+        if (results.isEmpty()) {
+            return ToolResponseBuilder.failure(
+                error = "No results found for: \"$query\". Try a different or broader query.",
+                metadata = mapOf("query" to query, "backend" to backend.name),
+            )
+        }
+
+        val summary = results.mapIndexed { i, r ->
+            "${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}"
+        }.joinToString("\n\n")
+
+        ToolResponseBuilder.successWithData(
+            output = summary,
+            data = mapOf(
+                "query" to query,
+                "backend" to backend.name,
+                "resultCount" to results.size,
+                "results" to results.map {
+                    mapOf("title" to it.title, "url" to it.url, "snippet" to it.snippet)
+                },
+            ),
+        )
+    } catch (e: Exception) {
+        log.error("searchWeb failed for query '{}': {}", query, e.message)
+        ToolResponseBuilder.failure(
+            error = "Web search failed: ${e.message}",
+            metadata = mapOf(
+                "query" to query,
+                "exception" to (e::class.simpleName ?: "Exception"),
+            ),
+        )
+    }
 
     /**
      * Fetch and extract the readable text content of a web page.

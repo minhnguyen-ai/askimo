@@ -113,6 +113,7 @@ import io.askimo.ui.common.ui.themedTooltip
 import io.askimo.ui.common.ui.util.FileDialogUtils
 import io.askimo.ui.util.Platform
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
@@ -124,6 +125,7 @@ import kotlin.collections.minus
 import kotlin.collections.plus
 import kotlin.math.ceil
 import kotlin.ranges.coerceIn
+import kotlin.time.Duration.Companion.milliseconds
 
 private val log = currentFileLogger()
 
@@ -313,6 +315,32 @@ fun chatInputField(
 
     val selectFileTitle = stringResource("chat.select.file")
     val scope = rememberCoroutineScope()
+
+    // ── Rotating placeholder hints ─────────────────────────────────────────────
+    // Cycles through discoverability hints (web search, URL, attach) only while
+    // the input is empty and the AI is not responding.
+    val placeholderHints = listOf(
+        placeholder,
+        stringResource("chat.input.placeholder.hint.search"),
+        placeholder,
+        stringResource("chat.input.placeholder.hint.attach", Platform.modifierKey),
+    )
+    var placeholderIndex by remember { mutableStateOf(0) }
+    val activePlaceholder = if (inputText.text.isEmpty() && !isLoading && !isThinking) {
+        placeholderHints[placeholderIndex]
+    } else {
+        placeholder
+    }
+    LaunchedEffect(inputText.text, isLoading, isThinking) {
+        if (inputText.text.isEmpty() && !isLoading && !isThinking) {
+            while (true) {
+                delay(5_000L.milliseconds)
+                placeholderIndex = (placeholderIndex + 1) % placeholderHints.size
+            }
+        } else {
+            placeholderIndex = 0
+        }
+    }
     val openFileDialog = {
         scope.launch {
             val paths = FileDialogUtils.pickFilePaths(selectFileTitle)
@@ -550,7 +578,7 @@ fun chatInputField(
                                     else -> false
                                 }
                             },
-                        placeholder = { Text(placeholder) },
+                        placeholder = { Text(activePlaceholder) },
                         maxLines = maxVisibleInputLines,
                         interactionSource = interactionSource,
                         // Border is provided by the outer container; keep OutlinedTextField's own border transparent.

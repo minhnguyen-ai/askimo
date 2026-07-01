@@ -12,9 +12,13 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ButtonColors
@@ -23,6 +27,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +43,9 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -45,10 +53,13 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import io.askimo.ui.common.i18n.stringResource
 
 object AppComponents {
 
@@ -234,6 +245,59 @@ object AppComponents {
             maxLines = maxLines,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
+            colors = outlinedTextFieldColors(),
+        )
+    }
+
+    /**
+     * A themed [OutlinedTextField] for secret values (API keys, passwords).
+     *
+     * Renders as a password field by default and provides an inline eye-icon toggle
+     * so the user can reveal the actual value they typed. Visibility state is local
+     * to each call site and resets whenever the composable leaves the composition.
+     *
+     * All other behaviour (colors, debounce, etc.) is left to the caller.
+     */
+    @Composable
+    fun appSecretTextField(
+        value: String,
+        onValueChange: (String) -> Unit,
+        modifier: Modifier = Modifier,
+        label: (@Composable () -> Unit)? = null,
+        placeholder: (@Composable () -> Unit)? = null,
+        supportingText: (@Composable () -> Unit)? = null,
+        isError: Boolean = false,
+        enabled: Boolean = true,
+        singleLine: Boolean = true,
+    ) {
+        var showSecret by remember { mutableStateOf(false) }
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = modifier,
+            label = label,
+            placeholder = placeholder,
+            supportingText = supportingText,
+            isError = isError,
+            enabled = enabled,
+            singleLine = singleLine,
+            visualTransformation = if (showSecret) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(
+                    onClick = { showSecret = !showSecret },
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
+                ) {
+                    Icon(
+                        imageVector = if (showSecret) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = stringResource(
+                            if (showSecret) "mcp.instance.password.hide" else "mcp.instance.password.show",
+                        ),
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
             colors = outlinedTextFieldColors(),
         )
     }

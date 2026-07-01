@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.Cable
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.NetworkCheck
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -69,6 +70,7 @@ enum class SettingsSection {
     AI_PROVIDER,
     APPEARANCE,
     NETWORK,
+    WEB_SEARCH,
     SHORTCUTS,
     MCP_SERVERS,
     SKILLS,
@@ -198,6 +200,12 @@ fun settingsViewWithSidebar(
                         onClick = { onSectionChange(SettingsSection.NETWORK) },
                     )
                     settingsSidebarItem(
+                        title = stringResource("settings.web_search"),
+                        icon = Icons.Outlined.Search,
+                        isSelected = selectedSection == SettingsSection.WEB_SEARCH,
+                        onClick = { onSectionChange(SettingsSection.WEB_SEARCH) },
+                    )
+                    settingsSidebarItem(
                         title = stringResource("settings.shortcuts"),
                         icon = Icons.Outlined.Keyboard,
                         isSelected = selectedSection == SettingsSection.SHORTCUTS,
@@ -279,6 +287,7 @@ fun settingsViewWithSidebar(
                         SettingsSection.AI_PROVIDER -> aiProviderSettingsSection(settingsViewModel)
                         SettingsSection.APPEARANCE -> appearanceSettingsSection()
                         SettingsSection.NETWORK -> networkSettingsSection()
+                        SettingsSection.WEB_SEARCH -> webSearchSettingsSection()
                         SettingsSection.SHORTCUTS -> shortcutsSettingsSection()
                         SettingsSection.MCP_SERVERS -> mcpServerTemplatesSection()
                         SettingsSection.SKILLS -> skillsSettingsSection()

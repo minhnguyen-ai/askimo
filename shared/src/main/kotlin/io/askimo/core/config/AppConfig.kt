@@ -349,6 +349,58 @@ data class AnalyticsConfig(
     val endpoint: String = "https://analytics.$DOMAIN/ingest",
 )
 
+/**
+ * Supported web search backends.
+ * Resolution order: user-configured backend → DuckDuckGo fallback (zero-config).
+ */
+enum class WebSearchBackend {
+    DUCKDUCKGO,
+    SEARXNG,
+    BRAVE,
+    TAVILY,
+}
+
+private const val WEB_SEARCH_KEY_BRAVE = "websearch.brave.key"
+private const val WEB_SEARCH_KEY_TAVILY = "websearch.tavily.key"
+private const val WEB_SEARCH_KEY_PLACEHOLDER = "***keychain***"
+
+/**
+ * Configuration for the built-in web search feature.
+ * Lives under the `web_search:` key in askimo.yml.
+ *
+ * API keys are stored securely via [SecureKeyManager] — the YAML holds a
+ * `***keychain***` placeholder, never the raw key value.
+ */
+data class WebSearchConfig(
+    val backend: WebSearchBackend = WebSearchBackend.DUCKDUCKGO,
+    val searxngEndpoint: String = "https://searx.be",
+    val enabled: Boolean = true,
+    /** Raw field — may be blank or `***keychain***`. Use [AppConfig.webSearch] resolved accessors. */
+    val braveApiKey: String = "",
+    /** Raw field — may be blank or `***keychain***`. Use [AppConfig.webSearch] resolved accessors. */
+    val tavilyApiKey: String = "",
+) {
+    companion object {
+        fun isKeyPlaceholder(value: String): Boolean = value == WEB_SEARCH_KEY_PLACEHOLDER
+        fun isActualKey(value: String): Boolean = value.isNotBlank() && !isKeyPlaceholder(value)
+        fun getSecureBraveKey(): String? = SecureKeyManager.retrieveSecretKey(WEB_SEARCH_KEY_BRAVE)
+        fun getSecureTavilyKey(): String? = SecureKeyManager.retrieveSecretKey(WEB_SEARCH_KEY_TAVILY)
+        fun setSecureBraveKey(key: String): SecureKeyManager.StorageResult = if (key.isEmpty()) {
+            SecureKeyManager.removeSecretKey(WEB_SEARCH_KEY_BRAVE)
+            SecureKeyManager.StorageResult(success = true, method = SecureKeyManager.StorageMethod.KEYCHAIN)
+        } else {
+            SecureKeyManager.storeSecuredKey(WEB_SEARCH_KEY_BRAVE, key)
+        }
+        fun setSecureTavilyKey(key: String): SecureKeyManager.StorageResult = if (key.isEmpty()) {
+            SecureKeyManager.removeSecretKey(WEB_SEARCH_KEY_TAVILY)
+            SecureKeyManager.StorageResult(success = true, method = SecureKeyManager.StorageMethod.KEYCHAIN)
+        } else {
+            SecureKeyManager.storeSecuredKey(WEB_SEARCH_KEY_TAVILY, key)
+        }
+        fun getKeyPlaceholder(): String = WEB_SEARCH_KEY_PLACEHOLDER
+    }
+}
+
 data class AppConfigData(
     val embedding: EmbeddingConfig = EmbeddingConfig(),
     val retry: RetryConfig = RetryConfig(),
@@ -360,6 +412,7 @@ data class AppConfigData(
     val models: ModelsConfig = ModelsConfig(),
     val proxy: ProxyConfig = ProxyConfig(),
     val analytics: AnalyticsConfig = AnalyticsConfig(),
+    val webSearch: WebSearchConfig = WebSearchConfig(),
     val context: AppContextParams = AppContextParams.noOp(),
     @field:JsonAlias("current_locale") val currentLocale: String? = null,
 )
@@ -374,6 +427,36 @@ object AppConfig {
     val models: ModelsConfig get() = delegate.models
     val context: AppContextParams get() = delegate.context
     val analytics: AnalyticsConfig get() = delegate.analytics
+
+    /**
+     * Raw web search configuration **without** keychain lookup.
+     * API key fields may be blank or `***keychain***`.
+     */
+    val rawWebSearch: WebSearchConfig get() = delegate.webSearch
+
+    /**
+     * Web search configuration with API keys resolved from secure storage.
+     * Safe to pass directly to backends.
+     */
+    val webSearch: WebSearchConfig
+        get() {
+            val config = delegate.webSearch
+            val braveKey = if (!WebSearchConfig.isActualKey(config.braveApiKey)) {
+                WebSearchConfig.getSecureBraveKey() ?: ""
+            } else {
+                config.braveApiKey
+            }
+            val tavilyKey = if (!WebSearchConfig.isActualKey(config.tavilyApiKey)) {
+                WebSearchConfig.getSecureTavilyKey() ?: ""
+            } else {
+                config.tavilyApiKey
+            }
+            return if (braveKey != config.braveApiKey || tavilyKey != config.tavilyApiKey) {
+                config.copy(braveApiKey = braveKey, tavilyApiKey = tavilyKey)
+            } else {
+                config
+            }
+        }
 
     /**
      * BCP-47 language tag of the user's selected UI locale (e.g. "ja-JP", "zh-CN").
@@ -578,6 +661,13 @@ object AppConfig {
         analytics:
           opted_in: ${'$'}{ASKIMO_ANALYTICS_OPTED_IN:false}
           endpoint: ${'$'}{ASKIMO_ANALYTICS_ENDPOINT:https://analytics.askimo.chat/ingest}
+
+        web_search:
+          backend:          ${'$'}{ASKIMO_WEB_SEARCH_BACKEND:DUCKDUCKGO}
+          searxng_endpoint: ${'$'}{ASKIMO_SEARXNG_ENDPOINT:https://searx.be}
+          brave_api_key:    ${'$'}{BRAVE_SEARCH_API_KEY:}
+          tavily_api_key:   ${'$'}{TAVILY_API_KEY:}
+          enabled:          ${'$'}{ASKIMO_WEB_SEARCH_ENABLED:true}
 
         context:
           current_provider: ${'$'}{ASKIMO_CONTEXT_CURRENT_PROVIDER:UNKNOWN}
@@ -1028,7 +1118,17 @@ object AppConfig {
                 password = env("ASKIMO_PROXY_PASSWORD", ""),
             )
 
-        return AppConfigData(emb, r, t, idx, dev, chat, rag, models, proxy)
+        val webSearch = WebSearchConfig(
+            backend = System.getenv("ASKIMO_WEB_SEARCH_BACKEND")
+                ?.let { runCatching { WebSearchBackend.valueOf(it) }.getOrNull() }
+                ?: WebSearchBackend.DUCKDUCKGO,
+            searxngEndpoint = env("ASKIMO_SEARXNG_ENDPOINT", "https://searx.be"),
+            braveApiKey = env("BRAVE_SEARCH_API_KEY", ""),
+            tavilyApiKey = env("TAVILY_API_KEY", ""),
+            enabled = System.getenv("ASKIMO_WEB_SEARCH_ENABLED")?.toBoolean() ?: true,
+        )
+
+        return AppConfigData(emb, r, t, idx, dev, chat, rag, models, proxy, webSearch = webSearch)
     }
 
     /**
@@ -1138,6 +1238,8 @@ object AppConfig {
                 "analytics" -> current.copy(analytics = updateAnalyticsField(current.analytics, field, value))
 
                 "indexing" -> current.copy(indexing = updateIndexingField(current.indexing, field, value))
+
+                "webSearch" -> current.copy(webSearch = updateWebSearchField(current.webSearch, field, value))
 
                 else -> {
                     log.displayError("Unknown config section: $section", null)
@@ -1319,5 +1421,57 @@ object AppConfig {
         "excludeFileNames" -> config.copy(excludeFileNames = value as Set<String>)
         "binaryExtensions" -> config.copy(binaryExtensions = value as Set<String>)
         else -> config
+    }
+
+    private fun updateWebSearchField(config: WebSearchConfig, field: String, value: Any): WebSearchConfig = when (field) {
+        "backend" -> config.copy(
+            backend = if (value is WebSearchBackend) value
+            else runCatching { WebSearchBackend.valueOf(value.toString()) }.getOrElse { config.backend },
+        )
+
+        "searxngEndpoint" -> config.copy(searxngEndpoint = value as String)
+
+        "enabled" -> config.copy(enabled = value as Boolean)
+
+        "braveApiKey" -> {
+            val key = value as String
+            if (WebSearchConfig.isActualKey(key)) {
+                val result = WebSearchConfig.setSecureBraveKey(key)
+                when (result.method) {
+                    SecureKeyManager.StorageMethod.KEYCHAIN ->
+                        log.debug("Brave Search API key stored securely in keychain")
+                    SecureKeyManager.StorageMethod.ENCRYPTED ->
+                        log.warn("Brave Search API key stored with encryption ({})", result.warningMessage)
+                    SecureKeyManager.StorageMethod.INSECURE_FALLBACK ->
+                        log.warn("⚠️ Brave Search API key storage: {}", result.warningMessage)
+                }
+                config.copy(braveApiKey = WebSearchConfig.getKeyPlaceholder())
+            } else {
+                config.copy(braveApiKey = key)
+            }
+        }
+
+        "tavilyApiKey" -> {
+            val key = value as String
+            if (WebSearchConfig.isActualKey(key)) {
+                val result = WebSearchConfig.setSecureTavilyKey(key)
+                when (result.method) {
+                    SecureKeyManager.StorageMethod.KEYCHAIN ->
+                        log.debug("Tavily API key stored securely in keychain")
+                    SecureKeyManager.StorageMethod.ENCRYPTED ->
+                        log.warn("Tavily API key stored with encryption ({})", result.warningMessage)
+                    SecureKeyManager.StorageMethod.INSECURE_FALLBACK ->
+                        log.warn("⚠️ Tavily API key storage: {}", result.warningMessage)
+                }
+                config.copy(tavilyApiKey = WebSearchConfig.getKeyPlaceholder())
+            } else {
+                config.copy(tavilyApiKey = key)
+            }
+        }
+
+        else -> {
+            log.displayError("Unknown webSearch field: $field", null)
+            config
+        }
     }
 }
