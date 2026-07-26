@@ -242,9 +242,18 @@ class AppContext private constructor(
         ?: NoopProviderSettings
 
     /**
+     * Returns the currently active [ProviderInstance].
+     * @throws ProviderNotConfiguredException if no instance is configured/selected.
+     */
+    fun requireActiveInstance(): ProviderInstance = params.activeInstance ?: throw ProviderNotConfiguredException()
+
+    /**
      * Gets (or lazily creates) settings for the first instance of [provider] type.
      * If no instance of that type exists, a new one is created with default settings and
      * added to [params.providerInstances].
+     *
+     * Prefer [requireActiveInstance] for active-instance operations. This method is intended
+     * only for callers that need settings for a *specific* provider type (e.g. CodexAgent, GeminiAgent).
      */
     fun getOrCreateProviderSettings(provider: ModelProvider): ProviderSettings {
         val existing = params.providerInstances.firstOrNull { it.providerType == provider }
@@ -255,30 +264,6 @@ class AppContext private constructor(
         )
         params.upsertInstance(newInstance)
         return newInstance.settings
-    }
-
-    /**
-     * Updates the settings of the first instance of [provider] type, or creates a new
-     * instance if none exists for that type.
-     *
-     * When there is an active instance of a different type, this does **not** change
-     * [params.currentInstanceId] — call [setCurrentInstance] explicitly if needed.
-     */
-    fun setProviderSetting(
-        provider: ModelProvider,
-        settings: ProviderSettings,
-    ) {
-        val existing = params.providerInstances.firstOrNull { it.providerType == provider }
-        if (existing != null) {
-            params.replaceInstance(existing.copy(settings = settings))
-        } else {
-            val newInstance = ProviderInstance.create(
-                displayName = provider.providerKey(),
-                providerType = provider,
-                settings = settings,
-            )
-            params.upsertInstance(newInstance)
-        }
     }
 
     /**
@@ -296,23 +281,20 @@ class AppContext private constructor(
     fun getModelFactory(provider: ModelProvider): ChatModelFactory<*> = ProviderRegistry.getFactory(provider) ?: throw ProviderNotConfiguredException()
 
     fun createChatModel(): ChatModel {
-        val provider = params.activeProviderType
-        val factory = getModelFactory(provider)
-        val settings = getOrCreateProviderSettings(provider)
+        val instance = requireActiveInstance()
+        val factory = getModelFactory(instance.providerType)
 
         @Suppress("UNCHECKED_CAST")
-        return (factory as ChatModelFactory<ProviderSettings>).createModel(settings)
+        return (factory as ChatModelFactory<ProviderSettings>).createModel(instance.settings)
     }
 
     fun getStatelessChatClient(): ChatClient {
-        val provider = params.activeProviderType
-        val factory = getModelFactory(provider)
-
-        val settings = getOrCreateProviderSettings(provider)
+        val instance = requireActiveInstance()
+        val factory = getModelFactory(instance.providerType)
 
         @Suppress("UNCHECKED_CAST")
         return (factory as ChatModelFactory<ProviderSettings>).create(
-            settings = settings,
+            settings = instance.settings,
             executionMode = ExecutionMode.STATELESS_MODE,
         )
     }
@@ -338,18 +320,16 @@ class AppContext private constructor(
             // Double-check after acquiring lock
             cachedUtilityClient?.let { return it }
 
-            val provider = params.activeProviderType
-            val factory = getModelFactory(provider)
-
-            val settings = getOrCreateProviderSettings(provider)
+            val instance = requireActiveInstance()
+            val factory = getModelFactory(instance.providerType)
 
             @Suppress("UNCHECKED_CAST")
             val client = (factory as ChatModelFactory<ProviderSettings>).createUtilityClient(
-                settings = settings,
+                settings = instance.settings,
             )
 
             cachedUtilityClient = client
-            log.debug("Created and cached utility client for provider {} with model {}", provider, params.model)
+            log.debug("Created and cached utility client for provider {} with model {}", instance.providerType, params.model)
             return client
         }
     }
@@ -361,18 +341,16 @@ class AppContext private constructor(
         synchronized(this) {
             cachedImageModel?.let { return it }
 
-            val provider = params.activeProviderType
-            val factory = getModelFactory(provider)
-
-            val settings = getOrCreateProviderSettings(provider)
+            val instance = requireActiveInstance()
+            val factory = getModelFactory(instance.providerType)
 
             @Suppress("UNCHECKED_CAST")
             val imageModel = (factory as ChatModelFactory<ProviderSettings>).createImageModel(
-                settings = settings,
+                settings = instance.settings,
             )
 
             cachedImageModel = imageModel
-            log.debug("Created and cached image model for provider {}", provider)
+            log.debug("Created and cached image model for provider {}", instance.providerType)
             return imageModel
         }
     }
@@ -391,23 +369,21 @@ class AppContext private constructor(
         synchronized(this) {
             cachedEmbeddingModel?.let { return it }
 
-            val provider = params.activeProviderType
-            val factory = getModelFactory(provider)
+            val instance = requireActiveInstance()
+            val factory = getModelFactory(instance.providerType)
 
             if (!factory.supportsEmbedding()) {
                 throw UnsupportedOperationException(
-                    "${provider.name} does not support embedding models. " +
+                    "${instance.providerType.name} does not support embedding models. " +
                         "Please switch to a provider that supports embeddings (OpenAI, Gemini, Ollama, etc.) to use RAG features.",
                 )
             }
 
-            val settings = getOrCreateProviderSettings(provider)
-
             @Suppress("UNCHECKED_CAST")
-            val embeddingModel = (factory as ChatModelFactory<ProviderSettings>).createEmbeddingModel(settings)
+            val embeddingModel = (factory as ChatModelFactory<ProviderSettings>).createEmbeddingModel(instance.settings)
 
             cachedEmbeddingModel = embeddingModel
-            log.debug("Created and cached embedding model for provider {}", provider)
+            log.debug("Created and cached embedding model for provider {}", instance.providerType)
             return embeddingModel
         }
     }
@@ -419,12 +395,11 @@ class AppContext private constructor(
      * @return Maximum number of tokens the embedding model can handle
      */
     fun getEmbeddingTokenLimit(): Int {
-        val provider = params.activeProviderType
-        val factory = ProviderRegistry.getFactory(provider) ?: return 2048
-        val settings = getOrCreateProviderSettings(provider)
+        val instance = params.activeInstance ?: return 2048
+        val factory = ProviderRegistry.getFactory(instance.providerType) ?: return 2048
 
         @Suppress("UNCHECKED_CAST")
-        return (factory as ChatModelFactory<ProviderSettings>).getEmbeddingTokenLimit(settings)
+        return (factory as ChatModelFactory<ProviderSettings>).getEmbeddingTokenLimit(instance.settings)
     }
 
     /**
@@ -448,14 +423,13 @@ class AppContext private constructor(
         retriever: ContentRetriever? = null,
         memory: ChatMemory,
     ): ChatClient {
-        val provider = params.activeProviderType
-        val factory = getModelFactory(provider)
-        val settings = getOrCreateProviderSettings(provider)
+        val instance = requireActiveInstance()
+        val factory = getModelFactory(instance.providerType)
 
         @Suppress("UNCHECKED_CAST")
         return (factory as ChatModelFactory<ProviderSettings>).create(
             sessionId = sessionId,
-            settings = settings,
+            settings = instance.settings,
             toolProvider = getToolProvider(),
             retriever = retriever,
             executionMode = executionMode,
