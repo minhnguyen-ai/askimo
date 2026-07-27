@@ -5,9 +5,12 @@
 package io.askimo.core.providers
 
 import dev.langchain4j.data.message.UserMessage
+import dev.langchain4j.exception.InternalServerException
 import dev.langchain4j.model.googleai.GeneratedImageHelper
 import io.askimo.core.context.AppContext
 import io.askimo.core.context.ChatContext
+import io.askimo.core.exception.ExceptionHandler
+import io.askimo.core.exception.LocalServerException
 import io.askimo.core.exception.ToolExecutionException
 import io.askimo.core.intent.DetectAiResponseIntentCommand
 import io.askimo.core.intent.FollowUpSuggestion
@@ -193,6 +196,26 @@ fun ChatClient.sendStreamingMessageWithCallback(
                             if (e is ToolExecutionException) {
                                 sb.append(e.errorDetails)
                                 onToken(e.errorDetails ?: "Tool execution failed")
+                                done.countDown()
+                                return@onError
+                            }
+
+                            // Check for local AI server internal errors (Ollama, Docker AI, LocalAI, LMStudio, etc.)
+                            // These are non-retryable: the server crashed, the model is broken, or OOM.
+                            val isLocalServerError = e is InternalServerException ||
+                                errorMessage.contains("process has terminated", ignoreCase = true) ||
+                                errorMessage.contains("llama-server", ignoreCase = true) ||
+                                errorMessage.contains("llama_model_loader", ignoreCase = true) ||
+                                errorMessage.contains("error loading model", ignoreCase = true) ||
+                                (errorMessage.contains("api_error", ignoreCase = true) && errorMessage.contains("exit status", ignoreCase = true))
+
+                            if (isLocalServerError) {
+                                isConfigurationError = true
+                                val localServerErrorMsg = ExceptionHandler.handle(
+                                    LocalServerException(details = errorMessage, cause = e),
+                                )
+                                sb.append(localServerErrorMsg)
+                                onToken(localServerErrorMsg)
                                 done.countDown()
                                 return@onError
                             }

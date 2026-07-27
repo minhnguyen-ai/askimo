@@ -4,6 +4,7 @@
  */
 package io.askimo.core.exception
 
+import dev.langchain4j.exception.InternalServerException
 import dev.langchain4j.exception.ModelNotFoundException
 import io.askimo.core.logging.logger
 import java.net.ConnectException
@@ -98,6 +99,12 @@ object ExceptionMapper {
             cause = exception,
         )
 
+        // Local AI server internal error (Ollama, Docker AI, LocalAI, LMStudio, etc.)
+        is InternalServerException -> LocalServerException(
+            details = exception.message ?: "",
+            cause = exception,
+        )
+
         // Add more type-based matches as needed
         else -> null
     }
@@ -113,6 +120,15 @@ object ExceptionMapper {
         val combinedMessage = messages.joinToString(" | ")
 
         return when {
+            // Local AI server internal error – process crashed, model failed to load, etc.
+            // Covers Ollama, Docker AI, LocalAI, LMStudio, and any OpenAI-compatible local backend.
+            combinedMessage.contains("process has terminated", ignoreCase = true) ||
+                combinedMessage.contains("llama-server", ignoreCase = true) ||
+                combinedMessage.contains("llama_model_loader", ignoreCase = true) ||
+                combinedMessage.contains("error loading model", ignoreCase = true) ||
+                (combinedMessage.contains("api_error", ignoreCase = true) && combinedMessage.contains("exit status", ignoreCase = true)) ->
+                LocalServerException(details = combinedMessage.take(300), cause = rootCause)
+
             // Network connectivity issues
             combinedMessage.contains("Connection refused", ignoreCase = true) ||
                 combinedMessage.contains("Network is unreachable", ignoreCase = true) ||
