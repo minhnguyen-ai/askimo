@@ -140,6 +140,22 @@ class ContextLengthException(
 }
 
 /**
+ * Local AI server crashed, failed to load the model, or returned an unrecoverable internal error.
+ * Covers Ollama, Docker AI, LocalAI, LMStudio, and any other OpenAI-compatible local backend.
+ *
+ * This is non-retryable: the user must fix the underlying server/model issue first.
+ *
+ * @param details A short excerpt from the server error message for diagnostic display.
+ */
+class LocalServerException(
+    val details: String = "",
+    cause: Throwable? = null,
+) : UserException("Local AI server error", cause) {
+    override fun getMessageKey() = "error.local_server"
+    override fun getMessageArgs() = mapOf("details" to details)
+}
+
+/**
  * No AI provider has been configured yet (currentProvider == UNKNOWN).
  */
 class ProviderNotConfiguredException :
