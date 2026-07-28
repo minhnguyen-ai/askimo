@@ -83,11 +83,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.askimo.core.chat.domain.ChatDirective
 import io.askimo.core.chat.domain.Project
 import io.askimo.core.chat.dto.ChatMessageDTO
 import io.askimo.core.chat.dto.FileAttachmentDTO
-import io.askimo.core.chat.service.ChatDirectiveService
 import io.askimo.core.config.AppConfig
 import io.askimo.core.db.DatabaseManager
 import io.askimo.core.event.EventBus
@@ -276,13 +274,6 @@ fun chatView(
         onStateChange(inputText, attachments, editingMessage)
     }
 
-    val directiveService = remember {
-        GlobalContext.get().get<ChatDirectiveService>()
-    }
-
-    // Load all directives
-    var availableDirectives by remember { mutableStateOf<List<ChatDirective>>(emptyList()) }
-
     // Session memory dialog state
     var showSessionMemoryDialog by remember { mutableStateOf(false) }
     var sessionMemorySessionId by remember { mutableStateOf<String?>(null) }
@@ -387,10 +378,6 @@ fun chatView(
         if (currentProjectId != null && ragIndexingStatus == "completed") {
             projectIndexStateManager.refreshActiveProject()
         }
-    }
-
-    LaunchedEffect(Unit) {
-        availableDirectives = directiveService.listAllDirectives()
     }
 
     // Focus requester for search field
@@ -1197,30 +1184,9 @@ fun chatView(
                         sessionId = sessionId,
                         onEnabledServerIdsChange = { currentEnabledServerIds = it },
                         onNavigateToMcpSettings = onNavigateToMcpSettings,
-                        // Directives chip
-                        availableDirectives = availableDirectives,
+                        // Directives chip — selection controlled here; CRUD managed inside chatInputField
                         selectedDirective = selectedDirective,
                         onToggleDirective = { id -> actions.setDirective(id) },
-                        onDirectiveCreated = { name, content, applyToCurrent ->
-                            val newDirective = directiveService.createDirective(name, content)
-                            availableDirectives = directiveService.listAllDirectives()
-                            if (applyToCurrent) actions.setDirective(newDirective.id)
-                        },
-                        onDirectiveUpdated = { id, newName, newContent ->
-                            directiveService.updateDirective(id, newName, newContent)
-                            availableDirectives = directiveService.listAllDirectives()
-                        },
-                        onDirectiveDeleted = { id ->
-                            directiveService.deleteDirective(id)
-                            if (selectedDirective == id) actions.setDirective(null)
-                            availableDirectives = directiveService.listAllDirectives()
-                        },
-                        onDirectiveExported = { directiveService.exportToJson() },
-                        onDirectiveImported = { json ->
-                            val result = directiveService.importFromJson(json)
-                            availableDirectives = directiveService.listAllDirectives()
-                            result
-                        },
                         modifier = Modifier
                             .widthIn(max = ThemePreferences.CONTENT_MAX_WIDTH)
                             .fillMaxWidth()
