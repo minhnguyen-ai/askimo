@@ -173,6 +173,7 @@ private fun resizeHandle(
 @Composable
 fun eventLogPanel(
     events: SnapshotStateList<Event>,
+    eventTrimmed: Boolean,
     onDetach: () -> Unit,
     onClose: () -> Unit,
     onClearEvents: () -> Unit,
@@ -187,6 +188,7 @@ fun eventLogPanel(
     val content = @Composable { contentModifier: Modifier ->
         eventLogPanelContent(
             events = events,
+            eventTrimmed = eventTrimmed,
             onDetach = onDetach,
             onClose = onClose,
             onClearEvents = onClearEvents,
@@ -253,6 +255,7 @@ fun eventLogPanel(
 @Composable
 private fun eventLogPanelContent(
     events: SnapshotStateList<Event>,
+    eventTrimmed: Boolean,
     onDetach: () -> Unit,
     onClose: () -> Unit,
     onClearEvents: () -> Unit,
@@ -386,7 +389,7 @@ private fun eventLogPanelContent(
         // Event list
         if (events.isEmpty()) {
             Box(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -397,7 +400,7 @@ private fun eventLogPanelContent(
         } else {
             val listState = rememberLazyListState()
 
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 LazyColumn(
                     state = listState,
                     verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
@@ -413,6 +416,21 @@ private fun eventLogPanelContent(
                         .align(Alignment.CenterEnd)
                         .fillMaxHeight(),
                     style = AppComponents.scrollbarStyle(),
+                )
+            }
+        }
+
+        if (eventTrimmed) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource("eventlog.footer.warning", events.size),
+                    style = AppTextStyles.caption,
                 )
             }
         }

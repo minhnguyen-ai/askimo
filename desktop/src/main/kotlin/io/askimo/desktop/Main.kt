@@ -370,7 +370,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
     // Store chat state per session for restoration when switching
     val sessionChatStates = remember { mutableStateMapOf<String, ChatViewState>() }
     val eventLogEvents = remember { mutableStateListOf<Event>() }
-
+    var eventTrimmed by remember { mutableStateOf<Boolean>(false) }
     // Load user profile on startup and detect first run
     LaunchedEffect(Unit) {
         val profileRepo = DatabaseManager.getInstance().getUserProfileRepository()
@@ -398,6 +398,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
             eventLogEvents.add(0, event)
             if (eventLogEvents.size > 100) {
                 eventLogEvents.removeAt(100)
+                eventTrimmed = true
             }
         }
     }
@@ -849,6 +850,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
                                     if (showEventLogPanel && eventLogDockPosition == EventLogDockPosition.LEFT) {
                                         eventLogPanel(
                                             events = eventLogEvents,
+                                            eventTrimmed = eventTrimmed,
                                             onDetach = {
                                                 showEventLogPanel = false
                                                 showEventLogWindow = true
@@ -858,6 +860,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
                                             },
                                             onClearEvents = {
                                                 eventLogEvents.clear()
+                                                eventTrimmed = false
                                             },
                                             onDockPositionChange = { newPosition ->
                                                 eventLogDockPosition = newPosition
@@ -1204,6 +1207,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
                                     if (showEventLogPanel && eventLogDockPosition == EventLogDockPosition.RIGHT) {
                                         eventLogPanel(
                                             events = eventLogEvents,
+                                            eventTrimmed = eventTrimmed,
                                             onDetach = {
                                                 showEventLogPanel = false
                                                 showEventLogWindow = true
@@ -1213,6 +1217,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
                                             },
                                             onClearEvents = {
                                                 eventLogEvents.clear()
+                                                eventTrimmed = false
                                             },
                                             onDockPositionChange = { newPosition ->
                                                 eventLogDockPosition = newPosition
@@ -1243,6 +1248,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
                             if (showEventLogPanel && eventLogDockPosition == EventLogDockPosition.BOTTOM) {
                                 eventLogPanel(
                                     events = eventLogEvents,
+                                    eventTrimmed = eventTrimmed,
                                     onDetach = {
                                         showEventLogPanel = false
                                         showEventLogWindow = true
@@ -1252,6 +1258,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
                                     },
                                     onClearEvents = {
                                         eventLogEvents.clear()
+                                        eventTrimmed = false
                                     },
                                     onDockPositionChange = { newPosition ->
                                         eventLogDockPosition = newPosition
@@ -1971,6 +1978,7 @@ fun app(frameWindowScope: FrameWindowScope? = null, windowState: WindowState? = 
                     if (showEventLogWindow) {
                         eventLogWindow(
                             events = eventLogEvents,
+                            eventTrimmed = eventTrimmed,
                             onCloseRequest = { showEventLogWindow = false },
                             onReattach = {
                                 showEventLogWindow = false

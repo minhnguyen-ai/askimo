@@ -34,6 +34,7 @@ import io.askimo.core.event.Event
 import io.askimo.core.i18n.LocalizationManager
 import io.askimo.core.util.TimeUtil
 import io.askimo.ui.common.components.linkButton
+import io.askimo.ui.common.i18n.stringResource
 import io.askimo.ui.common.theme.AppComponents
 import io.askimo.ui.common.theme.AppTextStyles
 import io.askimo.ui.common.theme.Spacing
@@ -54,6 +55,7 @@ import io.askimo.ui.common.theme.Spacing
 @Composable
 fun eventLogWindow(
     events: SnapshotStateList<Event>,
+    eventTrimmed: Boolean,
     onCloseRequest: () -> Unit,
     onReattach: () -> Unit,
 ) {
@@ -110,7 +112,7 @@ fun eventLogWindow(
             } else {
                 val listState = rememberLazyListState()
 
-                Box(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.weight(1f).fillMaxSize()) {
                     LazyColumn(
                         state = listState,
                         verticalArrangement = Arrangement.spacedBy(Spacing.small),
@@ -126,6 +128,21 @@ fun eventLogWindow(
                             .align(Alignment.CenterEnd)
                             .fillMaxHeight(),
                         style = AppComponents.scrollbarStyle(),
+                    )
+                }
+            }
+
+            if (eventTrimmed) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource("eventlog.footer.warning", events.size),
+                        style = AppTextStyles.caption,
                     )
                 }
             }
