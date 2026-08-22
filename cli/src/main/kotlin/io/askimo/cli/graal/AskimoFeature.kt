@@ -26,6 +26,7 @@ import io.askimo.core.providers.anthropic.AnthropicSettings
 import io.askimo.core.providers.gemini.GeminiSettings
 import io.askimo.core.providers.openai.OpenAiSettings
 import io.askimo.core.providers.openaicompatible.OpenAiCompatibleSettings
+import io.askimo.core.providers.xai.XAiSettings
 import io.askimo.tools.fs.LocalFsTools
 import io.askimo.tools.git.GitTools
 import org.graalvm.nativeimage.hosted.Feature
@@ -61,10 +62,10 @@ class AskimoFeature : Feature {
             HasApiKey::class.java,
             HasBaseUrl::class.java,
             SettingField::class.java,
-            OpenAiSettings::class.java,
             AnthropicSettings::class.java,
             GeminiSettings::class.java,
             OpenAiSettings::class.java,
+            XAiSettings::class.java,
             OpenAiCompatibleSettings::class.java,
             NoopProviderSettings::class.java,
         )
