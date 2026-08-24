@@ -25,6 +25,7 @@ import io.askimo.core.event.user.IndexingCompletedEvent
 import io.askimo.core.event.user.IndexingFailedEvent
 import io.askimo.core.event.user.IndexingQueuedEvent
 import io.askimo.core.event.user.IndexingStartedEvent
+import io.askimo.core.exception.EmbeddingModelNotConfiguredException
 import io.askimo.core.exception.ExceptionHandler
 import io.askimo.core.i18n.LocalizationManager
 import io.askimo.core.logging.logger
@@ -294,6 +295,17 @@ class ProjectIndexer(
     /**
      * Common indexing logic used by both initial indexing and re-indexing.
      *
+     * @param embeddingModelId The provider-model identity snapshot captured by the caller at
+     *   the *same time* as [embeddingModel] (e.g. right after `appContext.getEmbeddingModel()`).
+     *   Deliberately passed in rather than re-read from [appContext] here: this method can run
+     *   long after that snapshot was taken (tasks wait in the single-project FIFO queue, and
+     *   the mismatch checks in `handleIndexingRequest` perform real embedding API calls before
+     *   reaching this point). Re-querying `appContext.activeEmbeddingModelIdentity()` at save
+     *   time would read whatever provider happens to be active *now* — which can differ from
+     *   the provider that actually produced [embeddingModel] if the user switches providers
+     *   mid-flight, or if cached-model invalidation lags the switch. That would persist old
+     *   vectors tagged with the new model's identity, causing future mismatch checks to see a
+     *   false match and skip rebuilding — silently serving stale, incompatible vectors forever.
      * @param appendCoordinators When true, new coordinators are merged with any existing ones
      *   (used when adding a new knowledge source to an already-indexed project).
      *   When false (default), the coordinator list is replaced entirely.
@@ -303,6 +315,7 @@ class ProjectIndexer(
         knowledgeSources: List<KnowledgeSourceConfig>,
         embeddingStore: EmbeddingStore<TextSegment>,
         embeddingModel: EmbeddingModel,
+        embeddingModelId: String?,
         watchForChanges: Boolean,
         appendCoordinators: Boolean = false,
     ) {
@@ -311,7 +324,7 @@ class ProjectIndexer(
         val indexingStartMs = System.currentTimeMillis()
 
         val dimension = RagUtils.getDimensionForModel(embeddingModel)
-        RagUtils.saveEmbeddingDimension(projectId, dimension)
+        RagUtils.saveEmbeddingMetadata(projectId, dimension, embeddingModelId)
 
         // Register the store so removeCoordinator can close it and free in-memory vectors
         embeddingStores[projectId] = embeddingStore
@@ -482,12 +495,6 @@ class ProjectIndexer(
         try {
             val projectId = event.projectId
 
-            // Always stop and clean up regardless of current status — re-index takes priority.
-            // Note: no job cancellation needed here; the channel consumer handles that before
-            // dispatching this handler.
-            removeCoordinator(projectId, false)
-            log.info("Cleaned up existing index data for project $projectId, starting re-index")
-
             val project = try {
                 projectRepository.getProject(projectId)
             } catch (e: Exception) {
@@ -498,6 +505,10 @@ class ProjectIndexer(
             if (project != null) {
                 val embeddingModel = appContext.getEmbeddingModel()
                 checkEmbeddingModelAvailable(embeddingModel)
+                val embeddingModelId = appContext.activeEmbeddingModelIdentity()
+
+                removeCoordinator(projectId, false)
+                log.info("Cleaned up existing index data for project $projectId, starting re-index")
 
                 val dimension = RagUtils.getDimensionForModel(embeddingModel)
                 val embeddingStore = RagUtils.getEmbeddingStoreWithDimension(projectId, dimension)
@@ -507,12 +518,20 @@ class ProjectIndexer(
                     knowledgeSources = project.knowledgeSources,
                     embeddingStore = embeddingStore,
                     embeddingModel = embeddingModel,
+                    embeddingModelId = embeddingModelId,
                     watchForChanges = true,
                 )
             }
         } catch (e: CancellationException) {
             // Job was cancelled (e.g. project deleted while re-indexing) — not an error.
             log.info("Re-index job cancelled for project ${event.projectId}: ${e.message}")
+        } catch (e: EmbeddingModelNotConfiguredException) {
+            // No embedding model configured — this is a normal, recoverable state surfaced
+            // via the "configure embedding model" banner in ProjectView/ProjectsView, not an
+            // unexpected error. Skip quietly: no AppErrorEvent (global dialog) and no
+            // IndexingFailedEvent (which would additionally show a red FAILED indicator in
+            // the knowledge sources panel, duplicating the banner's messaging).
+            log.debug("Skipping re-index for project ${event.projectId}: ${e.message}")
         } catch (e: Exception) {
             log.error("Failed to handle re-index request for project ${event.projectId}", e)
             EventBus.emit(
@@ -582,19 +601,35 @@ class ProjectIndexer(
                 model
             }
 
-            // ── Dimension mismatch check ──────────────────────────────────────
-            // If the project was previously indexed with a different embedding model
-            // (detected via stored dimension in index.meta), wipe all stale index data
-            // and let indexing proceed from scratch with the current model.
+            // ── Dimension / model-identity mismatch check ──────────────────────
+            // If the project was previously indexed with a different embedding model,
+            // wipe all stale index data and let indexing proceed from scratch with the
+            // current model. Two independent signals are checked:
+            //  - dimension: catches any model whose output vector size differs
+            //  - model identity: catches a *different* model that happens to share the
+            //    same dimension (e.g. two 1536-dim OpenAI/other-provider models), which a
+            //    dimension-only check would miss and silently reuse semantically
+            //    incompatible stale vectors for retrieval.
+            // modelId comparison only applies when both stored and current values are
+            // known — older indexes created before this field existed have no stored
+            // modelId and fall back to the dimension check alone.
             val currentDimension = RagUtils.getDimensionForModel(embeddingModel)
+            val currentModelId = appContext.activeEmbeddingModelIdentity()
             val storedDimension = RagUtils.getStoredEmbeddingDimension(projectId)
-            if (storedDimension != null && storedDimension != currentDimension) {
+            val storedModelId = RagUtils.getStoredEmbeddingModelId(projectId)
+
+            val dimensionMismatch = storedDimension != null && storedDimension != currentDimension
+            val modelIdMismatch = storedModelId != null && currentModelId != null && storedModelId != currentModelId
+
+            if (storedDimension != null && (dimensionMismatch || modelIdMismatch)) {
                 log.warn(
-                    "Embedding dimension mismatch for project {} (stored={}, current={}). " +
-                        "Clearing stale index data and re-indexing with the new model.",
+                    "Embedding model changed for project {} (dimension stored={}, current={}; " +
+                        "model stored={}, current={}). Clearing stale index data and re-indexing.",
                     projectId,
                     storedDimension,
                     currentDimension,
+                    storedModelId,
+                    currentModelId,
                 )
                 // Close any existing coordinators and wipe everything (Lucene, JVector, DB)
                 coordinators.remove(projectId)?.forEach {
@@ -645,6 +680,7 @@ class ProjectIndexer(
                         knowledgeSources = newSources,
                         embeddingStore = embeddingStore,
                         embeddingModel = embeddingModel,
+                        embeddingModelId = currentModelId,
                         watchForChanges = event.watchForChanges,
                         appendCoordinators = true,
                     )
@@ -655,6 +691,7 @@ class ProjectIndexer(
                         knowledgeSources = project.knowledgeSources,
                         embeddingStore = embeddingStore,
                         embeddingModel = embeddingModel,
+                        embeddingModelId = currentModelId,
                         watchForChanges = event.watchForChanges,
                     )
                 }
@@ -662,6 +699,13 @@ class ProjectIndexer(
         } catch (e: CancellationException) {
             // Job was cancelled (e.g. project deleted while indexing) — not an error.
             log.info("Indexing job cancelled for project ${event.projectId}: ${e.message}")
+        } catch (e: EmbeddingModelNotConfiguredException) {
+            // No embedding model configured — this is a normal, recoverable state surfaced
+            // via the "configure embedding model" banner in ProjectView/ProjectsView, not an
+            // unexpected error. Skip quietly: no AppErrorEvent (global dialog) and no
+            // IndexingFailedEvent (which would additionally show a red FAILED indicator in
+            // the knowledge sources panel, duplicating the banner's messaging).
+            log.debug("Skipping indexing for project ${event.projectId}: ${e.message}")
         } catch (e: Exception) {
             log.error("Failed to handle indexing request for project ${event.projectId}", e)
 
