@@ -13,6 +13,7 @@ import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.LineUnavailableException
 import javax.sound.sampled.TargetDataLine
+import kotlin.math.sqrt
 
 /**
  * Thrown when the microphone cannot be opened — typically because the OS denied audio
@@ -62,9 +63,14 @@ class AudioRecorder {
     /**
      * Opens the microphone and begins capturing on a background thread.
      *
+     * @param onLevel Optional callback invoked on the capture thread after each chunk is read,
+     *   with the chunk's normalized RMS amplitude in `0f..1f` (0 = silence, 1 = full-scale).
+     *   Intended to drive a live "recording" UI indicator (e.g. a waveform/level meter) — this
+     *   is a lightweight, high-frequency signal, not audio data, so callers can safely mutate
+     *   Compose state directly from it (see the 🎤 button in `ChatInputField.kt`).
      * @throws MicrophoneUnavailableException if no input device is available or the OS denies access.
      */
-    fun start() {
+    fun start(onLevel: ((Float) -> Unit)? = null) {
         check(!isRecording) { "AudioRecorder is already recording" }
         buffer.reset()
 
@@ -96,6 +102,9 @@ class AudioRecorder {
                     val bytesRead = targetLine.read(readBuffer, 0, readBuffer.size)
                     if (bytesRead > 0) {
                         synchronized(buffer) { buffer.write(readBuffer, 0, bytesRead) }
+                        if (onLevel != null) {
+                            onLevel(computeRmsLevel(readBuffer, bytesRead))
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -144,5 +153,24 @@ class AudioRecorder {
             }
         }
         return output.toByteArray()
+    }
+
+    /**
+     * Computes the normalized RMS (root-mean-square) amplitude of a chunk of 16-bit
+     * little-endian PCM samples, as a value in `0f..1f`.
+     */
+    private fun computeRmsLevel(buf: ByteArray, length: Int): Float {
+        var sumSquares = 0.0
+        var sampleCount = 0
+        var i = 0
+        while (i + 1 < length) {
+            val sample = ((buf[i + 1].toInt() shl 8) or (buf[i].toInt() and 0xFF)).toShort()
+            sumSquares += sample * sample.toDouble()
+            sampleCount++
+            i += 2
+        }
+        if (sampleCount == 0) return 0f
+        val rms = sqrt(sumSquares / sampleCount)
+        return (rms / Short.MAX_VALUE).toFloat().coerceIn(0f, 1f)
     }
 }

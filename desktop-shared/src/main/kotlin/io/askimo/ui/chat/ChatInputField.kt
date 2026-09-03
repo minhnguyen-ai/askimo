@@ -4,6 +4,11 @@
  */
 package io.askimo.ui.chat
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,6 +30,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -65,6 +71,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -74,6 +81,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -168,6 +177,32 @@ private enum class VoiceRecordingState {
     IDLE,
     RECORDING,
     TRANSCRIBING,
+}
+
+/**
+ * Live bar-style waveform driven by [samples] (each in `0f..1f`), most-recent last.
+ * Used next to the 🎤 button while [VoiceRecordingState.RECORDING] to give immediate visual
+ * feedback that the microphone is actually picking up sound, not just that recording started.
+ */
+@Composable
+private fun voiceWaveform(
+    samples: List<Float>,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        if (samples.isEmpty()) return@Canvas
+        val barWidth = size.width / samples.size
+        val gap = barWidth * 0.3f
+        samples.forEachIndexed { index, level ->
+            val barHeight = (level * size.height).coerceIn(2f, size.height)
+            drawRect(
+                color = color,
+                topLeft = Offset(index * barWidth, (size.height - barHeight) / 2f),
+                size = Size((barWidth - gap).coerceAtLeast(1f), barHeight),
+            )
+        }
+    }
 }
 
 /**
@@ -361,12 +396,18 @@ fun chatInputField(
     val audioRecorder = remember { AudioRecorder() }
     val voiceErrorTitle = stringResource("chat.voice.error.title")
 
+    // Rolling window of recent mic amplitude samples (0f..1f), fed from AudioRecorder's
+    // capture-thread level callback — drives the live waveform shown while RECORDING.
+    val voiceWaveformSamples = remember { mutableStateListOf<Float>() }
+    val maxWaveformSamples = 40
+
     // Cancel any in-progress recording if this composable leaves the composition
     // (e.g. user navigates away mid-recording) to avoid leaking an open mic line.
     DisposableEffect(Unit) {
         onDispose {
             if (voiceRecordingState == VoiceRecordingState.RECORDING) {
                 audioRecorder.cancel()
+                voiceWaveformSamples.clear()
             }
         }
     }
@@ -477,7 +518,16 @@ fun chatInputField(
         when (voiceRecordingState) {
             VoiceRecordingState.IDLE -> {
                 try {
-                    audioRecorder.start()
+                    voiceWaveformSamples.clear()
+                    audioRecorder.start { level ->
+                        // Invoked from the capture thread — mutating Compose state directly is
+                        // safe/expected here (see ChatViewModel.editMessage for the same pattern),
+                        // and this is a high-frequency, low-cost UI signal, not audio data.
+                        voiceWaveformSamples.add(level)
+                        if (voiceWaveformSamples.size > maxWaveformSamples) {
+                            voiceWaveformSamples.removeAt(0)
+                        }
+                    }
                     voiceRecordingState = VoiceRecordingState.RECORDING
                 } catch (e: MicrophoneUnavailableException) {
                     EventBus.post(AppErrorEvent(title = voiceErrorTitle, message = e.message ?: "Microphone unavailable"))
@@ -486,6 +536,7 @@ fun chatInputField(
 
             VoiceRecordingState.RECORDING -> {
                 voiceRecordingState = VoiceRecordingState.TRANSCRIBING
+                voiceWaveformSamples.clear()
                 scope.launch {
                     try {
                         val wavBytes = withContext(Dispatchers.IO) { audioRecorder.stop() }
@@ -1066,6 +1117,44 @@ fun chatInputField(
                                 VoiceRecordingState.RECORDING -> stringResource("chat.voice.recording.stop")
                                 VoiceRecordingState.TRANSCRIBING -> stringResource("chat.voice.transcribing")
                             }
+
+                            // Persistent (non-hover) "recording" status — a pulsing dot + live
+                            // waveform reflecting mic input level, so it's obvious at a glance
+                            // (not just via the tooltip/icon tint) that audio is being captured.
+                            if (voiceRecordingState == VoiceRecordingState.RECORDING) {
+                                val infiniteTransition = rememberInfiniteTransition(label = "voiceRecordingPulse")
+                                val pulseAlpha by infiniteTransition.animateFloat(
+                                    initialValue = 1f,
+                                    targetValue = 0.25f,
+                                    animationSpec = infiniteRepeatable(
+                                        animation = tween(durationMillis = 700),
+                                        repeatMode = RepeatMode.Reverse,
+                                    ),
+                                    label = "voiceRecordingPulseAlpha",
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.error.copy(alpha = pulseAlpha),
+                                            shape = CircleShape,
+                                        ),
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = stringResource("chat.voice.recording.label"),
+                                    style = AppTextStyles.caption,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                voiceWaveform(
+                                    samples = voiceWaveformSamples,
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.width(48.dp).height(18.dp),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+
                             themedTooltip(text = voiceTooltip) {
                                 IconButton(
                                     onClick = toggleVoiceRecording,
