@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
@@ -61,6 +62,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -135,6 +137,11 @@ import io.askimo.ui.common.ui.util.FileDialogUtils
 import io.askimo.ui.session.manageDirectivesDialog
 import io.askimo.ui.session.newDirectiveDialog
 import io.askimo.ui.util.Platform
+import io.askimo.ui.voice.AudioRecorder
+import io.askimo.ui.voice.MicrophoneUnavailableException
+import io.askimo.ui.voice.VoiceAudioFormat
+import io.askimo.ui.voice.VoiceServiceException
+import io.askimo.ui.voice.VoiceServiceRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -151,6 +158,16 @@ import kotlin.ranges.coerceIn
 import kotlin.time.Duration.Companion.milliseconds
 
 private val log = currentFileLogger()
+
+/**
+ * States for the 🎤 voice-input button in the controls row.
+ * IDLE → RECORDING (mic open, capturing) → TRANSCRIBING (STT in flight) → IDLE.
+ */
+private enum class VoiceRecordingState {
+    IDLE,
+    RECORDING,
+    TRANSCRIBING,
+}
 
 /**
  * Reusable chat input field component with attachment support.
@@ -331,6 +348,29 @@ fun chatInputField(
         webSearchEnabled = withContext(Dispatchers.IO) { AppConfig.webSearch.enabled }
     }
 
+    // ── Voice input (🎤) ─────────────────────────────────────────────────────
+    // Cache the enabled flag the same way as webSearchEnabled above — AppConfig.voice
+    // also resolves a key from the OS keychain, so keep it off the UI thread.
+    // Hidden entirely when disabled (default) — zero UI impact for existing users.
+    var voiceInputEnabled by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        voiceInputEnabled = withContext(Dispatchers.IO) { AppConfig.voice.enabled }
+    }
+    var voiceRecordingState by remember { mutableStateOf(VoiceRecordingState.IDLE) }
+    val audioRecorder = remember { AudioRecorder() }
+    val voiceErrorTitle = stringResource("chat.voice.error.title")
+
+    // Cancel any in-progress recording if this composable leaves the composition
+    // (e.g. user navigates away mid-recording) to avoid leaking an open mic line.
+    DisposableEffect(Unit) {
+        onDispose {
+            if (voiceRecordingState == VoiceRecordingState.RECORDING) {
+                audioRecorder.cancel()
+            }
+        }
+    }
+
+
     // Notify caller whenever the user changes the enabled server selection.
     LaunchedEffect(enabledServerIds) {
         onEnabledServerIdsChange?.invoke(enabledServerIds)
@@ -430,6 +470,53 @@ fun chatInputField(
     val selectFileTitle = stringResource("chat.select.file")
     val scope = rememberCoroutineScope()
 
+    // Shared toggle logic — invoked both by the 🎤 button's onClick and by the
+    // Cmd/Ctrl+Shift+M keyboard shortcut (TOGGLE_VOICE_RECORDING) so behavior stays identical.
+    val toggleVoiceRecording: () -> Unit = toggle@{
+        if (!voiceInputEnabled || isLoading) return@toggle
+        when (voiceRecordingState) {
+            VoiceRecordingState.IDLE -> {
+                try {
+                    audioRecorder.start()
+                    voiceRecordingState = VoiceRecordingState.RECORDING
+                } catch (e: MicrophoneUnavailableException) {
+                    EventBus.post(AppErrorEvent(title = voiceErrorTitle, message = e.message ?: "Microphone unavailable"))
+                }
+            }
+
+            VoiceRecordingState.RECORDING -> {
+                voiceRecordingState = VoiceRecordingState.TRANSCRIBING
+                scope.launch {
+                    val wavBytes = withContext(Dispatchers.IO) { audioRecorder.stop() }
+                    try {
+                        val transcript = withContext(Dispatchers.IO) {
+                            VoiceServiceRegistry.speechToText(AppConfig.voice)
+                                .transcribe(wavBytes, VoiceAudioFormat.WAV)
+                        }
+                        if (transcript.isNotBlank()) {
+                            val newText = if (inputText.text.isBlank()) {
+                                transcript
+                            } else {
+                                "${inputText.text} $transcript"
+                            }
+                            onInputTextChange(
+                                TextFieldValue(text = newText, selection = TextRange(newText.length)),
+                            )
+                        }
+                    } catch (e: VoiceServiceException) {
+                        EventBus.post(AppErrorEvent(title = voiceErrorTitle, message = e.message ?: "Voice transcription failed"))
+                    } finally {
+                        voiceRecordingState = VoiceRecordingState.IDLE
+                    }
+                }
+            }
+
+            VoiceRecordingState.TRANSCRIBING -> {
+                // Ignore triggers while a transcription request is in flight.
+            }
+        }
+    }
+
     // ── Rotating placeholder hints ─────────────────────────────────────────────
     // Cycles through discoverability hints (web search, URL, attach) only while
     // the input is empty and the AI is not responding.
@@ -502,6 +589,15 @@ fun chatInputField(
                     KeyMapManager.AppShortcut.ATTACH_FILE -> {
                         if (!isLoading) {
                             openFileDialog()
+                            true
+                        } else {
+                            false
+                        }
+                    }
+
+                    KeyMapManager.AppShortcut.TOGGLE_VOICE_RECORDING -> {
+                        if (voiceInputEnabled && !isLoading) {
+                            toggleVoiceRecording()
                             true
                         } else {
                             false
@@ -703,7 +799,7 @@ fun chatInputField(
                     )
 
                     // ── Controls row ───────────────────────────────────────────────
-                    // Layout: [attach | image | tools | directive | image-mode-chip] <spacer> [reasoning chip] [send/stop]
+                    // Layout: [attach | image | tools | directive | image-mode-chip] <spacer> [memory | reasoning chip | voice | send/stop]
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -732,6 +828,7 @@ fun chatInputField(
                         }
 
                         Spacer(modifier = Modifier.width(2.dp))
+
 
                         // Image button — only show if model requires explicit toggle mode
                         // For multi-modal models (native image generation), hide this button
@@ -950,6 +1047,43 @@ fun chatInputField(
                                                 colors = AppComponents.menuItemColors(),
                                             )
                                         }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── Voice input (🎤) — hidden entirely when disabled in Settings > Voice ──
+                        // Grouped near Send since it's an input-modality toggle (dictation),
+                        // not a content-attachment action like Attach/Image on the left.
+                        if (voiceInputEnabled) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            val voiceShortcutHint = KeyMapManager.AppShortcut.TOGGLE_VOICE_RECORDING.getDisplayString()
+                            val voiceTooltip = when (voiceRecordingState) {
+                                VoiceRecordingState.IDLE -> stringResource("chat.voice.record", voiceShortcutHint)
+                                VoiceRecordingState.RECORDING -> stringResource("chat.voice.recording.stop")
+                                VoiceRecordingState.TRANSCRIBING -> stringResource("chat.voice.transcribing")
+                            }
+                            themedTooltip(text = voiceTooltip) {
+                                IconButton(
+                                    onClick = toggleVoiceRecording,
+                                    enabled = !isLoading && voiceRecordingState != VoiceRecordingState.TRANSCRIBING,
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .pointerHoverIcon(PointerIcon.Hand),
+                                ) {
+                                    if (voiceRecordingState == VoiceRecordingState.TRANSCRIBING) {
+                                        AppComponents.loadingSpinner(size = 16.dp)
+                                    } else {
+                                        Icon(
+                                            Icons.Default.Mic,
+                                            contentDescription = voiceTooltip,
+                                            tint = if (voiceRecordingState == VoiceRecordingState.RECORDING) {
+                                                MaterialTheme.colorScheme.error
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurface
+                                            },
+                                            modifier = Modifier.size(16.dp),
+                                        )
                                     }
                                 }
                             }

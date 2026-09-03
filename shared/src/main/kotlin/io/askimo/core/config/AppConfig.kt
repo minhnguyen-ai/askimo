@@ -472,6 +472,77 @@ data class WebSearchConfig(
     }
 }
 
+/**
+ * Supported speech-to-text / text-to-speech backends.
+ *
+ * Voice is a convenience layer on top of the existing text chat pipeline (see
+ * [io.askimo.core.providers.sendStreamingMessageWithCallback]) and is resolved
+ * **independently** of the active chat [io.askimo.core.providers.ModelProvider] —
+ * e.g. a user can chat with Gemini while using OpenAI Whisper for transcription,
+ * or a fully local/free STT+TTS stack.
+ *
+ * - [OPENAI]: Cloud API (Whisper for STT, OpenAI TTS for TTS). Requires an API key.
+ * - [LOCAL_WHISPER_CPP]: STT-only. Talks to a user-hosted whisper.cpp/faster-whisper
+ *   server exposing an OpenAI-compatible `/v1/audio/transcriptions` endpoint. Free, offline-capable.
+ * - [LOCAL_PIPER]: TTS-only. Talks to a user-hosted Piper HTTP server. Free, offline-capable.
+ */
+enum class VoiceProvider {
+    OPENAI,
+    LOCAL_WHISPER_CPP,
+    LOCAL_PIPER,
+}
+
+private const val VOICE_OPENAI_KEY = "voice.openai.key"
+private const val VOICE_KEY_PLACEHOLDER = "***keychain***"
+
+/**
+ * Configuration for the optional voice input/output feature.
+ * Lives under the `voice:` key in askimo.yml. Disabled by default — zero impact on existing users.
+ *
+ * The OpenAI API key used for voice is intentionally **separate** from any `OPENAI`
+ * [io.askimo.core.providers.ProviderInstance] key — a user may chat exclusively with
+ * another provider (Anthropic, Gemini, Ollama...) yet still want OpenAI Whisper/TTS for voice.
+ * [useProviderKeyForVoice] offers a convenience toggle so the Settings UI can optionally
+ * reuse an existing OpENAI provider instance's key instead of requiring the user to paste it again.
+ *
+ * API keys are stored securely via [SecureKeyManager] — the YAML holds a
+ * `***keychain***` placeholder, never the raw key value.
+ */
+data class VoiceConfig(
+    val enabled: Boolean = false,
+    val sttProvider: VoiceProvider = VoiceProvider.OPENAI,
+    val ttsProvider: VoiceProvider = VoiceProvider.OPENAI,
+    val sttModel: String = "whisper-1",
+    val ttsModel: String = "tts-1",
+    val ttsVoice: String = "alloy",
+    val speechSpeed: Double = 1.0,
+    /**
+     * When true and [openAiApiKey] is blank, Settings UI may offer to reuse the key from an
+     * existing `OPENAI` provider instance instead of requiring a separate paste. Purely a UX
+     * convenience flag — resolution of the actual key happens at the call site, not here.
+     */
+    val useProviderKeyForVoice: Boolean = true,
+    /** Raw field — may be blank or `***keychain***`. Use [AppConfig.voice] for the resolved value. */
+    val openAiApiKey: String = "",
+    /** Base URL of a user-hosted whisper.cpp/faster-whisper server (OpenAI-compatible API). */
+    val localSttEndpoint: String = "http://localhost:8081",
+    /** Base URL of a user-hosted Piper HTTP server. */
+    val localTtsEndpoint: String = "http://localhost:5000",
+) {
+    companion object {
+        fun isKeyPlaceholder(value: String): Boolean = value == VOICE_KEY_PLACEHOLDER
+        fun isActualKey(value: String): Boolean = value.isNotBlank() && !isKeyPlaceholder(value)
+        fun getSecureOpenAiKey(): String? = SecureKeyManager.retrieveSecretKey(VOICE_OPENAI_KEY)
+        fun setSecureOpenAiKey(key: String): SecureKeyManager.StorageResult = if (key.isEmpty()) {
+            SecureKeyManager.removeSecretKey(VOICE_OPENAI_KEY)
+            SecureKeyManager.StorageResult(success = true, method = SecureKeyManager.StorageMethod.KEYCHAIN)
+        } else {
+            SecureKeyManager.storeSecuredKey(VOICE_OPENAI_KEY, key)
+        }
+        fun getKeyPlaceholder(): String = VOICE_KEY_PLACEHOLDER
+    }
+}
+
 data class AppConfigData(
     val embedding: EmbeddingConfig = EmbeddingConfig(),
     val retry: RetryConfig = RetryConfig(),
@@ -485,6 +556,7 @@ data class AppConfigData(
     val proxy: ProxyConfig = ProxyConfig(),
     val analytics: AnalyticsConfig = AnalyticsConfig(),
     val webSearch: WebSearchConfig = WebSearchConfig(),
+    val voice: VoiceConfig = VoiceConfig(),
     val context: AppContextParams = AppContextParams.noOp(),
     val currentLocale: String? = null,
 )
@@ -529,6 +601,27 @@ object AppConfig {
             } else {
                 config
             }
+        }
+
+    /**
+     * Raw voice configuration **without** keychain lookup.
+     * [VoiceConfig.openAiApiKey] may be blank or `***keychain***`.
+     */
+    val rawVoice: VoiceConfig get() = delegate.voice
+
+    /**
+     * Voice configuration with the OpenAI API key resolved from secure storage.
+     * Safe to pass directly to voice STT/TTS services.
+     */
+    val voice: VoiceConfig
+        get() {
+            val config = delegate.voice
+            val apiKey = if (!VoiceConfig.isActualKey(config.openAiApiKey)) {
+                VoiceConfig.getSecureOpenAiKey() ?: ""
+            } else {
+                config.openAiApiKey
+            }
+            return if (apiKey != config.openAiApiKey) config.copy(openAiApiKey = apiKey) else config
         }
 
     /**
@@ -695,6 +788,19 @@ object AppConfig {
           brave_api_key:
           tavily_api_key:
           enabled: true
+
+        voice:
+          enabled: false
+          stt_provider: OPENAI
+          tts_provider: OPENAI
+          stt_model: whisper-1
+          tts_model: tts-1
+          tts_voice: alloy
+          speech_speed: 1.0
+          use_provider_key_for_voice: true
+          open_ai_api_key:
+          local_stt_endpoint: http://localhost:8081
+          local_tts_endpoint: http://localhost:5000
 
         context:
           current_instance_id: ""
@@ -904,6 +1010,8 @@ object AppConfig {
                 "indexing" -> current.copy(indexing = updateIndexingField(current.indexing, field, value))
 
                 "webSearch" -> current.copy(webSearch = updateWebSearchField(current.webSearch, field, value))
+
+                "voice" -> current.copy(voice = updateVoiceField(current.voice, field, value))
 
                 else -> {
                     log.displayError("Unknown config section: $section", null)
@@ -1176,6 +1284,65 @@ object AppConfig {
 
         else -> {
             log.displayError("Unknown webSearch field: $field", null)
+            config
+        }
+    }
+
+    private fun updateVoiceField(config: VoiceConfig, field: String, value: Any): VoiceConfig = when (field) {
+        "enabled" -> config.copy(enabled = value as Boolean)
+
+        "sttProvider" -> config.copy(
+            sttProvider = if (value is VoiceProvider) {
+                value
+            } else {
+                runCatching { VoiceProvider.valueOf(value.toString()) }.getOrElse { config.sttProvider }
+            },
+        )
+
+        "ttsProvider" -> config.copy(
+            ttsProvider = if (value is VoiceProvider) {
+                value
+            } else {
+                runCatching { VoiceProvider.valueOf(value.toString()) }.getOrElse { config.ttsProvider }
+            },
+        )
+
+        "sttModel" -> config.copy(sttModel = value as String)
+
+        "ttsModel" -> config.copy(ttsModel = value as String)
+
+        "ttsVoice" -> config.copy(ttsVoice = value as String)
+
+        "speechSpeed" -> config.copy(speechSpeed = (value as Number).toDouble())
+
+        "useProviderKeyForVoice" -> config.copy(useProviderKeyForVoice = value as Boolean)
+
+        "localSttEndpoint" -> config.copy(localSttEndpoint = value as String)
+
+        "localTtsEndpoint" -> config.copy(localTtsEndpoint = value as String)
+
+        "openAiApiKey" -> {
+            val key = value as String
+            if (VoiceConfig.isActualKey(key)) {
+                val result = VoiceConfig.setSecureOpenAiKey(key)
+                when (result.method) {
+                    StorageMethod.KEYCHAIN ->
+                        log.debug("Voice OpenAI API key stored securely in keychain")
+
+                    StorageMethod.ENCRYPTED ->
+                        log.warn("Voice OpenAI API key stored with encryption ({})", result.warningMessage)
+
+                    StorageMethod.INSECURE_FALLBACK ->
+                        log.warn("⚠️ Voice OpenAI API key storage: {}", result.warningMessage)
+                }
+                config.copy(openAiApiKey = VoiceConfig.getKeyPlaceholder())
+            } else {
+                config.copy(openAiApiKey = key)
+            }
+        }
+
+        else -> {
+            log.displayError("Unknown voice field: $field", null)
             config
         }
     }
