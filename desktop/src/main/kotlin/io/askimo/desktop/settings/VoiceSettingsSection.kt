@@ -122,6 +122,10 @@ private fun voiceConfigCard() {
     var localTtsEndpoint by remember { mutableStateOf(AppConfig.rawVoice.localTtsEndpoint) }
     // API key loaded async from keychain — starts blank, same pattern as web search / proxy.
     var openAiApiKey by remember { mutableStateOf("") }
+    // Guards the debounced save below from firing on the initial blank value before the keychain
+    // lookup in LaunchedEffect(Unit) completes — without this, a slow/delayed lookup could let the
+    // 500ms debounce persist "" first and erase the user's stored key just from opening this screen.
+    var apiKeyLoaded by remember { mutableStateOf(false) }
     var sttProviderDropdownExpanded by remember { mutableStateOf(false) }
     var ttsProviderDropdownExpanded by remember { mutableStateOf(false) }
     var reuseKeyStatus by remember { mutableStateOf<String?>(null) }
@@ -131,10 +135,12 @@ private fun voiceConfigCard() {
     LaunchedEffect(Unit) {
         val resolved = withContext(Dispatchers.IO) { AppConfig.voice }
         openAiApiKey = if (VoiceConfig.isActualKey(resolved.openAiApiKey)) resolved.openAiApiKey else ""
+        apiKeyLoaded = true
     }
 
     // ── Debounced saves for typed fields (keychain I/O for the API key — must NOT block the UI) ──
     LaunchedEffect(openAiApiKey) {
+        if (!apiKeyLoaded) return@LaunchedEffect
         delay(500.milliseconds)
         withContext(Dispatchers.IO) { AppConfig.updateField("voice.openAiApiKey", openAiApiKey) }
     }
