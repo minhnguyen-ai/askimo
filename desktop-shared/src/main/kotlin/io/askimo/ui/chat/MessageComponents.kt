@@ -123,6 +123,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun messageList(
@@ -241,7 +242,7 @@ fun messageList(
                     // call to show — otherwise keep the existing rich-text rendering path
                     // (streaming reveal, run-code dialog, link clicks, attachments) for the
                     // common tool-free case.
-                    val fallbackThinkingContent = if (!hasToolCalls && isLastAiMsg) {
+                    val fallbackThinkingContent = if (!hasToolCalls) {
                         resolvedGroups
                             .filterIsInstance<TurnTimelineGroup.ThinkingGroup>()
                             .joinToString("") { it.text }
@@ -274,7 +275,7 @@ fun messageList(
                         // thinking-then-tools-then-text layout — for every past turn, not just
                         // the last one.
                         customBody = if (!group.message.isUser && hasToolCalls) {
-                            { turnTimelineView(resolvedGroups) }
+                            { turnTimelineView(resolvedGroups, isStreaming = isStreamingMessage) }
                         } else {
                             null
                         },
@@ -1316,20 +1317,38 @@ internal fun thinkingSection(
  * Renders timeline groups in chronological order — tool-call and thinking groups reuse this
  * file's own collapsible sections ([toolCallsSection]/[thinkingSection]); token groups render
  * as normal markdown; status groups show as a small muted subtitle. Each group gets its own
- * remembered expand/collapse state, keyed by position — stable since groups are only ever
- * appended at the end for a given message.
+ * remembered expand/collapse state, keyed by [stableKey] — content-based rather than list
+ * position, since `grouped()` runs `collapsedEffectiveTools()` first, which can drop earlier
+ * groups entirely (superseded tool retries + the thinking that led to them) as new entries
+ * stream in. That shifts later groups' *indices* between recompositions even though their
+ * *content* hasn't changed, which — if keyed by index — would reattach one group's remembered
+ * expand/collapse state to a completely different, unrelated group occupying the same slot.
  *
  * Used both for the live streaming turn (agentic runs) and for finalized/historical AI
  * messages (via [messageBubble]'s `customBody`), so order is preserved identically in both.
  */
 @Composable
-internal fun turnTimelineView(groups: List<TurnTimelineGroup>) {
+internal fun turnTimelineView(
+    groups: List<TurnTimelineGroup>,
+    isStreaming: Boolean = false,
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
+        // Tracks how many times each stableKey() value has already been seen while iterating
+        // groups below, so repeated *identical* content (e.g. two StatusGroups with the same
+        // text, or a model repeating a phrase across separate ThinkingGroups) gets a distinct
+        // "#<occurrence>" suffix — see [renderKey] doc.
+        val occurrenceByStableKey = mutableMapOf<String, Int>()
         groups.forEachIndexed { index, group ->
-            key(index) {
+            // Only the *last* group can still be actively receiving new streamed deltas (see
+            // grouped()) — every earlier group's content is already frozen. See [renderKey].
+            val isStreamingTail = isStreaming && index == groups.lastIndex
+            val stableKey = group.stableKey()
+            val occurrence = occurrenceByStableKey.getOrDefault(stableKey, 0)
+            occurrenceByStableKey[stableKey] = occurrence + 1
+            key(group.renderKey(isStreamingTail, occurrence)) {
                 when (group) {
                     is TurnTimelineGroup.StatusGroup -> {
                         Text(
@@ -1370,13 +1389,132 @@ internal fun turnTimelineView(groups: List<TurnTimelineGroup>) {
                 }
             }
         }
+
+        // After the AI's last tool call finishes, there's a gap where the model is
+        // processing the tool result before it emits the next thinking/text chunk — with
+        // no other signal during that gap, the user has no feedback that the AI is still
+        // working (it looks like it's halted). Show a ticking "Processing..." row for
+        // exactly that window; it disappears the instant a new thinking/token group is
+        // appended to the timeline (grouped() will no longer report the ToolGroup as last).
+        val lastGroup = groups.lastOrNull()
+        if (isStreaming &&
+            lastGroup is TurnTimelineGroup.ToolGroup &&
+            lastGroup.entries.all { it.toolCall.status == ToolCallStatus.DONE }
+        ) {
+            key("processing:" + lastGroup.stableKey()) {
+                aiProcessingIndicator()
+            }
+        }
     }
 }
 
 /**
+ * Ticking "AI is processing..." row shown right after the last tool call in a turn
+ * finishes, while the model works on the tool result before emitting its next
+ * thinking/token chunk (see [turnTimelineView]). Self-contained ticker, same pattern as
+ * [toolCallsSection]'s elapsed timer — the elapsed count starts from the moment this
+ * composable first appears (i.e. right when the tool flipped to DONE), and the whole row
+ * disappears as soon as the caller ([turnTimelineView]) stops rendering it.
+ */
+@Composable
+private fun aiProcessingIndicator() {
+    val startedAtMillis = remember { System.currentTimeMillis() }
+    var nowMillis by remember { mutableStateOf(startedAtMillis) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            nowMillis = System.currentTimeMillis()
+            delay(1.seconds)
+        }
+    }
+    val elapsedSeconds = ((nowMillis - startedAtMillis) / 1000).coerceAtLeast(0)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = Spacing.medium, end = Spacing.medium, top = Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource("message.processing", elapsedSeconds),
+            style = AppTextStyles.hint,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            fontStyle = FontStyle.Italic,
+        )
+    }
+}
+
+/**
+ * A content-derived identity for a [TurnTimelineGroup]:
+ *
+ * - [TurnTimelineGroup.StatusGroup] — `"status:"` + each entry's text, joined with `|`.
+ * - [TurnTimelineGroup.ToolGroup] — `"tool:"` + each entry's [ToolCallInfo.toolName], joined
+ *   with `|` (arguments/result/status are intentionally excluded, since those mutate in place
+ *   as a call goes from running to done).
+ * - [TurnTimelineGroup.ThinkingGroup] — `"thinking:"` + a compact digest of the group's
+ *   accumulated text (see [textDigest]), avoiding a full copy of potentially large text on
+ *   every recomposition.
+ * - [TurnTimelineGroup.TokenGroup] — `"token:"` + a compact digest of the group's accumulated
+ *   text (see [textDigest]).
+ *
+ * Used as the base for the [key] in [turnTimelineView] via [renderKey], which additionally
+ * substitutes a fixed marker for the currently-streaming group and appends an occurrence suffix
+ * to break ties between groups that resolve to an identical [stableKey] — this occurrence
+ * suffix also acts as the collision-handling strategy for the (extremely unlikely) case where
+ * two distinct texts share the same digest.
+ */
+private fun TurnTimelineGroup.stableKey(): String = when (this) {
+    is TurnTimelineGroup.StatusGroup -> "status:" + entries.joinToString("|") { it.text }
+    is TurnTimelineGroup.ToolGroup -> "tool:" + entries.joinToString("|") { it.toolCall.toolName }
+    is TurnTimelineGroup.ThinkingGroup -> "thinking:" + text.textDigest()
+    is TurnTimelineGroup.TokenGroup -> "token:" + text.textDigest()
+}
+
+/**
+ * Compact, non-copying identity for a (potentially large) accumulated text, used by
+ * [stableKey] instead of the full text to avoid large allocations on every recomposition:
+ * the text's length combined with its [String.hashCode], formatted as `"<length>:<hashCode>"`.
+ */
+private fun String.textDigest(): String = "$length:${hashCode()}"
+
+/**
+ * Computes the [key] to use for a group in [turnTimelineView].
+ *
+ * - If [isStreamingTail] is true, the group is keyed by a fixed, content-independent marker
+ *   (`"live:thinking"`/`"live:token"`/`"live:status"`) instead of [stableKey] — with the
+ *   exception of [TurnTimelineGroup.ToolGroup], which always uses [stableKey] regardless of
+ *   [isStreamingTail], since that key already ignores status/arguments/result. At most one
+ *   group is ever the streaming tail, so this marker never collides with another group's key.
+ * - Otherwise, the base key is [stableKey].
+ * - [occurrence] — the number of prior groups in the same pass that already resolved to the
+ *   same base key — is appended as a `"#<occurrence>"` suffix whenever non-zero, guaranteeing
+ *   the returned key is unique among siblings even when multiple groups share identical
+ *   content. Omitted when [occurrence] is `0`, so the common non-duplicate case keeps the
+ *   plain base key unchanged.
+ */
+private fun TurnTimelineGroup.renderKey(isStreamingTail: Boolean, occurrence: Int): String {
+    val base = if (isStreamingTail) {
+        when (this) {
+            is TurnTimelineGroup.ThinkingGroup -> "live:thinking"
+            is TurnTimelineGroup.TokenGroup -> "live:token"
+            is TurnTimelineGroup.StatusGroup -> "live:status"
+            is TurnTimelineGroup.ToolGroup -> stableKey()
+        }
+    } else {
+        stableKey()
+    }
+    return if (occurrence > 0) "$base#$occurrence" else base
+}
+
+/**
  * Collapsible section that displays AI tool calls above the response text.
- * Shows "▶ Running tool…" when any tool is active, "▶ Used N tool(s)" when all are done.
- * Expands automatically when a tool starts running; collapses manually by the user.
+ * Shows "▶ Running tool… (Ns)" — with a live-ticking elapsed timer — when any tool is active,
+ * "▶ Used N tool(s)" when all are done. Expands automatically when a tool starts running;
+ * collapses manually by the user.
+ *
+ * The elapsed timer exists because a tool call (e.g. a long shell command) can run silently
+ * for a while with no other events — without it the user has no feedback that the AI is still
+ * working, unlike the pre-first-token "Thinking... Ns" indicator (which stops as soon as any
+ * event, including a tool call starting, arrives — see ChatViewModel.subscribeToThread).
  */
 @Composable
 internal fun toolCallsSection(
@@ -1385,8 +1523,24 @@ internal fun toolCallsSection(
     onToggle: () -> Unit,
 ) {
     val hasRunning = toolCalls.any { it.status == ToolCallStatus.RUNNING }
-    val headerText = if (hasRunning) {
-        stringResource("tool.call.header.running")
+
+    // Live elapsed-seconds ticker, driven by the earliest still-running call's start time —
+    // only ticks while a tool is actually running, so it's a no-op (and stops recomposing)
+    // once every call in this group has completed.
+    var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(hasRunning) {
+        while (hasRunning) {
+            nowMillis = System.currentTimeMillis()
+            delay(1.seconds)
+        }
+    }
+    val earliestRunningStart = toolCalls
+        .filter { it.status == ToolCallStatus.RUNNING }
+        .minOfOrNull { it.startedAtMillis }
+
+    val headerText = if (hasRunning && earliestRunningStart != null) {
+        val elapsedSeconds = ((nowMillis - earliestRunningStart) / 1000).coerceAtLeast(0)
+        stringResource("tool.call.header.running", elapsedSeconds)
     } else {
         stringResource("tool.call.header.done", toolCalls.size)
     }
