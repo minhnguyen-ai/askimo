@@ -20,12 +20,11 @@ class AudioPlaybackException(message: String, cause: Throwable? = null) : Except
  * Plays synthesised audio using [javax.sound.sampled] — no extra native dependencies needed.
  * Supports [pause]/[resume] and [stop]. Handles MP3 (OpenAI TTS) transparently: the JDK's
  * built-in `javax.sound.sampled` SPI only decodes WAV/AIFF/AU natively, so MP3 bytes are
- * transcoded to a PCM-decodable stream via [AudioSystem.getAudioInputStream] chaining, which
- * works out of the box as long as an MP3 SPI provider is on the classpath (see call site notes).
+ * transcoded to a PCM-decodable stream via [AudioSystem.getAudioInputStream] chaining.
  *
- * [AudioPlayer.Companion.stopCurrent] enforces the "only one message plays at a time" rule from
- * the voice-output UX spec — callers (e.g. the 🔊 button in `MessageComponents.kt`) should call
- * [play] via the companion so any previously-playing clip is stopped first.
+ * Each instance plays at most one clip at a time — calling [play] again stops any clip already
+ * playing on that same instance first. Enforcing "only one message plays at a time" *across the
+ * whole app* (the voice-output UX spec) is the caller's responsibility
  */
 class AudioPlayer {
     private val log = logger<AudioPlayer>()
@@ -41,7 +40,13 @@ class AudioPlayer {
      * Decodes [audio] (format described by [format]) and starts playback.
      * @param onComplete Invoked on natural playback completion (not on [stop]).
      * @throws AudioPlaybackException if the audio cannot be decoded or no output device is available.
+     *
+     * Synchronized (along with [pause]/[resume]/[stop]) on this instance's monitor so
+     * play/pause/stop calls from different threads/coroutines can't race — e.g. a [stop] call
+     * landing in the middle of [play] swapping in a new [clip], or [onFinished] being read after
+     * [stop] already cleared it.
      */
+    @Synchronized
     fun play(audio: ByteArray, format: VoiceAudioFormat, onComplete: () -> Unit = {}) {
         stop()
 
@@ -64,7 +69,16 @@ class AudioPlayer {
                     newClip.open(decodedStream)
                     newClip.addLineListener { event ->
                         if (event.type == LineEvent.Type.STOP && newClip.framePosition >= newClip.frameLength) {
-                            onFinished?.invoke()
+                            // Runs on the JVM's line-event dispatch thread, concurrently with any
+                            // synchronized play/pause/stop call — synchronize here too, and only
+                            // fire completion if `newClip` is still the active clip, so a stale
+                            // event from a clip that [stop] (or a subsequent [play]) already
+                            // replaced can't invoke a completion callback that no longer applies.
+                            synchronized(this@AudioPlayer) {
+                                if (clip === newClip) {
+                                    onFinished?.invoke()
+                                }
+                            }
                         }
                     }
                     onFinished = onComplete
@@ -81,22 +95,25 @@ class AudioPlayer {
         } catch (e: LineUnavailableException) {
             throw AudioPlaybackException("No audio output device available for playback.", e)
         } catch (e: Exception) {
-            log.warn("Audio playback failed: {}", e.message)
+            log.warn("Audio playback failed", e)
             throw AudioPlaybackException("Could not play audio: ${e.message}", e)
         }
     }
 
     /** Pauses playback in place; [resume] continues from the same position. No-op if not playing. */
+    @Synchronized
     fun pause() {
         clip?.takeIf { it.isRunning }?.stop()
     }
 
     /** Resumes playback from where it was paused. No-op if not paused or already playing. */
+    @Synchronized
     fun resume() {
         clip?.takeIf { it.isOpen && !it.isRunning }?.start()
     }
 
     /** Stops playback and releases the underlying audio line. Safe to call when not playing. */
+    @Synchronized
     fun stop() {
         clip?.let {
             if (it.isRunning) it.stop()
@@ -104,29 +121,5 @@ class AudioPlayer {
         }
         clip = null
         onFinished = null
-    }
-
-    companion object {
-        @Volatile private var currentlyPlaying: AudioPlayer? = null
-
-        /**
-         * Ensures only one [AudioPlayer] instance plays at a time across the whole app —
-         * stops any previously-registered player before returning, per the
-         * "only one message plays at a time" requirement for message 🔊 buttons.
-         */
-        @Synchronized
-        fun stopCurrent() {
-            currentlyPlaying?.stop()
-            currentlyPlaying = null
-        }
-
-        /** Registers [player] as the currently-playing instance, stopping any previous one first. */
-        @Synchronized
-        fun register(player: AudioPlayer) {
-            if (currentlyPlaying !== player) {
-                currentlyPlaying?.stop()
-            }
-            currentlyPlaying = player
-        }
     }
 }

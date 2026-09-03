@@ -515,7 +515,6 @@ data class VoiceConfig(
     val sttModel: String = "whisper-1",
     val ttsModel: String = "tts-1",
     val ttsVoice: String = "alloy",
-    val speechSpeed: Double = 1.0,
     /**
      * When true and [openAiApiKey] is blank, Settings UI may offer to reuse the key from an
      * existing `OPENAI` provider instance instead of requiring a separate paste. Purely a UX
@@ -796,7 +795,6 @@ object AppConfig {
           stt_model: whisper-1
           tts_model: tts-1
           tts_voice: alloy
-          speech_speed: 1.0
           use_provider_key_for_voice: true
           open_ai_api_key:
           local_stt_endpoint: http://localhost:8081
@@ -1323,8 +1321,6 @@ object AppConfig {
         "ttsModel" -> config.copy(ttsModel = value as String)
 
         "ttsVoice" -> config.copy(ttsVoice = value as String)
-
-        "speechSpeed" -> config.copy(speechSpeed = (value as Number).toDouble())
 
         "useProviderKeyForVoice" -> config.copy(useProviderKeyForVoice = value as Boolean)
 

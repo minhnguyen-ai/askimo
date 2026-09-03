@@ -176,7 +176,7 @@ private object VoicePlaybackController {
             try {
                 val ttsService = withContext(Dispatchers.IO) { VoiceServiceRegistry.textToSpeech(AppConfig.voice) }
                 val audioBytes = withContext(Dispatchers.IO) {
-                    ttsService.synthesize(text, AppConfig.rawVoice.speechSpeed)
+                    ttsService.synthesize(text)
                 }
                 // A newer toggle may have superseded this request while we were synthesizing.
                 if (loadingMessageId != messageId) return@launch

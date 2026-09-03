@@ -28,7 +28,7 @@ class OpenAiTextToSpeechService(private val config: VoiceConfig) : TextToSpeechS
 
     override val outputFormat: VoiceAudioFormat = VoiceAudioFormat.MP3
 
-    override suspend fun synthesize(text: String, speed: Double): ByteArray = withContext(Dispatchers.IO) {
+    override suspend fun synthesize(text: String): ByteArray = withContext(Dispatchers.IO) {
         val apiKey = config.openAiApiKey
         if (apiKey.isBlank()) {
             throw VoiceServiceException("OpenAI API key for voice is not configured. Set it in Settings > Voice.")
@@ -42,7 +42,7 @@ class OpenAiTextToSpeechService(private val config: VoiceConfig) : TextToSpeechS
                 .build()
             tts.synthesize(text).audio().binaryData()
         } catch (e: Exception) {
-            log.warn("OpenAI TTS request failed: {}", e.message)
+            log.warn("OpenAI TTS request failed", e)
             throw VoiceServiceException("OpenAI TTS request failed: ${e.message}", e)
         }
     }
@@ -62,16 +62,13 @@ object OpenAiTextToSpeechFactory : TextToSpeechFactory {
  * base URL (default `http://localhost:5000`) — the same "OpenAI-compatible" pattern used by
  * [io.askimo.core.providers.openaicompatible.OpenAiCompatibleModelFactory] for chat/embedding
  * models and by [LocalWhisperSpeechToTextService] for local speech-to-text.
- *
- * Note: playback `speed` is not supported by langchain4j's [OpenAiTextToSpeechModel] request API
- * and is currently ignored.
  */
 class PiperTextToSpeechService(private val config: VoiceConfig) : TextToSpeechService {
     private val log = logger<PiperTextToSpeechService>()
 
     override val outputFormat: VoiceAudioFormat = VoiceAudioFormat.WAV
 
-    override suspend fun synthesize(text: String, speed: Double): ByteArray = withContext(Dispatchers.IO) {
+    override suspend fun synthesize(text: String): ByteArray = withContext(Dispatchers.IO) {
         val baseUrl = config.localTtsEndpoint.trimEnd('/')
         if (baseUrl.isBlank()) {
             throw VoiceServiceException("Local Piper endpoint is not configured. Set it in Settings > Voice.")
@@ -87,7 +84,7 @@ class PiperTextToSpeechService(private val config: VoiceConfig) : TextToSpeechSe
 
             tts.synthesize(text).audio().binaryData()
         } catch (e: Exception) {
-            log.warn("Local Piper TTS request failed: {}", e.message)
+            log.warn("Local Piper TTS request failed", e)
             throw VoiceServiceException(
                 "Could not reach local Piper server at $baseUrl. Is it running? (${e.message})",
                 e,

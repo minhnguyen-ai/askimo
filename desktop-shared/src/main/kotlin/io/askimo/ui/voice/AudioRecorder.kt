@@ -5,15 +5,15 @@
 package io.askimo.ui.voice
 
 import io.askimo.core.logging.logger
-import java.io.ByteArrayOutputStream
-import javax.sound.sampled.AudioFileFormat
+import io.askimo.core.util.PcmAudioEncoder
+import java.io.BufferedOutputStream
+import java.nio.file.Files
+import java.nio.file.Path
 import javax.sound.sampled.AudioFormat
-import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.LineUnavailableException
 import javax.sound.sampled.TargetDataLine
-import kotlin.math.sqrt
 
 /**
  * Thrown when the microphone cannot be opened — typically because the OS denied audio
@@ -26,6 +26,13 @@ class MicrophoneUnavailableException(message: String, cause: Throwable? = null) 
 /**
  * Captures microphone audio using [javax.sound.sampled] — no extra native dependencies needed.
  * Records 16kHz mono 16-bit PCM, which is natively accepted by Whisper-family STT APIs.
+ *
+ * Captured PCM is streamed to a temporary file as it arrives rather than buffered in memory,
+ * so memory use stays flat (a few KB — just the read chunk) regardless of recording length.
+ * [stop] streams that file straight into the WAV encoder (via [PcmAudioEncoder], which holds
+ * the pure/hardware-free RMS + WAV-encoding logic so it can be unit-tested from `:cli` without
+ * an audio device) — the recording is never fully materialized as a single in-memory byte
+ * array — and deletes the temp file once done.
  *
  * Usage:
  * ```
@@ -55,24 +62,32 @@ class AudioRecorder {
 
     @Volatile private var line: TargetDataLine? = null
     private var captureThread: Thread? = null
-    private val buffer = ByteArrayOutputStream()
+
+    // Captured PCM is streamed straight to a temp file instead of an in-memory buffer, so
+    // memory use stays flat (a few KB for the read chunk) no matter how long the user records
+    // for. `writeLock` guards `pcmFile`/`fileOut` since they're written from the capture thread
+    // and read/closed from whichever thread calls stop()/cancel().
+    private val writeLock = Any()
+    private var pcmFile: Path? = null
+    private var fileOut: BufferedOutputStream? = null
 
     /** True while actively capturing audio. */
     val isRecording: Boolean get() = line?.isOpen == true
 
     /**
-     * Opens the microphone and begins capturing on a background thread.
+     * Opens the microphone and begins capturing on a background thread, streaming raw PCM
+     * bytes to a temporary file as they arrive (see [pcmFile]) rather than an in-memory buffer.
      *
      * @param onLevel Optional callback invoked on the capture thread after each chunk is read,
      *   with the chunk's normalized RMS amplitude in `0f..1f` (0 = silence, 1 = full-scale).
      *   Intended to drive a live "recording" UI indicator (e.g. a waveform/level meter) — this
      *   is a lightweight, high-frequency signal, not audio data, so callers can safely mutate
      *   Compose state directly from it (see the 🎤 button in `ChatInputField.kt`).
-     * @throws MicrophoneUnavailableException if no input device is available or the OS denies access.
+     * @throws MicrophoneUnavailableException if no input device is available, the OS denies
+     *   access, or a temporary file for the capture buffer cannot be created.
      */
     fun start(onLevel: ((Float) -> Unit)? = null) {
         check(!isRecording) { "AudioRecorder is already recording" }
-        buffer.reset()
 
         val info = DataLine.Info(TargetDataLine::class.java, format)
         if (!AudioSystem.isLineSupported(info)) {
@@ -94,6 +109,21 @@ class AudioRecorder {
             throw MicrophoneUnavailableException("Microphone access was denied by the operating system.", e)
         }
 
+        val tempFile = try {
+            Files.createTempFile("askimo-audio-", ".pcm").also { it.toFile().deleteOnExit() }
+        } catch (e: Exception) {
+            targetLine.close()
+            throw MicrophoneUnavailableException(
+                "Could not allocate temporary storage for the recording. (${e.message})",
+                e,
+            )
+        }
+
+        synchronized(writeLock) {
+            pcmFile = tempFile
+            fileOut = BufferedOutputStream(Files.newOutputStream(tempFile))
+        }
+
         line = targetLine
         captureThread = Thread({
             val readBuffer = ByteArray(READ_BUFFER_SIZE)
@@ -101,14 +131,20 @@ class AudioRecorder {
                 while (targetLine.isOpen) {
                     val bytesRead = targetLine.read(readBuffer, 0, readBuffer.size)
                     if (bytesRead > 0) {
-                        synchronized(buffer) { buffer.write(readBuffer, 0, bytesRead) }
+                        synchronized(writeLock) {
+                            try {
+                                fileOut?.write(readBuffer, 0, bytesRead)
+                            } catch (e: Exception) {
+                                log.warn("Failed writing captured audio to temp file", e)
+                            }
+                        }
                         if (onLevel != null) {
-                            onLevel(computeRmsLevel(readBuffer, bytesRead))
+                            onLevel(PcmAudioEncoder.computeRmsLevel(readBuffer, bytesRead))
                         }
                     }
                 }
             } catch (e: Exception) {
-                log.debug("Audio capture thread stopped: {}", e.message)
+                log.debug("Audio capture thread stopped", e)
             }
         }, "askimo-audio-recorder").apply {
             isDaemon = true
@@ -119,17 +155,29 @@ class AudioRecorder {
     /**
      * Stops recording and returns the captured audio encoded as a complete WAV file.
      * Safe to call even if [start] was never called (returns an empty WAV).
+     *
+     * The temp file written during capture is streamed directly into the WAV encoder (never
+     * fully loaded into a byte array) and deleted once encoding completes.
      */
     fun stop(): ByteArray {
-        val targetLine = line ?: return encodeAsWav(ByteArray(0))
+        val targetLine = line
+        if (targetLine == null) {
+            cleanupTempFile()
+            return PcmAudioEncoder.encodeFileAsWav(format, null, 0L)
+        }
         targetLine.stop()
         targetLine.close()
         line = null
         captureThread?.join(2_000)
         captureThread = null
 
-        val pcmBytes = synchronized(buffer) { buffer.toByteArray() }
-        return encodeAsWav(pcmBytes)
+        val file = closeAndTakeTempFile()
+        return try {
+            val frameCount = file?.let { runCatching { Files.size(it) }.getOrDefault(0L) / format.frameSize } ?: 0L
+            PcmAudioEncoder.encodeFileAsWav(format, file, frameCount)
+        } finally {
+            cleanupTempFile(file)
+        }
     }
 
     /** Stops recording and discards the captured audio without producing output. */
@@ -141,36 +189,33 @@ class AudioRecorder {
         line = null
         captureThread?.join(2_000)
         captureThread = null
-        synchronized(buffer) { buffer.reset() }
+
+        val file = closeAndTakeTempFile()
+        cleanupTempFile(file)
     }
 
-    private fun encodeAsWav(pcmBytes: ByteArray): ByteArray {
-        val output = ByteArrayOutputStream()
-        pcmBytes.inputStream().use { pcmStream ->
-            val frameLength = pcmBytes.size / format.frameSize
-            AudioInputStream(pcmStream, format, frameLength.toLong()).use { audioStream ->
-                AudioSystem.write(audioStream, AudioFileFormat.Type.WAVE, output)
+    /** Flushes/closes the current temp-file output stream (if any) and returns its path. */
+    private fun closeAndTakeTempFile(): Path? = synchronized(writeLock) {
+        try {
+            fileOut?.flush()
+            fileOut?.close()
+        } catch (e: Exception) {
+            log.debug("Failed closing temp audio file stream", e)
+        }
+        fileOut = null
+        val file = pcmFile
+        pcmFile = null
+        file
+    }
+
+    /** Deletes [file] (defaults to the current [pcmFile]) if present, ignoring failures. */
+    private fun cleanupTempFile(file: Path? = synchronized(writeLock) { pcmFile }) {
+        file?.let {
+            try {
+                Files.deleteIfExists(it)
+            } catch (e: Exception) {
+                log.debug("Failed to delete temp audio file {}", it, e)
             }
         }
-        return output.toByteArray()
-    }
-
-    /**
-     * Computes the normalized RMS (root-mean-square) amplitude of a chunk of 16-bit
-     * little-endian PCM samples, as a value in `0f..1f`.
-     */
-    private fun computeRmsLevel(buf: ByteArray, length: Int): Float {
-        var sumSquares = 0.0
-        var sampleCount = 0
-        var i = 0
-        while (i + 1 < length) {
-            val sample = ((buf[i + 1].toInt() shl 8) or (buf[i].toInt() and 0xFF)).toShort()
-            sumSquares += sample * sample.toDouble()
-            sampleCount++
-            i += 2
-        }
-        if (sampleCount == 0) return 0f
-        val rms = sqrt(sumSquares / sampleCount)
-        return (rms / Short.MAX_VALUE).toFloat().coerceIn(0f, 1f)
     }
 }

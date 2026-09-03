@@ -166,8 +166,17 @@ import kotlin.collections.plus
 import kotlin.math.ceil
 import kotlin.ranges.coerceIn
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private val log = currentFileLogger()
+
+/**
+ * Auto-stop cap for voice dictation. Not a Whisper file-size concern (25MB/request allows
+ * ~13 minutes at our 16kHz/16-bit mono capture rate) — purely a UX/safety bound so a
+ * forgotten/stuck recording can't run indefinitely — see the auto-stop
+ * `LaunchedEffect` inside `chatInputField`.
+ */
+private const val MAX_VOICE_RECORDING_SECONDS = 120
 
 /**
  * States for the 🎤 voice-input button in the controls row.
@@ -401,6 +410,10 @@ fun chatInputField(
     val voiceWaveformSamples = remember { mutableStateListOf<Float>() }
     val maxWaveformSamples = 40
 
+    // Ticking elapsed-seconds counter shown next to the waveform while RECORDING — also
+    // drives the [MAX_VOICE_RECORDING_SECONDS] auto-stop below.
+    var recordingElapsedSeconds by remember { mutableStateOf(0) }
+
     // Cancel any in-progress recording if this composable leaves the composition
     // (e.g. user navigates away mid-recording) to avoid leaking an open mic line.
     DisposableEffect(Unit) {
@@ -511,6 +524,41 @@ fun chatInputField(
     val selectFileTitle = stringResource("chat.select.file")
     val scope = rememberCoroutineScope()
 
+    // Shared "stop recording, transcribe, insert text" logic — invoked both when the user
+    // manually stops (toggleVoiceRecording below) and when the recorder is auto-stopped after
+    // [MAX_VOICE_RECORDING_SECONDS] (see the LaunchedEffect right below toggleVoiceRecording).
+    val stopRecordingAndTranscribe: () -> Unit = {
+        voiceRecordingState = VoiceRecordingState.TRANSCRIBING
+        voiceWaveformSamples.clear()
+        scope.launch {
+            try {
+                val wavBytes = withContext(Dispatchers.IO) { audioRecorder.stop() }
+                val transcript = withContext(Dispatchers.IO) {
+                    VoiceServiceRegistry.speechToText(AppConfig.voice)
+                        .transcribe(wavBytes, VoiceAudioFormat.WAV)
+                }
+                if (transcript.isNotBlank()) {
+                    val newText = if (inputText.text.isBlank()) {
+                        transcript
+                    } else {
+                        "${inputText.text} $transcript"
+                    }
+                    onInputTextChange(
+                        TextFieldValue(text = newText, selection = TextRange(newText.length)),
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: VoiceServiceException) {
+                EventBus.post(AppErrorEvent(title = voiceErrorTitle, message = e.message ?: "Voice transcription failed"))
+            } catch (e: Exception) {
+                EventBus.post(AppErrorEvent(title = voiceErrorTitle, message = e.message ?: "Voice recording failed"))
+            } finally {
+                voiceRecordingState = VoiceRecordingState.IDLE
+            }
+        }
+    }
+
     // Shared toggle logic — invoked both by the 🎤 button's onClick and by the
     // Cmd/Ctrl+Shift+M keyboard shortcut (TOGGLE_VOICE_RECORDING) so behavior stays identical.
     val toggleVoiceRecording: () -> Unit = toggle@{
@@ -534,40 +582,29 @@ fun chatInputField(
                 }
             }
 
-            VoiceRecordingState.RECORDING -> {
-                voiceRecordingState = VoiceRecordingState.TRANSCRIBING
-                voiceWaveformSamples.clear()
-                scope.launch {
-                    try {
-                        val wavBytes = withContext(Dispatchers.IO) { audioRecorder.stop() }
-                        val transcript = withContext(Dispatchers.IO) {
-                            VoiceServiceRegistry.speechToText(AppConfig.voice)
-                                .transcribe(wavBytes, VoiceAudioFormat.WAV)
-                        }
-                        if (transcript.isNotBlank()) {
-                            val newText = if (inputText.text.isBlank()) {
-                                transcript
-                            } else {
-                                "${inputText.text} $transcript"
-                            }
-                            onInputTextChange(
-                                TextFieldValue(text = newText, selection = TextRange(newText.length)),
-                            )
-                        }
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: VoiceServiceException) {
-                        EventBus.post(AppErrorEvent(title = voiceErrorTitle, message = e.message ?: "Voice transcription failed"))
-                    } catch (e: Exception) {
-                        EventBus.post(AppErrorEvent(title = voiceErrorTitle, message = e.message ?: "Voice recording failed"))
-                    } finally {
-                        voiceRecordingState = VoiceRecordingState.IDLE
-                    }
-                }
-            }
+            VoiceRecordingState.RECORDING -> stopRecordingAndTranscribe()
 
             VoiceRecordingState.TRANSCRIBING -> {
                 // Ignore triggers while a transcription request is in flight.
+            }
+        }
+    }
+
+    // Auto-stop safety cap — ticks recordingElapsedSeconds once per second while RECORDING and
+    // triggers stopRecordingAndTranscribe() once [MAX_VOICE_RECORDING_SECONDS] is reached, so a
+    // forgotten/stuck recording can't run indefinitely. See [MAX_VOICE_RECORDING_SECONDS] doc.
+    LaunchedEffect(voiceRecordingState) {
+        if (voiceRecordingState == VoiceRecordingState.RECORDING) {
+            val startedAt = System.currentTimeMillis()
+            recordingElapsedSeconds = 0
+            while (voiceRecordingState == VoiceRecordingState.RECORDING) {
+                delay(1.seconds)
+                if (voiceRecordingState != VoiceRecordingState.RECORDING) break
+                recordingElapsedSeconds = ((System.currentTimeMillis() - startedAt) / 1000).toInt()
+                if (recordingElapsedSeconds >= MAX_VOICE_RECORDING_SECONDS) {
+                    stopRecordingAndTranscribe()
+                    break
+                }
             }
         }
     }
@@ -1142,9 +1179,16 @@ fun chatInputField(
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = stringResource("chat.voice.recording.label"),
+                                    // Ticks up each second and turns solid red in the final 10s
+                                    // before MAX_VOICE_RECORDING_SECONDS auto-stops the recording —
+                                    // the only user-facing signal of the cap, no separate popup.
+                                    text = stringResource("chat.voice.recording.label.timed", recordingElapsedSeconds),
                                     style = AppTextStyles.caption,
-                                    color = MaterialTheme.colorScheme.error,
+                                    color = if (recordingElapsedSeconds >= MAX_VOICE_RECORDING_SECONDS - 10) {
+                                        MaterialTheme.colorScheme.error
+                                    } else {
+                                        MaterialTheme.colorScheme.error.copy(alpha = 0.85f)
+                                    },
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 voiceWaveform(

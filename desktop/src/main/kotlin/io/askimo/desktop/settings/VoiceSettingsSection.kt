@@ -27,7 +27,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -119,7 +118,6 @@ private fun voiceConfigCard() {
     var sttModel by remember { mutableStateOf(AppConfig.rawVoice.sttModel) }
     var ttsModel by remember { mutableStateOf(AppConfig.rawVoice.ttsModel) }
     var ttsVoice by remember { mutableStateOf(AppConfig.rawVoice.ttsVoice) }
-    var speechSpeed by remember { mutableStateOf(AppConfig.rawVoice.speechSpeed.toFloat()) }
     var localSttEndpoint by remember { mutableStateOf(AppConfig.rawVoice.localSttEndpoint) }
     var localTtsEndpoint by remember { mutableStateOf(AppConfig.rawVoice.localTtsEndpoint) }
     // API key loaded async from keychain — starts blank, same pattern as web search / proxy.
@@ -286,23 +284,6 @@ private fun voiceConfigCard() {
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
             )
-
-            // ── Speech speed slider ────────────────────────────────────────────────
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
-                Text(
-                    text = stringResource("settings.voice.speech_speed", String.format("%.2f", speechSpeed)),
-                    style = AppTextStyles.fieldLabel,
-                )
-                Slider(
-                    value = speechSpeed,
-                    onValueChange = { speechSpeed = it },
-                    onValueChangeFinished = {
-                        AppConfig.updateField("voice.speechSpeed", speechSpeed.toDouble())
-                    },
-                    valueRange = 0.25f..4.0f,
-                    modifier = Modifier.fillMaxWidth().pointerHoverIcon(PointerIcon.Hand),
-                )
-            }
 
             // ── OpenAI API key (separate from any OPENAI chat provider instance key) ──
             if (showApiKeyField) {

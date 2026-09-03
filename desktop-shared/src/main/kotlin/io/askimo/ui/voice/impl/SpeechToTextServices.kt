@@ -40,7 +40,7 @@ class OpenAiSpeechToTextService(private val config: VoiceConfig) : SpeechToTextS
 
             model.transcribeToText(Audio.builder().binaryData(audio).build())
         } catch (e: Exception) {
-            log.warn("OpenAI transcription request failed: {}", e.message)
+            log.warn("OpenAI transcription request failed", e)
             throw VoiceServiceException("OpenAI transcription request failed: ${e.message}", e)
         }
     }
@@ -78,7 +78,7 @@ class LocalWhisperSpeechToTextService(private val config: VoiceConfig) : SpeechT
 
             model.transcribeToText(Audio.builder().binaryData(audio).build())
         } catch (e: Exception) {
-            log.warn("Local whisper transcription request failed: {}", e.message)
+            log.warn("Local whisper transcription request failed", e)
             throw VoiceServiceException(
                 "Could not reach local whisper.cpp server at $baseUrl. Is it running? (${e.message})",
                 e,
