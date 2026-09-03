@@ -75,6 +75,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -524,6 +525,12 @@ fun chatInputField(
     val selectFileTitle = stringResource("chat.select.file")
     val scope = rememberCoroutineScope()
 
+    // Always reflects the latest recomposition's inputText — read via .value at the point the
+    // transcript is applied below (not captured by direct closure over `inputText`), so edits the
+    // user makes to the input field *while* transcription is in flight aren't overwritten by a
+    // stale snapshot of the text as it existed when the coroutine was launched.
+    val latestInputText by rememberUpdatedState(inputText)
+
     // Shared "stop recording, transcribe, insert text" logic — invoked both when the user
     // manually stops (toggleVoiceRecording below) and when the recorder is auto-stopped after
     // [MAX_VOICE_RECORDING_SECONDS] (see the LaunchedEffect right below toggleVoiceRecording).
@@ -538,10 +545,11 @@ fun chatInputField(
                         .transcribe(wavBytes, VoiceAudioFormat.WAV)
                 }
                 if (transcript.isNotBlank()) {
-                    val newText = if (inputText.text.isBlank()) {
+                    val currentText = latestInputText.text
+                    val newText = if (currentText.isBlank()) {
                         transcript
                     } else {
-                        "${inputText.text} $transcript"
+                        "$currentText $transcript"
                     }
                     onInputTextChange(
                         TextFieldValue(text = newText, selection = TextRange(newText.length)),

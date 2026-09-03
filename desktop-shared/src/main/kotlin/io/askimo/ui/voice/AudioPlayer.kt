@@ -71,12 +71,20 @@ class AudioPlayer {
                         if (event.type == LineEvent.Type.STOP && newClip.framePosition >= newClip.frameLength) {
                             // Runs on the JVM's line-event dispatch thread, concurrently with any
                             // synchronized play/pause/stop call — synchronize here too, and only
-                            // fire completion if `newClip` is still the active clip, so a stale
-                            // event from a clip that [stop] (or a subsequent [play]) already
-                            // replaced can't invoke a completion callback that no longer applies.
+                            // act if `newClip` is still the active clip, so a stale event from a
+                            // clip that [stop] (or a subsequent [play]) already replaced can't
+                            // invoke a completion callback that no longer applies.
                             synchronized(this@AudioPlayer) {
                                 if (clip === newClip) {
-                                    onFinished?.invoke()
+                                    // Capture the callback and clear/close *before* invoking it —
+                                    // stop() releases the now-finished clip's native audio line
+                                    // (otherwise it would stay open/leaked until the next explicit
+                                    // stop()/play()) — and clearing state first means a callback
+                                    // that reentrantly calls play() again (same thread, same
+                                    // monitor) has its newly-assigned clip left untouched by us.
+                                    val callback = onFinished
+                                    stop()
+                                    callback?.invoke()
                                 }
                             }
                         }
