@@ -77,6 +77,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -421,7 +422,7 @@ fun chatInputField(
         onDispose {
             if (voiceRecordingState == VoiceRecordingState.RECORDING) {
                 audioRecorder.cancel()
-                voiceWaveformSamples.clear()
+                Snapshot.withMutableSnapshot { voiceWaveformSamples.clear() }
             }
         }
     }
@@ -536,7 +537,7 @@ fun chatInputField(
     // [MAX_VOICE_RECORDING_SECONDS] (see the LaunchedEffect right below toggleVoiceRecording).
     val stopRecordingAndTranscribe: () -> Unit = {
         voiceRecordingState = VoiceRecordingState.TRANSCRIBING
-        voiceWaveformSamples.clear()
+        Snapshot.withMutableSnapshot { voiceWaveformSamples.clear() }
         scope.launch {
             try {
                 val wavBytes = withContext(Dispatchers.IO) { audioRecorder.stop() }
@@ -574,14 +575,17 @@ fun chatInputField(
         when (voiceRecordingState) {
             VoiceRecordingState.IDLE -> {
                 try {
-                    voiceWaveformSamples.clear()
+                    Snapshot.withMutableSnapshot { voiceWaveformSamples.clear() }
                     audioRecorder.start { level ->
-                        // Invoked from the capture thread — mutating Compose state directly is
-                        // safe/expected here (see ChatViewModel.editMessage for the same pattern),
-                        // and this is a high-frequency, low-cost UI signal, not audio data.
-                        voiceWaveformSamples.add(level)
-                        if (voiceWaveformSamples.size > maxWaveformSamples) {
-                            voiceWaveformSamples.removeAt(0)
+                        // Invoked from the capture thread, concurrently with UI-thread calls that
+                        // clear() this same list (e.g. stopRecordingAndTranscribe/onDispose above)
+                        // — wrap in Snapshot.withMutableSnapshot (matching this codebase's other
+                        // background-thread state updates
+                        Snapshot.withMutableSnapshot {
+                            voiceWaveformSamples.add(level)
+                            if (voiceWaveformSamples.size > maxWaveformSamples) {
+                                runCatching { voiceWaveformSamples.removeAt(0) }
+                            }
                         }
                     }
                     voiceRecordingState = VoiceRecordingState.RECORDING
