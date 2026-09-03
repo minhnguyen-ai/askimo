@@ -420,10 +420,13 @@ fun chatInputField(
     // (e.g. user navigates away mid-recording) to avoid leaking an open mic line.
     DisposableEffect(Unit) {
         onDispose {
-            if (voiceRecordingState == VoiceRecordingState.RECORDING) {
-                audioRecorder.cancel()
-                Snapshot.withMutableSnapshot { voiceWaveformSamples.clear() }
+            if (audioRecorder.isRecording) {
+                Thread({ audioRecorder.cancel() }, "askimo-audio-recorder-dispose-cancel").apply {
+                    isDaemon = true
+                    start()
+                }
             }
+            Snapshot.withMutableSnapshot { voiceWaveformSamples.clear() }
         }
     }
 
