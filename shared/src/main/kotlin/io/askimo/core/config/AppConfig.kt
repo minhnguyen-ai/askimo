@@ -503,7 +503,7 @@ private const val VOICE_KEY_PLACEHOLDER = "***keychain***"
  * [io.askimo.core.providers.ProviderInstance] key — a user may chat exclusively with
  * another provider (Anthropic, Gemini, Ollama...) yet still want OpenAI Whisper/TTS for voice.
  * [useProviderKeyForVoice] offers a convenience toggle so the Settings UI can optionally
- * reuse an existing OpENAI provider instance's key instead of requiring the user to paste it again.
+ * reuse an existing OpenAI provider instance's key instead of requiring the user to paste it again.
  *
  * API keys are stored securely via [SecureKeyManager] — the YAML holds a
  * `***keychain***` placeholder, never the raw key value.
@@ -1207,8 +1207,13 @@ object AppConfig {
                 }
 
                 config.copy(password = ProxyConfig.getPasswordPlaceholder())
+            } else if (password.isEmpty()) {
+                // User explicitly cleared the field — remove the stored password too, otherwise
+                // AppConfig.proxy would keep resolving the stale keychain entry.
+                ProxyConfig.setSecurePassword(config.type, "")
+                config.copy(password = "")
             } else {
-                // Keep placeholder or empty as-is
+                // Keep placeholder as-is
                 config.copy(password = password)
             }
         }
@@ -1244,41 +1249,55 @@ object AppConfig {
 
         "braveApiKey" -> {
             val key = value as String
-            if (WebSearchConfig.isActualKey(key)) {
-                val result = WebSearchConfig.setSecureBraveKey(key)
-                when (result.method) {
-                    StorageMethod.KEYCHAIN ->
-                        log.debug("Brave Search API key stored securely in keychain")
+            when {
+                WebSearchConfig.isActualKey(key) -> {
+                    val result = WebSearchConfig.setSecureBraveKey(key)
+                    when (result.method) {
+                        StorageMethod.KEYCHAIN ->
+                            log.debug("Brave Search API key stored securely in keychain")
 
-                    StorageMethod.ENCRYPTED ->
-                        log.warn("Brave Search API key stored with encryption ({})", result.warningMessage)
+                        StorageMethod.ENCRYPTED ->
+                            log.warn("Brave Search API key stored with encryption ({})", result.warningMessage)
 
-                    StorageMethod.INSECURE_FALLBACK ->
-                        log.warn("⚠️ Brave Search API key storage: {}", result.warningMessage)
+                        StorageMethod.INSECURE_FALLBACK ->
+                            log.warn("⚠️ Brave Search API key storage: {}", result.warningMessage)
+                    }
+                    config.copy(braveApiKey = WebSearchConfig.getKeyPlaceholder())
                 }
-                config.copy(braveApiKey = WebSearchConfig.getKeyPlaceholder())
-            } else {
-                config.copy(braveApiKey = key)
+
+                key.isEmpty() -> {
+                    WebSearchConfig.setSecureBraveKey("")
+                    config.copy(braveApiKey = "")
+                }
+
+                else -> config.copy(braveApiKey = key)
             }
         }
 
         "tavilyApiKey" -> {
             val key = value as String
-            if (WebSearchConfig.isActualKey(key)) {
-                val result = WebSearchConfig.setSecureTavilyKey(key)
-                when (result.method) {
-                    StorageMethod.KEYCHAIN ->
-                        log.debug("Tavily API key stored securely in keychain")
+            when {
+                WebSearchConfig.isActualKey(key) -> {
+                    val result = WebSearchConfig.setSecureTavilyKey(key)
+                    when (result.method) {
+                        StorageMethod.KEYCHAIN ->
+                            log.debug("Tavily API key stored securely in keychain")
 
-                    StorageMethod.ENCRYPTED ->
-                        log.warn("Tavily API key stored with encryption ({})", result.warningMessage)
+                        StorageMethod.ENCRYPTED ->
+                            log.warn("Tavily API key stored with encryption ({})", result.warningMessage)
 
-                    StorageMethod.INSECURE_FALLBACK ->
-                        log.warn("⚠️ Tavily API key storage: {}", result.warningMessage)
+                        StorageMethod.INSECURE_FALLBACK ->
+                            log.warn("⚠️ Tavily API key storage: {}", result.warningMessage)
+                    }
+                    config.copy(tavilyApiKey = WebSearchConfig.getKeyPlaceholder())
                 }
-                config.copy(tavilyApiKey = WebSearchConfig.getKeyPlaceholder())
-            } else {
-                config.copy(tavilyApiKey = key)
+
+                key.isEmpty() -> {
+                    WebSearchConfig.setSecureTavilyKey("")
+                    config.copy(tavilyApiKey = "")
+                }
+
+                else -> config.copy(tavilyApiKey = key)
             }
         }
 
@@ -1292,19 +1311,11 @@ object AppConfig {
         "enabled" -> config.copy(enabled = value as Boolean)
 
         "sttProvider" -> config.copy(
-            sttProvider = if (value is VoiceProvider) {
-                value
-            } else {
-                runCatching { VoiceProvider.valueOf(value.toString()) }.getOrElse { config.sttProvider }
-            },
+            sttProvider = value as? VoiceProvider ?: runCatching { VoiceProvider.valueOf(value.toString()) }.getOrElse { config.sttProvider },
         )
 
         "ttsProvider" -> config.copy(
-            ttsProvider = if (value is VoiceProvider) {
-                value
-            } else {
-                runCatching { VoiceProvider.valueOf(value.toString()) }.getOrElse { config.ttsProvider }
-            },
+            ttsProvider = value as? VoiceProvider ?: runCatching { VoiceProvider.valueOf(value.toString()) }.getOrElse { config.ttsProvider },
         )
 
         "sttModel" -> config.copy(sttModel = value as String)
@@ -1323,21 +1334,30 @@ object AppConfig {
 
         "openAiApiKey" -> {
             val key = value as String
-            if (VoiceConfig.isActualKey(key)) {
-                val result = VoiceConfig.setSecureOpenAiKey(key)
-                when (result.method) {
-                    StorageMethod.KEYCHAIN ->
-                        log.debug("Voice OpenAI API key stored securely in keychain")
+            when {
+                VoiceConfig.isActualKey(key) -> {
+                    val result = VoiceConfig.setSecureOpenAiKey(key)
+                    when (result.method) {
+                        StorageMethod.KEYCHAIN ->
+                            log.debug("Voice OpenAI API key stored securely in keychain")
 
-                    StorageMethod.ENCRYPTED ->
-                        log.warn("Voice OpenAI API key stored with encryption ({})", result.warningMessage)
+                        StorageMethod.ENCRYPTED ->
+                            log.warn("Voice OpenAI API key stored with encryption ({})", result.warningMessage)
 
-                    StorageMethod.INSECURE_FALLBACK ->
-                        log.warn("⚠️ Voice OpenAI API key storage: {}", result.warningMessage)
+                        StorageMethod.INSECURE_FALLBACK ->
+                            log.warn("⚠️ Voice OpenAI API key storage: {}", result.warningMessage)
+                    }
+                    config.copy(openAiApiKey = VoiceConfig.getKeyPlaceholder())
                 }
-                config.copy(openAiApiKey = VoiceConfig.getKeyPlaceholder())
-            } else {
-                config.copy(openAiApiKey = key)
+
+                key.isEmpty() -> {
+                    // User explicitly cleared the field — remove the stored key too, otherwise
+                    // AppConfig.voice would keep resolving the stale keychain entry.
+                    VoiceConfig.setSecureOpenAiKey("")
+                    config.copy(openAiApiKey = "")
+                }
+
+                else -> config.copy(openAiApiKey = key)
             }
         }
 

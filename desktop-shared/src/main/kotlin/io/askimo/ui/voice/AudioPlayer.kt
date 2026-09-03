@@ -31,6 +31,7 @@ class AudioPlayer {
     private val log = logger<AudioPlayer>()
 
     @Volatile private var clip: Clip? = null
+
     @Volatile private var onFinished: (() -> Unit)? = null
 
     /** True while a clip is actively playing (not paused, not stopped). */
@@ -45,28 +46,32 @@ class AudioPlayer {
         stop()
 
         try {
-            val rawStream = AudioSystem.getAudioInputStream(ByteArrayInputStream(audio))
-            val decodedFormat = AudioFormat(
-                AudioFormat.Encoding.PCM_SIGNED,
-                rawStream.format.sampleRate,
-                16,
-                rawStream.format.channels,
-                rawStream.format.channels * 2,
-                rawStream.format.sampleRate,
-                false,
-            )
-            val decodedStream = AudioSystem.getAudioInputStream(decodedFormat, rawStream)
-
-            val newClip = AudioSystem.getClip()
-            newClip.open(decodedStream)
-            newClip.addLineListener { event ->
-                if (event.type == LineEvent.Type.STOP && newClip.framePosition >= newClip.frameLength) {
-                    onFinished?.invoke()
+            // Clip.open() reads the entire stream into memory up front, so it's safe to close
+            // both the raw and decoded AudioInputStreams (via `use`) once open() returns —
+            // otherwise repeated plays leak native/SPI decoder resources.
+            AudioSystem.getAudioInputStream(ByteArrayInputStream(audio)).use { rawStream ->
+                val decodedFormat = AudioFormat(
+                    AudioFormat.Encoding.PCM_SIGNED,
+                    rawStream.format.sampleRate,
+                    16,
+                    rawStream.format.channels,
+                    rawStream.format.channels * 2,
+                    rawStream.format.sampleRate,
+                    false,
+                )
+                AudioSystem.getAudioInputStream(decodedFormat, rawStream).use { decodedStream ->
+                    val newClip = AudioSystem.getClip()
+                    newClip.open(decodedStream)
+                    newClip.addLineListener { event ->
+                        if (event.type == LineEvent.Type.STOP && newClip.framePosition >= newClip.frameLength) {
+                            onFinished?.invoke()
+                        }
+                    }
+                    onFinished = onComplete
+                    clip = newClip
+                    newClip.start()
                 }
             }
-            onFinished = onComplete
-            clip = newClip
-            newClip.start()
         } catch (e: UnsupportedAudioFileException) {
             throw AudioPlaybackException(
                 "Unsupported audio format for playback (${format.name}). " +
@@ -125,4 +130,3 @@ class AudioPlayer {
         }
     }
 }
-

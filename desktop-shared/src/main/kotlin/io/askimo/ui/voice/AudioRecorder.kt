@@ -112,7 +112,7 @@ class AudioRecorder {
      * Safe to call even if [start] was never called (returns an empty WAV).
      */
     fun stop(): ByteArray {
-        val targetLine = line ?: return ByteArray(0)
+        val targetLine = line ?: return encodeAsWav(ByteArray(0))
         targetLine.stop()
         targetLine.close()
         line = null
@@ -146,4 +146,3 @@ class AudioRecorder {
         return output.toByteArray()
     }
 }
-

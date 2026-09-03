@@ -100,4 +100,3 @@ object PiperTextToSpeechFactory : TextToSpeechFactory {
     override val provider: VoiceProvider = VoiceProvider.LOCAL_PIPER
     override fun create(config: VoiceConfig): TextToSpeechService = PiperTextToSpeechService(config)
 }
-

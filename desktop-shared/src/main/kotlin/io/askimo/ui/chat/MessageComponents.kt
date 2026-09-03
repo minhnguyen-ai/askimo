@@ -68,6 +68,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -174,13 +175,17 @@ private object VoicePlaybackController {
         scope.launch {
             try {
                 val ttsService = withContext(Dispatchers.IO) { VoiceServiceRegistry.textToSpeech(AppConfig.voice) }
-                val audioBytes = withContext(Dispatchers.IO) { ttsService.synthesize(text) }
+                val audioBytes = withContext(Dispatchers.IO) {
+                    ttsService.synthesize(text, AppConfig.rawVoice.speechSpeed)
+                }
                 // A newer toggle may have superseded this request while we were synthesizing.
                 if (loadingMessageId != messageId) return@launch
                 loadingMessageId = null
                 playingMessageId = messageId
                 player.play(audioBytes, ttsService.outputFormat) {
-                    if (playingMessageId == messageId) playingMessageId = null
+                    Snapshot.withMutableSnapshot {
+                        if (playingMessageId == messageId) playingMessageId = null
+                    }
                 }
             } catch (e: VoiceServiceException) {
                 loadingMessageId = null

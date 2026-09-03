@@ -142,6 +142,7 @@ import io.askimo.ui.voice.MicrophoneUnavailableException
 import io.askimo.ui.voice.VoiceAudioFormat
 import io.askimo.ui.voice.VoiceServiceException
 import io.askimo.ui.voice.VoiceServiceRegistry
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -370,7 +371,6 @@ fun chatInputField(
         }
     }
 
-
     // Notify caller whenever the user changes the enabled server selection.
     LaunchedEffect(enabledServerIds) {
         onEnabledServerIdsChange?.invoke(enabledServerIds)
@@ -487,8 +487,8 @@ fun chatInputField(
             VoiceRecordingState.RECORDING -> {
                 voiceRecordingState = VoiceRecordingState.TRANSCRIBING
                 scope.launch {
-                    val wavBytes = withContext(Dispatchers.IO) { audioRecorder.stop() }
                     try {
+                        val wavBytes = withContext(Dispatchers.IO) { audioRecorder.stop() }
                         val transcript = withContext(Dispatchers.IO) {
                             VoiceServiceRegistry.speechToText(AppConfig.voice)
                                 .transcribe(wavBytes, VoiceAudioFormat.WAV)
@@ -503,8 +503,12 @@ fun chatInputField(
                                 TextFieldValue(text = newText, selection = TextRange(newText.length)),
                             )
                         }
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: VoiceServiceException) {
                         EventBus.post(AppErrorEvent(title = voiceErrorTitle, message = e.message ?: "Voice transcription failed"))
+                    } catch (e: Exception) {
+                        EventBus.post(AppErrorEvent(title = voiceErrorTitle, message = e.message ?: "Voice recording failed"))
                     } finally {
                         voiceRecordingState = VoiceRecordingState.IDLE
                     }
@@ -828,7 +832,6 @@ fun chatInputField(
                         }
 
                         Spacer(modifier = Modifier.width(2.dp))
-
 
                         // Image button — only show if model requires explicit toggle mode
                         // For multi-modal models (native image generation), hide this button

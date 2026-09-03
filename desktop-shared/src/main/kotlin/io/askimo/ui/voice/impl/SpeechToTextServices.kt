@@ -91,4 +91,3 @@ object LocalWhisperSpeechToTextFactory : SpeechToTextFactory {
     override val provider: VoiceProvider = VoiceProvider.LOCAL_WHISPER_CPP
     override fun create(config: VoiceConfig): SpeechToTextService = LocalWhisperSpeechToTextService(config)
 }
-
