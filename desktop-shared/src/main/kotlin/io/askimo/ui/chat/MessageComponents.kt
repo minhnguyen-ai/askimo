@@ -188,10 +188,14 @@ private object VoicePlaybackController {
                     }
                 }
             } catch (e: VoiceServiceException) {
+                if (loadingMessageId != messageId) return@launch
                 loadingMessageId = null
+                playingMessageId = null
                 onError(e.message ?: "Voice playback failed")
             } catch (e: AudioPlaybackException) {
+                if (playingMessageId != messageId) return@launch
                 loadingMessageId = null
+                playingMessageId = null
                 onError(e.message ?: "Voice playback failed")
             }
         }
